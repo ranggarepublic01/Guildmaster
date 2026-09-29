@@ -984,7 +984,8 @@ function updateAdv(S, a, dt) {
   }
   switch (a.state) {
     case 'emerge':
-      if (moveTo(a, a.ex, a.ez, CFG.adv.speed * 0.8, dt, 0.3)) decide(S, a);
+      // step 7: the parked caravan can stand on the spot a recruit walks out to; stepping out of the hall is enough then
+      if (moveTo(a, a.ex, a.ez, CFG.adv.speed * 0.8, dt, 0.3) || (S.caravan && d2(a.ex, a.ez, S.caravan.x, S.caravan.z) < CFG.caravan.r + 1.2 && d2(a.x, a.z, S.caravan.x, S.caravan.z) < CFG.caravan.r + 2)) decide(S, a);
       break;
     case 'chase': {
       if (recheck(S, a, dt)) break;
@@ -1598,7 +1599,7 @@ function separate(S) {
       if (d < R0) { const k = d > 1e-4 ? 1 / d : 0; const nx = d > 1e-4 ? dx * k : 1, nz = d > 1e-4 ? dz * k : 0; u.x = o.x + nx * R0 - nz * 0.04; u.z = o.z + nz * R0 + nx * 0.04; }
     }
     const C = S.caravan;   // the wagon does not give way; people step around it
-    if (C && C.state !== 'wreck') { const dx = u.x - C.x, dz = u.z - C.z, d = Math.sqrt(dx * dx + dz * dz), R0 = CFG.caravan.r + 0.3; if (d < R0 && d > 1e-4) { u.x = C.x + dx / d * R0; u.z = C.z + dz / d * R0; } }
+    if (C && C.state !== 'wreck') { const dx = u.x - C.x, dz = u.z - C.z, d = Math.sqrt(dx * dx + dz * dz), R0 = CFG.caravan.r + 0.3; if (d < R0 && d > 1e-4) { u.x = C.x + dx / d * R0 - dz / d * 0.04; u.z = C.z + dz / d * R0 + dx / d * 0.04; } }   // slide round it, like round a building
     const H = CFG.mapHalf - 2; u.x = clamp(u.x, -H, H); u.z = clamp(u.z, -H, H);
   }
 }
