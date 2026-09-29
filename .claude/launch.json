@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "guildmaster",
+      "runtimeExecutable": "C:/Users/CG-RW/AppData/Local/Programs/node/node-v24.19.0-win-x64/node.exe",
+      "runtimeArgs": ["tools/serve.js", ".", "8765"],
+      "port": 8765
+    }
+  ]
+}
