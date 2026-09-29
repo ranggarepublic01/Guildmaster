@@ -30,6 +30,9 @@ guild leaves the village emptier when raids come and the horn and defend flag an
 **Step 6 built 28 Sep 2026** in Claude Code (see 1f): specialists, gear condition and repair, arrays, ward stones.
 Rawa decided three points before the build (only the alchemist comes built; array gear is a ward stone; two bought
 gear tiers); the other build choices are in 1e to confirm.
+**Step 7 built 29 Sep 2026** in Claude Code (see 1f): the merchant caravan, bandits robbing it, camp tiers, escort bounties.
+Rawa decided four points before the build (the road runs by the bandit camp, set per village; caravan pay; escort split and refund;
+half the stolen goods back when the camp falls); the other build choices are in 1e to confirm.
 **From step 6 the build moves to Claude Code.** Keep this file, `index.html` (the step 5 build) and
 `guildmaster_bot_harness.js` in one project folder, with `CLAUDE.md` pointing to them. The last claude.ai
 build link, for reference: https://claude.ai/artifact/HpUoHyAbPg8UaJdLb22gbF
@@ -205,6 +208,12 @@ build link, for reference: https://claude.ai/artifact/HpUoHyAbPg8UaJdLb22gbF
 - *(v3)* Bandits who stop it take the goods. Their camp tiers up (a bigger flag, and a tap
   card saying why), and its raiders gain better weapons and potions, so they are harder to
   eliminate.
+- *(Rawa, 29 Sep)* **The road depends on where the bandits are:** it runs near the bandit camp (or the camp sits by the
+  main road). Each village sets its own road, since later maps put the enemies elsewhere.
+- *(Rawa, 29 Sep)* Villagers keep 20 food; the rest goes on the caravan at **3g a food**, paid when it reaches the far edge.
+- *(Rawa, 29 Sep)* The escort bounty is shared **evenly** by the escorts still with the caravan when it arrives, and
+  **comes back to the treasury** if the caravan is lost.
+- *(Rawa, 29 Sep)* Destroying a camp that robbed caravans returns **half the value** of the stolen goods to the treasury.
 
 **Bounties (v2)**
 - **Destroy:** on a lair or camp. Paid when it is destroyed.
@@ -342,7 +351,7 @@ Which number the leaderboard shows is open (see 1e).
 6. ~~Specialists and arrays, with gear for all four classes and upgrades paid in gold, wood
    and stone. *(v3.1)* Gear condition and blacksmith repair; array cost per shot, and no
    coin from array kills.~~ Done 28 Sep.
-7. Caravan every 3–5 min, bandits' caravan targeting and camp tier-up, and escort bounties.
+7. ~~Caravan every 3–5 min, bandits' caravan targeting and camp tier-up, and escort bounties.~~ Done 29 Sep.
 8. Scouted waves that escalate over time. *(v3.1)* Raiders damage the hall and take treasury
    coin; waves tuned so arrays are required.
 9. *(v3)* Missions: the tutorial village, the coin score to guild headquarters, and a fresh
@@ -472,7 +481,43 @@ Which number the leaderboard shows is open (see 1e).
   - An idle adventurer with gold for gear but no blacksmith says so in their reason.
 - *(step 6, decided by Rawa 28 Sep)* Ward stone kills pay coin to their owner, as built. Tier-2 gear being out of reach
   waits for the income from escorts and waves (steps 7–8); no price change now.
-- Whether destroying an enriched bandit camp drops some of the stolen goods (a comeback reward).
+- ~~Whether destroying an enriched bandit camp drops some of the stolen goods.~~ *(Rawa, 29 Sep: half their value back to the treasury.)*
+- *(step 7, to confirm)* Choices made in the build:
+  - The road on this map: the caravan comes in from the east edge (71, 8) empty, stops at the guild hall (3.5, 6.5) for
+    20 s to load, then leaves by the west edge (−71, 12) past the road farm. The loaded leg passes about 18.5 units from the
+    bandit camp. Speed 1.8 (adventurers 3.1, bandits 2.7): about 37 s in, 20 s loading, 43 s out. The road is drawn on the
+    ground and stored per village (`CFG.caravan.route`).
+  - Timing: the first comes at 190–230 s; the next is due 180–300 s after the last one appeared, and waits while one is still
+    on the map. About 2.7 caravans in 12 minutes.
+  - The surplus (food above 20) is taken at the end of loading. With none to spare, the caravan leaves empty and bandits ignore it.
+  - The wagon has 240 health and stops while it is being hit. Two tier-0 bandits break it in about 16 s.
+  - Bandits: when a loaded caravan leaves the hall, the camp sends a party of 2 straight at it. They go for the wagon and fight
+    back only when attacked, and never chase more than 15 units from it. While a caravan is coming for food, loading, or
+    on the road loaded, the camp does not raid the village; its raid timer restarts at half (40 s).
+  - Robbed: the goods are taken at once and the camp goes up a tier (at most 3). Each tier: bandits +20% health, damage, coin and
+    experience; raiders and robbers carry one potion (heals 40, drunk below 45% health); camp threat +0.5. A red war banner at the
+    camp grows with each tier; the camp card lists the caravans robbed, the tier effects and what comes back if it is destroyed.
+    At tier 3 the goods only add to what comes back.
+  - Escort bounty: posted from the caravan card (25 or 50g, raise by the same) any time from when it appears until it is robbed;
+    cancelled for a full refund while nobody has taken it. Adventurers judge it like a flag: no retreat, so they ask 0.5 more
+    (about 35g). The threat they see is the robbers already out, or the party the camp will send (two bandits at its tier:
+    3.9 at tier 0), plus any menace within 16 units. At most 3 escorts. They walk beside the wagon and fight anything within 9 of
+    it. Healers take it only when someone else escorts (like a flag), and follow an escort at a priority between a destroy
+    bounty and a flag.
+  - Pay: escorts within 15 of the wagon when it arrives share the bounty evenly; one who has not caught up gets nothing and says
+    why. Kills on an escort pay normal coin, with no extra kill pay. Escorts keep to the caravan when the horn sounds.
+  - A hint, "A merchant caravan has come for your surplus food, and bandits will go for it. Tap the wagon to post an escort
+    bounty", shows on the first two caravans until an escort is posted.
+  - Raiders and robbers who get home join the camp's guards, even above its cap (as in step 6). The camp card now says
+    "6 guarding: 4 usually, plus raiders back from the road" instead of "6 guarding, 4 at most".
+- *(step 7, open, for Rawa)* **Villagers farm only up to the caravan reserve.** They choose the farm when food is below 20 and prefer
+  other sites above it, so once a quarry or the far sites are built the store hovers near 20 and caravans leave nearly empty
+  (`caravanFar`: 45 of 64 empty; `shopsLong`: 50 of 63). Should villagers keep farming for the caravan (for example, value food up
+  to 20 + what the next caravan would buy), or is choosing stone over caravan food a trade-off the player should face?
+- *(step 7, open, for Rawa)* **Escorts are cheap for what they save.** A 25g escort is delivered about as often as a 50g one (54/66
+  and 57/69), and escorts almost never die (0–0.1 a run). Stronger robbers, bigger parties at higher tiers, or a bigger ask?
+- *(step 7, open, for Rawa)* **A player who never escorts now often loses the camp race:** the camp tiers up and the scripted 150g
+  camp bounty is no longer enough (`normal` won 18/30, was 30/30). With escorts it wins 29/30. Intended, or soften the tiers?
 - More classes and more maps after the first four classes.
 - Plan for now: saves between missions only (mission number, headquarters points), with a
   mid-mission save later. English first, with all text in one table so languages can be
@@ -630,6 +675,49 @@ before buying tier-1 armour (each tier is now filled first); hints showed undern
 - Seed noise: "raids reaching the hall" for the mixed guild ranges 52–73/210 between two sets of 30 seeds, so differences
   smaller than about 20 are not meaningful.
 
+**Step 7, the merchant caravan, robbing it, camp tiers and escort bounties.** Built in Claude Code and bot-tested: 35 scenarios
+× 30 runs × 12 min (the 29 older ones on both step 6 and step 7, plus 6 new), all with the same harness. Zero stuck units, every
+decision has a reason, and the ledger (now with caravan pay, escort bounties and refunds, and goods back), flag pots, escort pots
+and stores balance in every run; no escort is ever left without a caravan. The UI was tested in a headless browser at phone
+portrait (390×844) and landscape (844×390) with real taps (the hint, the wagon card, posting and cancelling an escort, the
+escorts walking with the wagon, the camp card after a robbery, the new treasury rows), with no page errors. The bot caught one
+problem, fixed: a recruit whose walk-out spot fell under the parked wagon could not finish joining. The harness had one bug, fixed:
+when a raid went unfought and its raiders got home, a later hit on them at the camp counted as that raid's first blow (it
+affected the step 6 numbers too; both builds were rerun).
+
+Caravans with the mixed guild and no destroy bounties (the scripted player only posts escorts):
+
+| 30 runs × 12 min | Loaded caravans delivered | Caravan income | Escort cost | Camp tier at the end | Raids reaching the hall |
+|---|---|---|---|---|---|
+| No escort (`caravanNone`) | 4/65 (58 robbed) | 14g a run | – | t1 6, t2 20, t3 4 | 71/152, stolen 54g a run |
+| 50g escort at the hall (`caravanEscort`) | 57/69 (6 robbed) | 226g | 120g posted, 97g paid | t0 25, t1 4, t2 1 | 34/141, 21g |
+| 25g escort at the hall | 54/66 (6 robbed) | 204g | 63g posted, 46g paid | t0 25 | 44/138, 31g |
+| 50g escort, posted once it has left (`caravanEscortLate`) | 50/65 (11 robbed) | 188g | 108g posted, 83g paid | t0 21, t1 8 | 43/136, 29g |
+| All six sites plus 50g escorts (`caravanFar`) | 16/19 loaded; 45 left empty | 6g | 58g posted, 50g paid | t0 29 | 68/190, 42g |
+
+- A loaded caravan carries a median 36–43 food (108–129g). About 2.7 come in 12 minutes, the first at a median 209 s.
+- Escorts: 2.8–2.9 take each escort bounty, 4–5 robber kills a run, 0–0.1 deaths a run. Village raids skipped because a caravan
+  was on the map: about 4 a run of 7, so there are fewer raids (145–152 against 210 in step 6).
+- Without escorts, tier-ups make the raiders stronger: raids reaching the hall rose from 52/210 (step 6, `mixedNoBounty`) to 71/152.
+
+Older scenarios (they never post an escort, so their caravans are robbed and the camp tiers up):
+
+| 30 runs × 12 min | Step 6 | Step 7 |
+|---|---|---|
+| All warriors, den then camp (`normal`) | won 30/30, median 5.7 min | won 18/30, median 4.3 min (camp t2+ in 12 runs) |
+| `normalHorn` / `noSmith` | 30/30, 5.8 / 30/30, 5.1 | 16/30, 4.5 / 21/30, 4.3 |
+| Mixed guild (`mixed`) / `mixedPush` (raids off) | 30/30, 4.6 / 30/30, 4.5 | 26/30, 3.4 / 30/30, 3.7 |
+| `mixedFar` / `shops` / `arraysNormal` | 30/30, 5.8 / 4.5 / 4.5 | 30/30, 4.9 / 30/30, 4.0 / 29/30, 3.5 |
+| All archers / all magicians | 30/30, 4.4 / 5.9 | 27/30, 3.4 / 15/30, 4.8 |
+| Mixed, den then camp, plus 50g escorts (`caravanEscortNormal`) | – | won 29/30, median 3.6 min |
+
+- Runs that win now win sooner (by 0.8–1.4 min). Not yet tested which cause matters; likely: the camp's coin and experience scale with its tier and robbers bring extra
+  kills, so adventurers level faster; the camp also has fewer guards home while robbers are out.
+- Runs that lose do so because the camp tiers up before the scripted 150g bounty is taken; a tier-2 camp is threat 5 against 4.
+- **Tier-2 gear is still never bought**, in any scenario, even with 226g a run of caravan income going to the treasury: caravan pay
+  goes to the guild, not to adventurers, and escort pay (about 97g a run shared by 2–3) goes on potions and tier-1 gear.
+- Draw calls: 36 in portrait and 82 in landscape at the test zoom. The wagon is about 20 meshes, one on the map at a time.
+
 **Tuning notes for the content pass**
 - First success is fast: the den falls about 23 s after posting. *(v3)* Keep that for the
   tutorial village. From mission 2, target about 2 min.
@@ -659,7 +747,8 @@ before buying tier-1 armour (each tier is now filled first); hints showed undern
 - *(step 5)* Class balance is untuned. All archers clear faster than all warriors (5.0 against 5.9 min) with no
   more deaths, so fragility is not felt yet; check again once waves (step 8) bring groups to the village.
 - *(step 6)* Tier-2 gear is out of reach in a 12-minute mission (see step 6). *(Rawa, 28 Sep: wait for the income from
-  escorts and waves; recheck tier-2 purchases after steps 7 and 8.)*
+  escorts and waves; recheck tier-2 purchases after steps 7 and 8.)* *(Step 7: still never bought; escort pay is about 97g a
+  run shared by 2–3 adventurers. Recheck after step 8.)*
 - *(step 6)* The blacksmith now costs the player 70g, which delays the camp bounty when sites are built early (`mixedFar`
   5.8 min, was 4.5).
 - *(step 5)* A healer makes the camp fall in under 2 min from mission start. Keep for the tutorial village;
@@ -783,6 +872,17 @@ only 6 players on the leaderboard. Plenty started, few finished. Lesson for the 
   repairs, time with broken gear), ARRAYS (shots and their cost, kills, share of all damage, time silent) and WARDS.
   New checks: the ledger includes array shots; the stores balance (wood and stone delivered, less what was spent, equals
   what is in the store).
+  *(Step 7)* A caravan now comes in every scenario; the older ones never post an escort. New scenarios: caravanNone,
+  caravanEscort, caravanEscort25, caravanEscortLate, caravanEscortNormal, caravanFar. New lever: post an escort of a set size on
+  each caravan, when it reaches the hall or once it has left. New report: CARAVAN (caravans, food and value, delivered and robbed
+  with and without an escort, income, escort posted, refunded and paid, escorts per caravan, deaths and kills on escort, camp tier
+  at the end, stolen goods and goods back, village raids skipped for a caravan, time hungry). New checks: the ledger includes
+  caravan pay, escorts, escort refunds and goods back; escort bounties posted = refunded + paid + still on the caravan; no escort
+  without a caravan. Fix: a raid's first blow counts only while the raider is still on the raid. In a cloud session (4 cores) the
+  64 runs of both builds take about 35 min with `xargs -P4`.
+- *(Guildmaster, step 7)* In a cloud session the phone-size UI tests run in headless Chromium through Playwright
+  (`/opt/node22/lib/node_modules/playwright`, browser in `/opt/pw-browsers`), against `tools/serve.js` on port 8765. Cards scroll
+  in landscape: scroll a button into view before tapping it. A bandit standing on the camp takes the tap before the camp does.
 - *(Guildmaster, step 6)* Testing the UI in Claude Code: the built-in browser cannot open `file://`, so
   `.claude/launch.json` starts a tiny static server (`tools/serve.js`, plain Node). The page runs slowly while
   the browser pane is hidden, so fast-forward from the console with `GM.step(GM.sim(), 1/30)` and use `GM.screenOf` to

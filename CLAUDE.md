@@ -2,8 +2,8 @@
 
 Read `playgama_game_brief_guildmaster_v3_6.md` before any work. It is the single source of truth:
 the design, the locked decisions, the build order, the build choices waiting for Rawa, and what each
-step's bot results showed. The next step is step 7 (caravan, bandit targeting and camp tier-up, escort bounties)
-in the build order.
+step's bot results showed. The next step is step 8 (scouted waves that escalate; raiders damage the hall; arrays
+required) in the build order. Step 7 left three questions for Rawa in 1e first.
 
 ## Files
 - `index.html`: the game. One self-contained file (three.js inlined, no external assets), as Playgama needs.
@@ -12,7 +12,7 @@ in the build order.
   Scenarios are listed at the top of the file. Use 30 runs × 12 min for the numbers that go in the brief.
   On Rawa's PC, Node is a portable copy (not on PATH): `%LOCALAPPDATA%\Programs\node\node-v24.19.0-win-x64\node.exe`.
   In a cloud session, use `node` from PATH. Nothing to install either way.
-- `builds/`: keep a copy of each finished step (`builds/step6.html` is the current `index.html`), so every
+- `builds/`: keep a copy of each finished step (`builds/step7.html` is the current `index.html`), so every
   step can be bot-compared with the one before.
 - `tools/serve.js`: a tiny static server for testing in the browser pane (`.claude/launch.json`, name `guildmaster`,
   port 8765); the browser pane cannot open `file://`. Cloud sessions have no browser pane: there, the phone-size
