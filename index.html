@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<title>Guildmaster, step 6: specialists and arrays</title>
+<title>Guildmaster, step 7: the caravan and escorts</title>
 <style>
 :root{--panel:rgba(26,34,31,.93);--panel2:rgba(40,50,45,.95);--ink:#f1ead9;--muted:#b4bcaa;--brass:#d6a94a;--brass2:#f0c866;--line:rgba(241,234,217,.14);--red:#e0624f;--green:#86c86a;
 --serif:"Palatino Linotype","Book Antiqua",Palatino,"Noto Serif",Georgia,serif;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
@@ -110,7 +110,7 @@ ol time{display:block;color:var(--muted);font-size:11.5px}
 <div id="hint" hidden>Tap the wolf den to post a bounty</div>
 <div id="card" hidden></div>
 <div id="won" hidden><div><h2>Map cleared</h2><p id="wonText"></p><button id="againBtn">Play again</button></div></div>
-<div id="tag">Step 6 test build: specialists, gear wear, arrays</div>
+<div id="tag">Step 7 test build: caravan, escorts, camp tiers</div>
 <script>/**
  * @license
  * Copyright 2010-2023 Three.js Authors
@@ -208,7 +208,19 @@ const CFG = {
   clsOrder: ['warrior', 'archer', 'magician', 'healer'],
   healer: { keep: 3.5, behind: 2.6, trail: 2.2, maxPer: 1, share: 1 / 3, xpPerHp: 0.25, bountyK: 0.5, partyK: 0.5, flagK: 0.6, trust: 0.8, guardR: 6 },
   townDefR: 17,      // an adventurer this close to the hall counts as in town and defends it for free
-  recheck: 3         // hunters look at the bounty board and the horn every few seconds
+  recheck: 3,        // hunters look at the bounty board and the horn every few seconds
+  // ---- step 7: the merchant caravan, bandits robbing it, the camp tiering up, escort bounties ----
+  // Each village sets its own road. Rawa (29 Sep): the loaded leg runs near the bandit camp (or the camp sits by the road).
+  // Here it comes in from the east empty, loads the surplus food at the hall, and leaves west past the road farm, about 18 units from the camp.
+  caravan: {
+    route: { in: [[71, 8], [16, 8]], stop: [3.5, 6.5], out: [[-4.5, 5.5], [-12.5, 8.5], [-30, 14], [-71, 12]] },
+    first: [190, 230], every: [180, 300], speed: 1.8, load: 20, hp: 240, r: 1.2,
+    keep: 20, price: 3,                     // villagers keep 20 food; the rest goes on the caravan at 3g a food, paid when it reaches the far edge
+    escortR: 9, sideR: 2.4, max: 3, ask: 0.5,  // escorts walk beside it and fight whatever comes within escortR; no retreat, so they ask more, like a flag
+    wreck: 12
+  },
+  // each caravan the camp robs makes it one tier stronger (at most 3): bandits hit harder and last longer, raiders carry a potion
+  campTier: { max: 3, k: 0.2, threat: 0.5, potion: 40, goodsBack: 0.5 }
 };
 CFG.obstacles = [{ x: CFG.hall.x, z: CFG.hall.z, r: CFG.hall.r }, ...CFG.shopOrder.map(k => CFG.shops[k]), ...CFG.houses, ...CFG.arrayPlots.map(p => ({ x: p.x, z: p.z, r: 0.7 }))];
 const RES_NAME = { wood: 'wood', stone: 'stone', food: 'food' };
@@ -219,8 +231,8 @@ const randIn = (R, a) => a[0] + R() * (a[1] - a[0]);
 
 const NAMES = ['Bram', 'Edda', 'Toma', 'Wren', 'Osric', 'Mira', 'Hale', 'Sefa', 'Ivo', 'Rook', 'Tilde', 'Corin', 'Anse', 'Brisa', 'Dunn', 'Fenna', 'Garet', 'Lio', 'Marra', 'Pell'];
 const TUNICS = ['#b8453c', '#3f6fa8', '#6f9a3c', '#7a5aa0', '#d08a2e', '#2f8a8a', '#a8506e'];
-const STATES = ['emerge', 'idle', 'quest', 'hunt', 'game', 'chase', 'shop', 'rest', 'retreat', 'defend', 'flag', 'horn', 'follow'];
-const STATE_LABEL = { emerge: 'Joining the guild', idle: 'Looking for work', quest: 'On a bounty', hunt: 'Hunting for coins', game: 'Hunting wild game', chase: 'Chasing a monster', shop: 'Going shopping', rest: 'Resting', retreat: 'Retreating', defend: 'Defending the village', flag: 'Guarding a defend flag', horn: 'Answering the horn', follow: 'Following to heal' };
+const STATES = ['emerge', 'idle', 'quest', 'hunt', 'game', 'chase', 'shop', 'rest', 'retreat', 'defend', 'flag', 'horn', 'follow', 'escort'];
+const STATE_LABEL = { emerge: 'Joining the guild', idle: 'Looking for work', quest: 'On a bounty', hunt: 'Hunting for coins', game: 'Hunting wild game', chase: 'Chasing a monster', shop: 'Going shopping', rest: 'Resting', retreat: 'Retreating', defend: 'Defending the village', flag: 'Guarding a defend flag', horn: 'Answering the horn', follow: 'Following to heal', escort: 'Escorting the caravan' };
 const clsOf = a => CFG.cls[a.cls || 'warrior'];
 const isHealer = a => a.cls === 'healer';
 const gearName = (a, kind, tier) => clsOf(a)[kind === 'weapon' ? 'weapons' : 'armours'][tier];
@@ -233,9 +245,10 @@ function newSim(seed) {
     seed, R, t: 0, gold: CFG.startGold, adv: [], mobs: [], lairs: [], bounty: {}, events: [], fx: [], nid: 1,
     recruitQ: CFG.recruitStart.slice(), recruitT: CFG.recruitEvery,
     hall: { x: CFG.hall.x, z: CFG.hall.z, hp: CFG.hall.hp, max: CFG.hall.hp, hitT: -99 },
-    ledger: { tax: 0, bounties: 0, refunds: 0, recent: [], deliveries: 0, recentDel: [], builds: 0, stolen: 0, recovered: 0, flags: 0, flagRefunds: 0, horn: 0, wages: 0, killPay: 0, arrayShots: 0 },
+    ledger: { tax: 0, bounties: 0, refunds: 0, recent: [], deliveries: 0, recentDel: [], builds: 0, stolen: 0, recovered: 0, flags: 0, flagRefunds: 0, horn: 0, wages: 0, killPay: 0, arrayShots: 0, caravans: 0, escorts: 0, escortRefunds: 0, goodsBack: 0 },
     shops: {}, arrays: [],
     nextCls: 'warrior', pickedCls: false, shots: [],
+    caravan: null, caravanT: 0, cvn: 0, caravanLog: [],
     flags: [], fid: 1, horn: null, hornReadyT: 0, hornN: 0, raidLog: [], firstRaidT: null, won: false, wonT: 0, names: shuffle(NAMES.slice(), R), everPosted: false,
     vil: [], sites: [], res: Object.assign({}, CFG.startRes), vilQ: [], hungry: false, vnames: shuffle(VNAMES.slice(), R),
     stats: { deaths: 0, retreats: 0, kills: 0, potions: 0, shopTrips: 0, levelUps: 0, spent: 0, cleared: {}, posted: {}, firstTaken: {}, firstArrive: {}, quests: [],
@@ -243,13 +256,14 @@ function newSim(seed) {
       flagDeaths: 0, hornDeaths: 0, horns: 0, hornHeard: 0, hornAnswers: 0, hornPays: 0, flagTakes: 0, flagsPlanted: 0, recheckSwitch: 0, flagKills: 0,
       byCls: {}, heals: 0, healed: 0, overheal: 0, healShare: 0, healerOutT: 0, healerMeleeT: 0, follows: 0, splashHits: 0, guardHealer: 0,
       repairs: 0, repairG: 0, breaks: 0, brokenT: 0, bought: {}, firstBuy: {}, upgraded: {}, builtShop: {}, resSpent: { wood: 0, stone: 0 },
-      arrayShots: 0, arrayKills: 0, arrayDmg: 0, arraySilent: 0, arrayStole: 0, wardShots: 0, wardKills: 0, wardSets: 0, noSmithWant: 0 }
+      arrayShots: 0, arrayKills: 0, arrayDmg: 0, arraySilent: 0, arrayStole: 0, wardShots: 0, wardKills: 0, wardSets: 0, noSmithWant: 0,
+      escortTakes: 0, escortDeaths: 0, escortKills: 0, robParties: 0, tierUps: 0, skippedRaids: 0 }
   };
   for (const k of CFG.clsOrder) S.stats.byCls[k] = { recruited: 0, kills: 0, deaths: 0, dmg: 0, t: 0, idleT: 0, xp: 0, gold: 0 };
   for (const k of CFG.shopOrder) { const D = CFG.shops[k]; S.shops[k] = { id: k, name: D.name, x: D.x, z: D.z, built: !!D.built, level: D.built ? 1 : 0, sales: 0, tax: 0, customers: 0 }; }
   for (const p of CFG.arrayPlots) S.arrays.push({ id: p.id, x: p.x, z: p.z, place: p.place, built: false, cd: 0, shots: 0, kills: 0, spent: 0, silent: false, targetId: null, shotT: -99 });
   for (const c of CFG.lairs) {
-    const L = Object.assign({}, c, { max: c.hp, alive: true, spawnT: c.every, raidT: c.raidEvery || 0, dmgBy: {}, hitT: -99, hunger: 0, huntAt: c.kind === 'den' ? randIn(R, CFG.wolfHunt.first) : 0 });
+    const L = Object.assign({}, c, { max: c.hp, alive: true, tier: 0, stolen: 0, robbed: 0, spawnT: c.every, raidT: c.raidEvery || 0, dmgBy: {}, hitT: -99, hunger: 0, huntAt: c.kind === 'den' ? randIn(R, CFG.wolfHunt.first) : 0 });
     S.lairs.push(L); S.bounty[L.id] = 0;
     for (let i = 0; i < L.cap; i++) spawnMob(S, L, 'guard');
   }
@@ -257,6 +271,7 @@ function newSim(seed) {
   // villagers start already at work on the sites that come built
   const start = S.sites.filter(s => s.built);
   for (let i = 0; i < CFG.vil.start; i++) addVillager(S, start.length ? start[i % start.length] : null);
+  S.caravanT = randIn(R, CFG.caravan.first);
   S.wild = {};
   for (const k in CFG.wild) {
     const W = CFG.wild[k];
@@ -275,7 +290,7 @@ function mobById(S, id) { for (const m of S.mobs) if (m.id === id) return m; ret
 function vilById(S, id) { for (const v of S.vil) if (v.id === id) return v; return null; }
 function siteById(S, id) { for (const s of S.sites) if (s.id === id) return s; return null; }
 function unitById(S, id) { return advById(S, id) || vilById(S, id); }
-function roamer(m) { return m.state === 'prowl' || m.state === 'raid'; }
+function roamer(m) { return m.state === 'prowl' || m.state === 'raid' || m.state === 'rob'; }
 function mobGroup(m) { return m.def.plural; }
 function aMob(m) { return m.def.a; }
 // a wild animal that is attacking someone right now
@@ -317,7 +332,7 @@ function reach(a) { return clsOf(a).range + 0.3; }
 function lairReach(a) { const r = clsOf(a).range; return r > 2 ? r * 0.8 : 1.3; }
 function xpNeed(l) { return Math.round(CFG.adv.xpBase * Math.pow(l, 1.4)); }
 function guardsOf(S, L) { return S.mobs.filter(m => !m.dead && m.lairId === L.id && (m.state === 'guard' || m.state === 'return')); }
-function threatOf(S, L) { return L.level + 0.35 * guardsOf(S, L).length; }
+function threatOf(S, L) { return L.level + CFG.campTier.threat * (L.tier || 0) + 0.35 * guardsOf(S, L).length; }
 function activeMob(m) { return !m.dead && m.state !== 'scatter'; }
 function restSpotUnused(a) { const ang = a.id * 1.37; return [CFG.hall.x + Math.cos(ang) * 4.8, CFG.hall.z + Math.sin(ang) * 4.8]; }
 function advInTown(a) { return a.inside || d2(a.x, a.z, CFG.hall.x, CFG.hall.z) < CFG.townDefR; }
@@ -509,6 +524,20 @@ function plan(S, a) {
     if (e.willing) { if (!best || e.score > bestE.score) { best = F; bestE = e; } }
     else if (!e.full && (!refused || e.b > refusedE.b)) { refused = F; refusedE = e; }
   }
+  // step 7: an escort bounty on the caravan, judged like a flag (no retreat)
+  if (S.caravan) {
+    const C = S.caravan, e = evalEscort(S, a, C);
+    if (e.b > 0) {
+      if (e.willing) { if (!best || e.score > bestE.score) { best = C; bestE = e; } }
+      else if (!e.full && (!refused || e.b > refusedE.b)) { refused = C; refusedE = e; }
+    }
+  }
+  if (best && bestE.escort) {
+    const why = bestE.gap <= 0
+      ? `Taking the caravan escort (${bestE.b}g). ${bestE.desc}: threat ${fmt(bestE.th)} vs my strength ${fmt(bestE.pw)}. No retreat once I'm with it.`
+      : `Taking the caravan escort (${bestE.b}g). Risky with no retreat, threat ${fmt(bestE.th)} vs my strength ${fmt(bestE.pw)}, but the bounty is worth it.`;
+    return { st: 'escort', target: best.id, why, e: bestE };
+  }
   if (best && bestE.flag) {
     const why = bestE.gap <= 0
       ? `Taking the defend flag at ${best.place} (${bestE.b}g in the pot). ${bestE.desc}: threat ${fmt(bestE.th)} vs my strength ${fmt(bestE.pw)}. No retreat once I'm there.`
@@ -521,7 +550,9 @@ function plan(S, a) {
       : `Taking the ${best.name} bounty (${bestE.b}g). Risky, threat ${fmt(bestE.th)} vs my strength ${fmt(bestE.pw)}, but the reward is worth it.`;
     return { st: 'quest', target: best.id, why, e: bestE };
   }
-  const refusal = !refused ? '' : refusedE.flag
+  const refusal = !refused ? '' : refusedE.escort
+    ? ` The caravan escort (${refusedE.b}g) is too dangerous with no retreat: threat ${fmt(refusedE.th)} vs my strength ${fmt(refusedE.pw)}.`
+    : refusedE.flag
     ? ` The defend flag at ${refused.place} (${refusedE.b}g) is too dangerous with no retreat: threat ${fmt(refusedE.th)} vs my strength ${fmt(refusedE.pw)}.`
     : ` The ${refused.name} bounty (${refusedE.b}g) is too dangerous: threat ${fmt(refusedE.th)} vs my strength ${fmt(refusedE.pw)}.`;
   // roaming monsters away from their lair: easy coins, and often someone to save
@@ -577,9 +608,10 @@ function plan(S, a) {
 }
 // ---------- step 5: healers ----------
 // what an ally is doing, as a healer sees it: how much it matters and how dangerous it is
-const FOLLOW_PRI = { quest: 3, flag: 2.4, chase: 1.6, game: 1.3, hunt: 1.3 };
+const FOLLOW_PRI = { quest: 3, escort: 2.6, flag: 2.4, chase: 1.6, game: 1.3, hunt: 1.3 };
 function allyJob(S, b) {
   if (b.state === 'quest') { const L = lairById(S, b.target); return L ? { th: threatOf(S, L), what: `the ${L.name} bounty`, short: `to the ${L.name.toLowerCase()}` } : null; }
+  if (b.state === 'escort') { const C = S.caravan; return C && C.id === b.target ? { th: escortThreat(S, C).th, what: 'the caravan escort', short: 'along the caravan road' } : null; }
   if (b.state === 'flag') { const F = flagById(S, b.target); return F ? { th: flagThreat(S, F).th, what: `the defend flag at ${F.place}`, short: `at ${F.place}` } : null; }
   if (b.state === 'chase' || b.state === 'game') { const m = mobById(S, b.target); return m && !m.dead && m.kind !== 'deer' ? { th: m.def.level, what: `hunting ${aMob(m)}`, short: `after ${aMob(m)}` } : null; }
   if (b.state === 'hunt') { const L = lairById(S, b.target); return L ? { th: CFG.mobs[L.mob].level, what: `hunting ${CFG.mobs[L.mob].plural} near the ${L.name}`, short: `near the ${L.name.toLowerCase()}` } : null; }
@@ -606,6 +638,13 @@ function planHealer(S, a) {
     if (e.full) { full++; continue; }
     if (e.willing) { if (!bE || e.score > bE.score) { best = b; bE = e; } }
     else if (!rE || e.pri > rE.pri) { refused = b; rE = e; }
+  }
+  if (S.caravan && escortTakers(S, S.caravan).some(o => !isHealer(o))) {
+    const C = S.caravan, e = evalEscort(S, a, C);
+    if (e.b > 0 && e.willing && (!fE || e.score > fE.score) && (!best || bE.pri < 3)) {
+      const g = escortTakers(S, C).map(o => o.name);
+      return { st: 'escort', target: C.id, e, why: `Taking the caravan escort (${e.b}g) to heal ${g.join(' and ')} on the road. Threat ${fmt(e.th)} vs our strength ${fmt(e.pw)}. No retreat once I'm with it.` };
+    }
   }
   if (fBest && (!best || bE.pri < 3)) {
     const g = S.adv.filter(o => o !== a && !o.dead && o.state === 'flag' && o.target === fBest.id).map(o => o.name);
@@ -637,6 +676,12 @@ function decide(S, a) {
     S.stats.quests.push({ t: S.t, id: a.id, lvl: a.lvl, flag: p.target, gap: p.e.gap, tol: p.e.tol, b: p.e.b });
     S.stats.flagTakes++; if (F.takenT == null) F.takenT = S.t;
     event(S, `${a.name} took the defend flag at ${F.place}.`, 'info', F.x, F.z);
+  }
+  if (p.st === 'escort') {
+    const C = S.caravan;
+    S.stats.quests.push({ t: S.t, id: a.id, lvl: a.lvl, escort: C.id, gap: p.e.gap, tol: p.e.tol, b: p.e.b });
+    S.stats.escortTakes++; if (C.takenT == null) C.takenT = S.t;
+    event(S, `${a.name} took the caravan escort.`, 'info', C.x, C.z);
   }
   if (p.st === 'shop') S.stats.shopTrips++;
   if (p.st === 'chase') S.stats.chases++;
@@ -698,7 +743,8 @@ function hitMob(S, m, dmg, a) {
       S.gold += m.loot; S.ledger.recovered += m.loot; fx(S, m.x, m.z, '+' + m.loot + 'g back', 'recover');
       event(S, `${a.name} got back ${m.loot}g the bandits stole.`, 'good', m.x, m.z); m.loot = 0;
     }
-    const c = m.def.coins; let coins = c[0] + Math.floor(S.R() * (c[1] - c[0] + 1));
+    const c = m.def.coins; let coins = Math.round((c[0] + Math.floor(S.R() * (c[1] - c[0] + 1))) * (m.dmgK || 1));
+    if (a.state === 'escort') S.stats.escortKills++;
     a.kills++; a.huntKills++; S.stats.kills++; S.stats.byCls[a.cls].kills++;
     // step 5: a healer following the killer takes a third of the coin
     const h = isHealer(a) ? null : S.adv.find(o => !o.dead && !o.inside && o.state === 'follow' && o.target === a.id && d2(o.x, o.z, a.x, a.z) < 12);
@@ -713,7 +759,7 @@ function hitMob(S, m, dmg, a) {
       thought(S, a, `Killed ${aMob(m)}. +${coins}g.`);
       if (m.kind === 'bear') event(S, `${a.name} killed a bear. Another will come out of the deep forest in time.`, 'good', m.x, m.z);
     }
-    gainXp(S, a, m.def.xp);
+    gainXp(S, a, Math.round(m.def.xp * (m.dmgK || 1)));
     // a kill near the flag this adventurer is guarding is paid from its pot
     if (a.state === 'flag' && m.kind !== 'deer') {
       const F = flagById(S, a.target);
@@ -743,7 +789,7 @@ function hitAdv(S, a, dmg, m) {
   wear(S, a, 'armour', CFG.gear.wearTaken);
   if (a.hp <= 0) {
     a.hp = 0; a.dead = true; a.deadT = S.t; S.stats.deaths++; S.stats.byCls[a.cls].deaths++;
-    if (a.state === 'flag') S.stats.flagDeaths++; else if (a.state === 'horn') S.stats.hornDeaths++;
+    if (a.state === 'flag') S.stats.flagDeaths++; else if (a.state === 'horn') S.stats.hornDeaths++; else if (a.state === 'escort') S.stats.escortDeaths++;
     a.diedAs = a.state;
     thought(S, a, `Fell in battle against a ${m.def.name.toLowerCase()}.`);
     event(S, `${a.name} (level ${a.lvl}) has fallen.`, 'bad', a.x, a.z);
@@ -762,6 +808,12 @@ function destroyLair(S, L) {
     gainXp(S, a, Math.round(L.xp * share));
   }
   event(S, `The ${L.name} is destroyed by ${parts.map(p => p[0].name).join(', ').replace(/, ([^,]*)$/, ' and $1')}.` + (b ? ` ${b}g bounty paid.` : ''), 'good', L.x, L.z);
+  // Rawa (29 Sep): destroying a camp that robbed caravans returns half the value of the goods to the treasury
+  if (L.stolen > 0) {
+    const back = Math.round(L.stolen * CFG.campTier.goodsBack); S.gold += back; S.ledger.goodsBack += back;
+    fx(S, L.x, L.z, '+' + back + 'g goods back', 'recover');
+    event(S, `Found what is left of the stolen caravan goods at the ${L.name}: +${back}g to the treasury.`, 'good', L.x, L.z);
+  }
   for (const m of S.mobs) if (m.lairId === L.id && !m.dead) {
     if (m.loot) { S.gold += m.loot; S.ledger.recovered += m.loot; fx(S, m.x, m.z, '+' + m.loot + 'g back', 'recover'); m.loot = 0; }
     m.state = 'scatter'; m.fade = 0;
@@ -912,7 +964,7 @@ function updateAdv(S, a, dt) {
   a.progT = (a.progT || 0) + dt;
   if (a.progT > 2) { a.blocked = a.wantMove && !a.fighting && Math.hypot(a.x - (a.px || 0), a.z - (a.pz || 0)) < 0.5; a.px = a.x; a.pz = a.z; a.progT = 0; }
   a.fighting = false; a.wantMove = false;
-  const combat = a.state === 'quest' || a.state === 'hunt' || a.state === 'defend' || a.state === 'chase' || a.state === 'game' || a.state === 'flag' || a.state === 'horn' || a.state === 'follow';
+  const combat = a.state === 'quest' || a.state === 'hunt' || a.state === 'defend' || a.state === 'chase' || a.state === 'game' || a.state === 'flag' || a.state === 'horn' || a.state === 'follow' || a.state === 'escort';
   // step 5: a healer heals whoever near them needs it, whatever they are doing (not while hidden in the hall or running for it)
   if (isHealer(a)) {
     a.healCd -= dt;
@@ -925,8 +977,8 @@ function updateAdv(S, a, dt) {
     fx(S, a.x, a.z, '+' + P.heal, 'heal');
     thought(S, a, `Drank a ${P.name} (${a.potions} left).`);
   }
-  // no retreat on a defend flag (v3): potions are the only way through
-  if (a.state !== 'retreat' && a.state !== 'rest' && a.state !== 'emerge' && a.state !== 'flag' && a.hp / a.max < a.retreatAt && (a.potions === 0 || a.potCd > 0)) {
+  // no retreat on a defend flag or an escort (v3): potions are the only way through
+  if (a.state !== 'retreat' && a.state !== 'rest' && a.state !== 'emerge' && a.state !== 'flag' && a.state !== 'escort' && a.hp / a.max < a.retreatAt && (a.potions === 0 || a.potCd > 0)) {
     setState(S, a, 'retreat', `Badly hurt (${pct(a.hp / a.max)} health) and ${a.potions ? 'my potion is not ready' : 'out of potions'}. Running back to the guild hall.`);
     S.stats.retreats++; event(S, `${a.name} is retreating to the guild hall.`, 'warn', a.x, a.z);
   }
@@ -1039,6 +1091,20 @@ function updateAdv(S, a, dt) {
       if (!a.onDuty) { moveTo(a, a.sx, a.sz, CFG.adv.speed, dt, 0.3); break; }
       if (d2(a.x, a.z, a.sx, a.sz) > 0.8) moveTo(a, a.sx, a.sz, CFG.adv.speed * 0.7, dt, 0.3);
       else a.face = Math.atan2(a.x - F.x, a.z - F.z);   // looking out from the flag
+      break;
+    }
+    case 'escort': {
+      const C = S.caravan;
+      if (!C || C.id !== a.target || C.state === 'wreck') { if (C && C.state === 'wreck') note(S, a, 'The caravan is lost. Free to go.'); decide(S, a); break; }
+      const dc = d2(a.x, a.z, C.x, C.z);
+      if (!a.onDuty && dc < CFG.caravan.escortR - 3) { a.onDuty = true; thought(S, a, `With the caravan. Guarding it to the west edge for ${C.bounty}g, shared by its escorts. No retreat.`); }
+      let m = threatNear(S, a, 4);
+      if (m && d2(m.x, m.z, C.x, C.z) > CFG.caravan.escortR + 3 && m.targetId !== a.id) m = null;
+      if (!m) m = escortEnemy(S, C);
+      if (m) { engage(S, a, m, dt); break; }
+      const [sx, sz] = escortSpot(C, a), ds = d2(a.x, a.z, sx, sz);
+      if (ds > 0.4) moveTo(a, sx, sz, CFG.adv.speed * (ds > 3 ? 1 : 0.75), dt, 0.2);
+      else a.face = C.face;
       break;
     }
     case 'follow': {
@@ -1163,8 +1229,8 @@ function recheck(S, a, dt) {
   a.recheckT = CFG.recheck;
   const p = plan(S, a);
   // a healer leaves who they follow for a flag, the village, or someone taking a destroy bounty (from a hunt)
-  if (a.state === 'follow') { if (!(p.st === 'flag' || p.st === 'defend' || (p.st === 'follow' && p.target !== a.target && p.pri >= 3 && (a.followPri || 0) < 3))) return false; }
-  else if (p.st !== 'quest' && p.st !== 'flag' && p.st !== 'defend') return false;
+  if (a.state === 'follow') { if (!(p.st === 'flag' || p.st === 'escort' || p.st === 'defend' || (p.st === 'follow' && p.target !== a.target && p.pri >= 3 && (a.followPri || 0) < 3))) return false; }
+  else if (p.st !== 'quest' && p.st !== 'flag' && p.st !== 'escort' && p.st !== 'defend') return false;
   S.stats.recheckSwitch++;
   decide(S, a);
   return true;
@@ -1183,8 +1249,10 @@ function flagEnemy(S, F) {
 function mSet(m, st, why) { m.state = st; m.why = why; m.stateT = 0; m.wx = null; if (st !== 'prowl') m.goal = null; }
 function spawnMob(S, L, mode) {
   const def = CFG.mobs[L.mob], ang = S.R() * TAU, r = L.r + 1 + S.R() * 2.5;
-  const m = { id: S.nid++, type: 'mob', kind: L.mob, def, lairId: L.id, x: L.x + Math.cos(ang) * r, z: L.z + Math.sin(ang) * r, hp: def.hp, max: def.hp, state: mode, why: '', stateT: 0, targetId: null, cd: 0, wx: null, wz: 0, pause: S.R() * 2, dead: false, fade: 0, face: 0, hitT: -99, loot: 0, goal: null };
-  m.why = mode === 'raid' ? 'No caravan on the road to rob, so they raid the village for coin instead.' : `Guarding the ${L.name.toLowerCase()}.`;
+  const K = tierK(L);   // step 7: a camp that robbed caravans sends stronger bandits
+  const m = { id: S.nid++, type: 'mob', kind: L.mob, def, lairId: L.id, x: L.x + Math.cos(ang) * r, z: L.z + Math.sin(ang) * r, hp: def.hp * K, max: def.hp * K, state: mode, why: '', stateT: 0, targetId: null, cd: 0, wx: null, wz: 0, pause: S.R() * 2, dead: false, fade: 0, face: 0, hitT: -99, loot: 0, goal: null,
+    dmgK: K, potions: L.tier && (mode === 'raid' || mode === 'rob') ? 1 : 0 };
+  m.why = mode === 'raid' ? 'No caravan on the road to rob, so they raid the village for coin instead.' : mode === 'rob' ? 'A caravan loaded with food is on the road. Going to rob it.' : `Guarding the ${L.name.toLowerCase()}.`;
   S.mobs.push(m); return m;
 }
 // who a monster goes for: adventurers in reach, villagers when hunting (wolves are drawn to them)
@@ -1232,8 +1300,11 @@ function updateMob(S, m, dt) {
     if (tgt && tgt.type === 'vil' && d2(tgt.x, tgt.z, CFG.hall.x, CFG.hall.z) < CFG.townR - 3) tgt = null;   // will not follow prey into the village
     if (!tgt && m.stateT > CFG.wolfHunt.time) packReturn(S, m.lairId, 'Found nothing to eat. Going back to the den.');
   }
-  if (!tgt && m.state !== 'return') tgt = pickPrey(S, m);
+  if (m.state === 'rob' && tgt && S.caravan && d2(tgt.x, tgt.z, S.caravan.x, S.caravan.z) > CFG.caravan.escortR + 6) tgt = null;   // robbers do not chase far from the wagon
+  if (!tgt && m.state !== 'return' && m.state !== 'rob') tgt = pickPrey(S, m);   // robbers go for the wagon, and fight back only when attacked
   m.targetId = tgt ? tgt.id : null;
+  // step 7: a raider from a camp that robbed a caravan carries a potion
+  if (m.potions > 0 && m.hp < m.max * 0.45) { m.potions--; m.hp = Math.min(m.max, m.hp + CFG.campTier.potion * (m.dmgK || 1)); fx(S, m.x, m.z, 'potion', 'heal'); }
   if (m.state === 'return') {
     m.targetId = null;
     if (moveTo(m, L.x, L.z, def.speed, dt, L.r + 1.5)) {
@@ -1248,7 +1319,20 @@ function updateMob(S, m, dt) {
     if (d > def.range) moveTo(m, tgt.x, tgt.z, def.speed * sprint, dt, def.range * 0.9);
     else {
       m.fighting = true; m.face = Math.atan2(tgt.x - m.x, tgt.z - m.z);
-      if (m.cd <= 0) { m.cd = def.cd; m.swingT = S.t; const dmg = def.dmg * (0.85 + S.R() * 0.3); if (tgt.type === 'vil') hitVil(S, tgt, dmg, m); else hitAdv(S, tgt, dmg, m); }
+      if (m.cd <= 0) { m.cd = def.cd; m.swingT = S.t; const dmg = def.dmg * (m.dmgK || 1) * (0.85 + S.R() * 0.3); if (tgt.type === 'vil') hitVil(S, tgt, dmg, m); else hitAdv(S, tgt, dmg, m); }
+    }
+    return;
+  }
+  if (m.state === 'rob') {
+    const C = S.caravan;
+    if (!C || C.id !== m.cvId || C.state !== 'out') { mSet(m, 'return', C && C.id === m.cvId && C.state === 'wreck' ? 'The caravan is robbed. Going back to the camp.' : 'The caravan got away. Going back to the camp.'); return; }
+    if (moveTo(m, C.x, C.z, def.speed, dt, CFG.caravan.r + def.range * 0.8)) {
+      m.fighting = true; m.face = Math.atan2(C.x - m.x, C.z - m.z);
+      if (m.cd <= 0) {
+        m.cd = def.cd; m.swingT = S.t; C.hp = Math.max(0, C.hp - def.dmg * (m.dmgK || 1) * (0.85 + S.R() * 0.3)); C.hitT = S.t;
+        if (C.log.hitT == null) { C.log.hitT = S.t; event(S, 'Bandits are attacking the caravan!', 'bad', C.x, C.z); }
+        m.why = 'Attacking the caravan to take its goods.';
+      }
     }
     return;
   }
@@ -1306,8 +1390,10 @@ function updateLair(S, L, dt) {
     L.raidT -= dt;
     if (L.raidT <= 0) {
       L.raidT = L.raidEvery;
-      const raiders = S.mobs.filter(m => !m.dead && m.state === 'raid').length;
-      if (raiders < 2) {
+      const raiders = S.mobs.filter(m => !m.dead && (m.state === 'raid' || m.state === 'rob')).length;
+      // v2: bandits go for the caravan first; while one is on the map with food to rob, they leave the village alone
+      if (caravanDraw(S)) { S.stats.skippedRaids++; L.raidT = L.raidEvery / 2; }
+      else if (raiders < 2) {
         const g = { n: S.raidLog.length, t: S.t, from: L.id, ids: [], hitT: null, firstBy: null, reachedT: null, stolen: 0, recovered: 0, killed: 0,
           away: S.adv.filter(a => !a.dead && !advInTown(a)).length, home: S.adv.filter(a => !a.dead && advInTown(a)).length };
         for (let i = 0; i < L.raidSize; i++) { const m = spawnMob(S, L, 'raid'); m.raidN = g.n; g.ids.push(m.id); }
@@ -1511,6 +1597,8 @@ function separate(S) {
       const dx = u.x - o.x, dz = u.z - o.z, d = Math.sqrt(dx * dx + dz * dz), R0 = o.r + 0.4;
       if (d < R0) { const k = d > 1e-4 ? 1 / d : 0; const nx = d > 1e-4 ? dx * k : 1, nz = d > 1e-4 ? dz * k : 0; u.x = o.x + nx * R0 - nz * 0.04; u.z = o.z + nz * R0 + nx * 0.04; }
     }
+    const C = S.caravan;   // the wagon does not give way; people step around it
+    if (C && C.state !== 'wreck') { const dx = u.x - C.x, dz = u.z - C.z, d = Math.sqrt(dx * dx + dz * dz), R0 = CFG.caravan.r + 0.3; if (d < R0 && d > 1e-4) { u.x = C.x + dx / d * R0; u.z = C.z + dz / d * R0; } }
     const H = CFG.mapHalf - 2; u.x = clamp(u.x, -H, H); u.z = clamp(u.z, -H, H);
   }
 }
@@ -1526,6 +1614,7 @@ function step(S, dt) {
   for (const a of S.adv) if (!a.dead) { updateAdv(S, a, dt); updateWard(S, a, dt); }
   for (const v of S.vil) if (!v.dead) updateVil(S, v, dt);
   for (const m of S.mobs) if (!m.dead) updateMob(S, m, dt);
+  updateCaravan(S, dt);
   updateArrays(S, dt);
   feed(S, dt);
   updateFlags(S, dt);
@@ -1640,7 +1729,7 @@ function updateFlags(S, dt) {
 function hornReady(S) { return S.t >= S.hornReadyT; }
 function hornWouldAnswer(S, a) {
   if (a.dead) return false;
-  if (a.state === 'follow') { const b = advById(S, a.target); return !b || b.dead || !(b.state === 'quest' || b.state === 'flag'); }   // a healer answers unless following someone on a bounty or a flag
+  if (a.state === 'follow') { const b = advById(S, a.target); return !b || b.dead || !(b.state === 'quest' || b.state === 'flag' || b.state === 'escort'); }   // a healer answers unless following someone on a bounty or a flag
   return a.state === 'idle' || a.state === 'hunt' || a.state === 'game' || a.state === 'chase';
 }
 function soundHorn(S) {
@@ -1654,13 +1743,14 @@ function hornReply(S, a) {
   switch (a.state) {
     case 'quest': return `Heard the recall horn, but I took the ${lairById(S, a.target).name} bounty. Keeping to it.`;
     case 'flag': { const F = flagById(S, a.target); return `Heard the recall horn, but I'm standing guard at ${F ? F.place : 'a defend flag'}. Keeping to it.`; }
+    case 'escort': return 'Heard the recall horn, but I took the caravan escort. Staying with the wagon.';
     case 'rest': return `Heard the recall horn, but still healing in the hall (${pct(a.hp / a.max)}). Will defend the village once healed.`;
     case 'retreat': return 'Heard the recall horn, but too badly hurt to fight. Still running back to heal.';
     case 'shop': return 'Heard the recall horn. Already in the village, finishing my shopping first.';
     case 'emerge': return 'Heard the recall horn on my first day. Already in the village.';
     case 'defend': return 'Heard the recall horn. Already defending the village.';
     case 'horn': return 'Heard the horn again. Already answering it.';
-    case 'follow': { const b = advById(S, a.target); return `Heard the recall horn, but I'm healing ${b ? b.name : 'someone'} on ${b && b.state === 'flag' ? 'a defend flag' : 'a bounty'}. Staying with them.`; }
+    case 'follow': { const b = advById(S, a.target); return `Heard the recall horn, but I'm healing ${b ? b.name : 'someone'} on ${b && b.state === 'flag' ? 'a defend flag' : b && b.state === 'escort' ? 'the caravan escort' : 'a bounty'}. Staying with them.`; }
   }
   return null;
 }
@@ -1683,6 +1773,176 @@ function updateHorn(S) {
     event(S, H.answered ? `${H.answered} of ${H.heard} adventurers answered the horn.` : `Nobody answered the horn (${H.heard} heard it).`, H.answered ? 'good' : 'warn');
     S.horn = null;
   }
+}
+
+// ===== step 7: the merchant caravan, robbing it, the camp tiering up, escort bounties =====
+// the camp whose raiders go for the caravan: the living lair that raids (the bandit camp)
+function robberCamp(S) { for (const L of S.lairs) if (L.alive && L.raidEvery) return L; return null; }
+function tierK(L) { return 1 + CFG.campTier.k * (L && L.tier || 0); }
+function surplusFood(S) { return Math.max(0, Math.floor(S.res.food - CFG.caravan.keep)); }
+function caravanLoaded(C) { return !!C && C.state === 'out' && C.food > 0; }
+// bandits leave the village alone while a caravan is on the map with goods coming or on board
+function caravanDraw(S) { const C = S.caravan; return !!C && (C.state === 'in' || C.state === 'load' ? surplusFood(S) > 0 : caravanLoaded(C)); }
+function escortTakers(S, C) { return C ? S.adv.filter(a => !a.dead && a.state === 'escort' && a.target === C.id) : []; }
+function robbersOf(S, C) { return S.mobs.filter(m => activeMob(m) && m.state === 'rob' && m.cvId === C.id); }
+function spawnCaravan(S) {
+  const R0 = CFG.caravan.route, p = R0.in[0];
+  const C = { id: ++S.cvn, type: 'caravan', x: p[0], z: p[1], hp: CFG.caravan.hp, max: CFG.caravan.hp, state: 'in', path: R0.in.slice(1).concat([R0.stop]), wi: 0,
+    food: 0, value: 0, bounty: 0, posted: 0, t0: S.t, loadT: 0, hitT: -99, face: -Math.PI / 2, robSent: false, takenT: null, wreckT: 0, why: '', wantMove: false };
+  C.why = surplusFood(S) > 0 ? `Coming to the guild hall to buy your surplus food (${surplusFood(S)} in store beyond what the villagers need).` : 'Coming to the guild hall to buy food. The villagers have none to spare right now.';
+  S.caravan = C; S.caravanT = S.t + randIn(S.R, CFG.caravan.every);
+  const log = { id: C.id, t: S.t, food: 0, value: 0, result: null, endT: null, bounty: 0, escorts: 0, robbers: 0, hitT: null };
+  S.caravanLog.push(log); C.log = log;
+  event(S, 'A merchant caravan is coming along the east road to buy your surplus food.', 'gold', C.x, C.z);
+  wakeIdle(S);
+  return C;
+}
+function caravanMove(C, dt, speed) {
+  const w = C.path[C.wi]; if (!w) return true;
+  const dx = w[0] - C.x, dz = w[1] - C.z, d = Math.hypot(dx, dz), s = speed * dt;
+  C.wantMove = true;
+  if (d > 1e-6) C.face = Math.atan2(dx, dz);
+  if (d <= s) { C.x = w[0]; C.z = w[1]; C.wi++; return C.wi >= C.path.length; }
+  C.x += dx / d * s; C.z += dz / d * s; return false;
+}
+function updateCaravan(S, dt) {
+  if (!S.caravan) { if (S.t >= S.caravanT) spawnCaravan(S); return; }
+  const C = S.caravan, K = CFG.caravan; C.wantMove = false;
+  if (C.state === 'wreck') { C.wreckT += dt; if (C.wreckT > K.wreck) { const took = escortTakers(S, C); S.caravan = null; for (const a of took) decide(S, a); } return; }
+  if (C.state === 'in') { if (caravanMove(C, dt, K.speed)) { C.state = 'load'; C.loadT = 0; C.why = `At the guild hall, loading the surplus food. Leaves by the west road in ${K.load} s.`; event(S, 'The caravan has reached the guild hall and is loading food.', 'info', C.x, C.z); } return; }
+  if (C.state === 'load') {
+    C.loadT += dt;
+    C.why = `At the guild hall, loading the surplus food. Leaves by the west road in ${Math.max(1, Math.ceil(K.load - C.loadT))} s.`;
+    if (C.loadT < K.load) return;
+    const food = surplusFood(S); S.res.food -= food; S.stats.caravanFood = (S.stats.caravanFood || 0) + food;
+    C.food = food; C.value = food * K.price; C.log.food = food; C.log.value = C.value;
+    C.state = 'out'; C.path = K.route.out; C.wi = 0;
+    const L = robberCamp(S);
+    if (food > 0) {
+      C.why = `Carrying ${food} food, worth ${C.value}g to the guild when it reaches the west edge.` + (L ? ` The road passes the ${L.name.toLowerCase()}.` : '');
+      event(S, `The caravan left with ${food} food, worth ${C.value}g if it reaches the west edge.`, 'gold', C.x, C.z);
+      if (L && !C.robSent) {   // bandits go for the caravan first (v2)
+        C.robSent = true; S.stats.robParties++; C.log.robbers = L.raidSize;
+        for (let i = 0; i < L.raidSize; i++) { const m = spawnMob(S, L, 'rob'); m.cvId = C.id; }
+        event(S, `Bandits from the ${L.name} are going for the caravan!`, 'bad', L.x, L.z);
+      }
+    } else {
+      C.why = 'Leaving empty: the villagers had no food to spare. Bandits have nothing to rob from it.';
+      event(S, 'The caravan left empty: the villagers need all the food in the store.', 'warn', C.x, C.z);
+    }
+    return;
+  }
+  // on the road out
+  const halted = S.t - C.hitT < 1.5;
+  if (C.hp <= 0) { robCaravan(S, C); return; }
+  if (halted) { C.why = `Under attack! The driver has stopped the wagon (${pct(C.hp / C.max)} left).`; return; }
+  if (caravanMove(C, dt, K.speed)) { deliverCaravan(S, C); return; }
+  if (C.food > 0) C.why = `Carrying ${C.food} food, worth ${C.value}g to the guild when it reaches the west edge.` + (robbersOf(S, C).length ? ' Bandits are coming for it.' : '');
+}
+function deliverCaravan(S, C) {
+  S.gold += C.value; S.ledger.caravans += C.value; C.log.result = 'delivered'; C.log.endT = S.t;
+  if (C.value) fx(S, C.x, C.z, '+' + C.value + 'g', 'coin');
+  event(S, C.value ? `The caravan reached the west edge. +${C.value}g to the treasury for ${C.food} food.` : 'The empty caravan left by the west road.', C.value ? 'good' : 'info', C.x, C.z);
+  const took = escortTakers(S, C);
+  payEscort(S, C);
+  S.caravan = null;
+  for (const a of took) decide(S, a);
+}
+// Rawa (29 Sep): the escort bounty is shared evenly by the escorts still with the caravan when it arrives; refunded if the caravan is lost
+function payEscort(S, C) {
+  const b = C.bounty; if (b <= 0) return;
+  const all = escortTakers(S, C), on = all.filter(a => d2(a.x, a.z, C.x, C.z) < CFG.caravan.escortR + 6);
+  C.bounty = 0;
+  for (const a of all) if (on.indexOf(a) < 0) note(S, a, 'The caravan reached the west edge before I caught up with it. No share of the escort bounty.');
+  if (!on.length) { S.gold += b; S.ledger.escortRefunds += b; event(S, `Nobody escorted the caravan to the edge. The ${b}g escort bounty is back in the treasury.`, 'gold'); return; }
+  const each = Math.floor(b / on.length); let left = b - each * on.length;
+  for (const a of on) {
+    const g = each + (left > 0 ? 1 : 0); if (left > 0) left--;
+    a.gold += g; S.stats.byCls[a.cls].gold += g; S.stats.escortPaid = (S.stats.escortPaid || 0) + g; fx(S, a.x, a.z, '+' + g + 'g', 'coin');
+    thought(S, a, `Brought the caravan to the west edge. Paid ${g}g of the escort bounty. Heading home.`);
+  }
+  C.log.escorts = on.length;
+  event(S, `${on.map(a => a.name).join(', ').replace(/, ([^,]*)$/, ' and $1')} ${on.length > 1 ? 'share' : 'takes'} the ${b}g escort bounty.`, 'good', C.x, C.z);
+}
+function robCaravan(S, C) {
+  const L = lairById(S, robbersOf(S, C)[0] ? robbersOf(S, C)[0].lairId : (robberCamp(S) || {}).id);
+  C.state = 'wreck'; C.wreckT = 0; C.hp = 0; C.log.result = 'robbed'; C.log.endT = S.t;
+  C.why = `Robbed. The bandits took its ${C.food} food.`;
+  if (C.bounty > 0) { S.gold += C.bounty; S.ledger.escortRefunds += C.bounty; fx(S, C.x, C.z, '+' + C.bounty + 'g back', 'recover'); }
+  const back = C.bounty; C.bounty = 0;
+  for (const a of escortTakers(S, C)) thought(S, a, 'The bandits broke the caravan and took its goods. No escort pay.');
+  event(S, `Bandits robbed the caravan and took ${C.food} food (worth ${C.value}g).` + (back ? ` The ${back}g escort bounty is back in the treasury.` : ''), 'bad', C.x, C.z);
+  if (L) {
+    L.stolen += C.value; L.robbed++;
+    if (L.tier < CFG.campTier.max) tierUp(S, L);
+    else event(S, `The ${L.name} is already as strong as it gets. The goods only make it richer.`, 'bad', L.x, L.z);
+  }
+  for (const m of robbersOf(S, C)) { mSet(m, 'return', `Robbed the caravan. Carrying its goods back to the ${L ? L.name.toLowerCase() : 'camp'}.`); m.targetId = null; }
+}
+// v3: the camp grows stronger with every caravan it robs; its bandits get better weapons and raiders carry potions
+function tierUp(S, L) {
+  const k0 = tierK(L); L.tier++; const k1 = tierK(L); S.stats.tierUps++;
+  for (const m of S.mobs) if (!m.dead && m.lairId === L.id) { m.max *= k1 / k0; m.hp *= k1 / k0; m.dmgK = k1; if ((m.state === 'raid' || m.state === 'rob') && !m.potions) m.potions = 1; }
+  event(S, `The ${L.name} grows stronger (tier ${L.tier}) on the stolen goods: better weapons, and raiders now carry potions.`, 'bad', L.x, L.z);
+}
+function tierText(L) { const T = CFG.campTier; return L.tier ? `Tier ${L.tier} of ${T.max}: robbed ${L.robbed} caravan${L.robbed === 1 ? '' : 's'}. Bandits have ${Math.round(T.k * L.tier * 100)}% more health and damage, raiders carry a potion, threat +${fmt(T.threat * L.tier)}.` : ''; }
+// what escorts see: the robbers already out for this caravan, or the party they expect from the camp once it is loaded
+function escortThreat(S, C) {
+  const lv = [], bits = [];
+  const rob = robbersOf(S, C), L = robberCamp(S);
+  if (rob.length) { for (const m of rob) lv.push(m.def.level + CFG.campTier.threat * (lairById(S, m.lairId).tier || 0)); bits.push(rob.length === 1 ? 'a bandit going for it' : `${rob.length} bandits going for it`); }
+  else if (L && !C.robSent && (C.state === 'out' ? C.food > 0 : surplusFood(S) > 0)) {
+    for (let i = 0; i < L.raidSize; i++) lv.push(CFG.mobs[L.mob].level + CFG.campTier.threat * L.tier);
+    bits.push(`the ${L.name.toLowerCase()} will send ${L.raidSize} ${CFG.mobs[L.mob].plural}` + (L.tier ? ` (tier ${L.tier})` : ''));
+  }
+  for (const m of S.mobs) {
+    if (!activeMob(m) || m.state === 'rob' || m.kind === 'deer' || !menace(m) || d2(m.x, m.z, C.x, C.z) > 16) continue;
+    lv.push(m.def.level); bits.push(aMob(m) + ' nearby');
+  }
+  lv.sort((x, y) => y - x);
+  const th = lv.length ? lv[0] + 0.35 * (lv.length - 1) : CFG.flag.quiet;
+  return { th, desc: bits.length ? capF(bits.join(' and ')) : (C.state === 'out' && !C.food ? 'Empty, nothing for bandits to rob' : 'No bandits after it') };
+}
+function escortPower(S, a, C) {
+  if (!isHealer(a)) return power(a);
+  let g = 0; for (const o of escortTakers(S, C)) if (o !== a && !isHealer(o)) g = Math.max(g, power(o));
+  return g ? rawPower(a) + CFG.healer.flagK * g : power(a);
+}
+function evalEscort(S, a, C) {
+  const b = C.bounty || 0, pw = escortPower(S, a, C), T = escortThreat(S, C), th = T.th, gap = th - pw;
+  const pull = Math.min(1.6, b / 70), tol = a.courage + pull - CFG.caravan.ask;
+  const dist = d2(a.x, a.z, C.x, C.z), others = escortTakers(S, C).filter(o => o !== a).length, full = others >= CFG.caravan.max;
+  const open = C.state === 'in' || C.state === 'load' || C.state === 'out';
+  const willing = b > 0 && gap <= tol && !full && open;
+  const score = (b + th * 8) / (1 + dist / 25) * (1 - 0.2 * Math.max(0, gap)) * (1 - 0.12 * others);
+  const short = gap - a.courage + CFG.caravan.ask;
+  const need = short <= 0 ? 0 : (short <= 1.6 ? Math.ceil(short * 70 / 5) * 5 : Infinity);
+  return { b, pw, th, gap, tol, willing, score, need, others, dist, full, desc: T.desc, escort: true };
+}
+// where an escort walks: beside the wagon, on their own side
+function escortSpot(C, a) {
+  const side = (a.id % 2 ? 1 : -1), back = ((a.id >> 1) % 3 - 1) * 1.4, fx0 = Math.sin(C.face), fz0 = Math.cos(C.face);
+  return [C.x + fz0 * side * CFG.caravan.sideR - fx0 * back, C.z - fx0 * side * CFG.caravan.sideR - fz0 * back];
+}
+// the nearest thing an escort fights: robbers, anything attacking an escort, menaces close to the wagon (never deer or a calm animal)
+function escortEnemy(S, C) {
+  return nearestMobTo(S, C.x, C.z, CFG.caravan.escortR, m => m.kind !== 'deer' && (m.state === 'rob' || menace(m) || (!m.wild && m.targetId != null)));
+}
+// player levers: post or raise an escort bounty on the caravan; cancel it while nobody has taken it
+function postEscort(S, amount) {
+  const C = S.caravan;
+  if (!C || !(C.state === 'in' || C.state === 'load' || C.state === 'out') || !(amount > 0) || S.gold < amount) return false;
+  S.gold -= amount; S.ledger.escorts += amount; C.bounty += amount; C.posted += amount; C.log.bounty = C.posted; S.everPosted = true;
+  event(S, `Escort bounty on the caravan is now ${C.bounty}g.`, 'gold', C.x, C.z);
+  wakeIdle(S);
+  return true;
+}
+function cancelEscort(S) {
+  const C = S.caravan; if (!C || C.bounty <= 0 || escortTakers(S, C).length) return false;
+  const b = C.bounty; C.bounty = 0; S.gold += b; S.ledger.escortRefunds += b;
+  fx(S, C.x, C.z, '+' + b + 'g back', 'recover');
+  event(S, `Cancelled the escort bounty. ${b}g back in the treasury.`, 'gold', C.x, C.z);
+  return true;
 }
 
 // ===== step 3b: wild animals =====
@@ -1831,7 +2091,8 @@ const HEADLESS = /[?&]headless=1/.test(location.search);
 const GM = window.GM = { CFG, newSim, step, postBounty, cancelBounty, buildSite, plan, planVil, evalLair, power, STATES,
   plantFlag, raiseFlag, cancelFlag, soundHorn, hornReady, hornWouldAnswer, flagThreat, evalFlag, flagSpot, flagFor, advInTown,
   setRecruitClass, rawPower, evalFollow, healAmt,
-  buildShop, upgradeShop, buildArray, canPay, shopCost, arrayCost, wantBuy, repairCost, condEff, arrayStats };
+  buildShop, upgradeShop, buildArray, canPay, shopCost, arrayCost, wantBuy, repairCost, condEff, arrayStats,
+  postEscort, cancelEscort, evalEscort, escortThreat, escortTakers, surplusFood, threatOf };
 function stanceOfFlag(S, a, F) {
   if (a.state === 'flag' && a.target === F.id) return ['on', a.onDuty ? 'Standing guard' : 'On the way'];
   if (a.inside) return ['busy', `Resting in the hall (${pct(a.hp / a.max)})`];
@@ -1879,7 +2140,9 @@ const ICON_STYLE = {
   horn: { bg: '#8a4f8f', label: 'Answering the horn' },
   follow: { bg: '#3d8a5c', label: 'Following to heal' },
   hornNo: { bg: '#6b6f66', label: 'Heard the horn' },
-  repair: { bg: '#6a5a4a', label: 'Going for a repair' }
+  repair: { bg: '#6a5a4a', label: 'Going for a repair' },
+  escort: { bg: '#a0662a', label: 'Escorting the caravan' },
+  mrob: { bg: '#4a1c18', label: 'Robbing the caravan' }
 };
 const ICON_KEYS = Object.keys(ICON_STYLE);
 const advIcon = a => a.state === 'shop' && a.shopRepair ? 'repair' : a.state;
@@ -1904,6 +2167,11 @@ function drawGlyph(g, st, s) {
     g.beginPath(); g.arc(c, c + s * 0.19, s * 0.06, 0, TAU); g.fill();
   } else if (st === 'mprowl') { // claw marks
     g.lineWidth = s * 0.06; [-0.12, 0, 0.12].forEach(x => { g.beginPath(); g.moveTo(c + (x - 0.1) * s, c - s * 0.2); g.lineTo(c + (x + 0.08) * s, c + s * 0.22); g.stroke(); });
+  } else if (st === 'escort' || st === 'mrob') { // a wagon wheel
+    g.lineWidth = s * 0.07; g.beginPath(); g.arc(c, c, s * 0.22, 0, TAU); g.stroke();
+    for (let i = 0; i < 4; i++) { const a = i * Math.PI / 4; g.beginPath(); g.moveTo(c + Math.cos(a) * s * 0.22, c + Math.sin(a) * s * 0.22); g.lineTo(c - Math.cos(a) * s * 0.22, c - Math.sin(a) * s * 0.22); g.stroke(); }
+    g.beginPath(); g.arc(c, c, s * 0.06, 0, TAU); g.fill();
+    if (st === 'mrob') { g.lineWidth = s * 0.08; g.strokeStyle = '#ff8a78'; g.beginPath(); g.moveTo(c - s * 0.26, c - s * 0.26); g.lineTo(c + s * 0.26, c + s * 0.26); g.stroke(); }
   } else if (st === 'mraid') { // flame
     g.beginPath(); g.moveTo(c, c - s * 0.26); g.bezierCurveTo(c + s * 0.2, c - s * 0.04, c + s * 0.2, c + s * 0.24, c, c + s * 0.24);
     g.bezierCurveTo(c - s * 0.2, c + s * 0.24, c - s * 0.2, c + s * 0.02, c - s * 0.04, c - s * 0.1); g.quadraticCurveTo(c - s * 0.02, c - s * 0.02, c, c - s * 0.26); g.fill();
@@ -1994,6 +2262,7 @@ function startGame() {
   // ---------- ground ----------
   const H = CFG.mapHalf + 12;
   const segs = [[CFG.hall, CFG.lairs[0]], [CFG.hall, CFG.lairs[1]], ...CFG.shopOrder.map(k => [CFG.hall, CFG.shops[k]]), ...CFG.sites.map(x => [CFG.hall, x])];
+  { const R0 = CFG.caravan.route, pts = [...R0.in, R0.stop, ...R0.out].map(p => ({ x: p[0], z: p[1] })); for (let i = 1; i < pts.length; i++) segs.push([pts[i - 1], pts[i]]); }   // step 7: the caravan road
   const segDist = (x, z) => { let best = 1e9; for (const [a, b] of segs) { const vx = b.x - a.x, vz = b.z - a.z, L2 = vx * vx + vz * vz; let t = ((x - a.x) * vx + (z - a.z) * vz) / L2; t = clamp(t, 0, 1); best = Math.min(best, d2(x, z, a.x + vx * t, a.z + vz * t)); } return best; };
   const clearZone = (x, z) => {
     let d = d2(x, z, 0, 0) - 13; for (const L of CFG.lairs) d = Math.min(d, d2(x, z, L.x, L.z) - 7); for (const st of CFG.sites) d = Math.min(d, d2(x, z, st.x, st.z) - CFG.siteKinds[st.kind].r - (st.kind === 'lumber' ? 0.6 : 2));
@@ -2079,8 +2348,8 @@ function startGame() {
   for (const st of ICON_KEYS) for (const f of [0, 1]) iconTex[st + f] = new THREE.CanvasTexture(iconCanvas(st, f));
   const iconURL = {}; for (const st of ICON_KEYS) iconURL[st] = iconCanvas(st, 0, 64).toDataURL();
   const vilIcon = v => v.state === 'flee' ? 'vflee' : (v.state === 'wait' || v.state === 'emerge') ? 'vwait' : (siteById(S, v.site || v.lastSite) ? CFG.siteKinds[siteById(S, v.site || v.lastSite).kind].icon : 'vwait');
-  const mobIcon = m => ({ prowl: 'mprowl', raid: 'mraid', return: 'mhome', flee: 'wflee', charge: 'wangry', maul: 'wangry', back: 'mhome' }[m.state] || null);
-  const MOB_LABEL = { guard: 'Guarding its lair', prowl: 'Hunting', raid: 'Raiding the village', return: 'Going home', scatter: 'Fleeing',
+  const mobIcon = m => ({ prowl: 'mprowl', raid: 'mraid', rob: 'mrob', return: 'mhome', flee: 'wflee', charge: 'wangry', maul: 'wangry', back: 'mhome' }[m.state] || null);
+  const MOB_LABEL = { guard: 'Guarding its lair', prowl: 'Hunting', raid: 'Raiding the village', rob: 'Robbing the caravan', return: 'Going home', scatter: 'Fleeing',
     graze: 'Grazing', flee: 'Running away', root: 'Rooting in its patch', charge: 'Charging', back: 'Going back to its patch', roam: 'Wandering', maul: 'Attacking' };
   const WILD_DANGER = { deer: 'Harmless. Runs from people.', boar: 'About level 2. Charges anyone near its patch.', bear: 'About level 3. Attacks anyone within reach.' };
   function vilLabel(v) {
@@ -2136,8 +2405,12 @@ function startGame() {
     flag.add(mesh(new THREE.BoxGeometry(1, 0.6, 0.05), '#d8a93a', 0.52, 2.65, 0)); flag.position.set(L.r + 0.6, 0, -L.r * 0.4); flag.visible = false; g.add(flag);
     const hp = bar(0x7fcf5a); hp.add(g);
     const ash = mesh(new THREE.CircleGeometry(L.r + 0.8, 10), '#4a4238', 0, 0.05, 0); ash.rotation.x = -Math.PI / 2; ash.visible = false; g.add(ash);
+    // step 7: a war banner that grows with each caravan the camp robs
+    const tierFlag = new THREE.Group(); tierFlag.position.set(-L.r - 0.4, 0, L.r * 0.3); tierFlag.visible = false; body.add(tierFlag);
+    tierFlag.add(mesh(new THREE.CylinderGeometry(0.07, 0.08, 3.6, 5), '#3a2a20', 0, 1.8, 0), mesh(new THREE.BoxGeometry(1.2, 0.9, 0.05), '#9a1f1a', -0.62, 3.1, 0));
+    const skull = mesh(new THREE.BoxGeometry(0.3, 0.3, 0.07), '#e6dac0', -0.62, 3.1, 0); skull.rotation.z = Math.PI / 4; tierFlag.add(skull);
     scene.add(g);
-    lairV[L.id] = { g, body, ring, ringMat, flag, hp, ash, label: null, shown: -1 };
+    lairV[L.id] = { g, body, ring, ringMat, flag, hp, ash, label: null, shown: -1, tierFlag };
   }
   const hallBar = bar(0x7fcf5a); hallBar.add(hallG);
   const restBadge = new THREE.Sprite(new THREE.SpriteMaterial({ map: iconTex.rest0, depthTest: false })); restBadge.renderOrder = 12; restBadge.position.set(-1.8, 5.2, 0); hallG.add(restBadge);
@@ -2412,6 +2685,28 @@ function startGame() {
     return { g, body, arm, skin, hp, icon, iconKey: '', lastX: m.x, lastZ: m.z, bob: 0, barY: MOB_H[m.kind] - 0.1 };
   }
 
+  // ---------- step 7: the merchant caravan ----------
+  function makeCaravanV() {
+    const g = new THREE.Group(), body = new THREE.Group(); g.add(body);
+    const wood = new THREE.MeshLambertMaterial({ color: '#8a5e36' });
+    body.add(mesh(new THREE.BoxGeometry(1.5, 0.5, 2.3), wood, 0, 0.75, -0.2));
+    const cg = new THREE.CylinderGeometry(0.8, 0.8, 2.1, 8, 1, false, 0, Math.PI); cg.rotateX(Math.PI / 2); cg.rotateZ(Math.PI / 2);   // a half barrel, arched over the bed
+    const cover = mesh(cg, new THREE.MeshLambertMaterial({ color: '#e9dfc6', side: THREE.DoubleSide }), 0, 1.0, -0.2); body.add(cover);
+    for (const [x, z] of [[-0.8, 0.6], [0.8, 0.6], [-0.8, -1.0], [0.8, -1.0]]) { const w = mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.12, 10), '#4a3122', x, 0.42, z); w.rotation.z = Math.PI / 2; body.add(w); }
+    body.add(mesh(new THREE.BoxGeometry(0.1, 0.1, 1.3), '#5a4030', -0.35, 0.55, 1.4), mesh(new THREE.BoxGeometry(0.1, 0.1, 1.3), '#5a4030', 0.35, 0.55, 1.4));
+    const ox = new THREE.Group(); ox.position.set(0, 0, 2.2); body.add(ox);
+    ox.add(mesh(new THREE.BoxGeometry(0.62, 0.6, 1.15), '#7a6a58', 0, 0.8, 0), mesh(new THREE.BoxGeometry(0.4, 0.38, 0.42), '#7a6a58', 0, 0.95, 0.72), mesh(new THREE.BoxGeometry(0.62, 0.06, 0.06), '#e6dac0', 0, 1.2, 0.8));
+    [[-0.2, 0.4], [0.2, 0.4], [-0.2, -0.4], [0.2, -0.4]].forEach(([x, z]) => ox.add(mesh(new THREE.BoxGeometry(0.14, 0.5, 0.14), '#5a4a3a', x, 0.25, z)));
+    const load = new THREE.Group(); body.add(load);
+    [[-0.3, -0.6], [0.3, -0.5], [0, 0.1]].forEach(([x, z]) => load.add(mesh(new THREE.IcosahedronGeometry(0.3, 0), '#c9a45a', x, 1.85, z)));   // sacks of food on the roof once loaded
+    const shadow = new THREE.Mesh(new THREE.CircleGeometry(1.5, 12), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.25, depthWrite: false })); shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.03; shadow.scale.set(0.8, 1.6, 1); g.add(shadow);
+    const hp = bar(0x7fcf5a); hp.add(g);
+    const icon = new THREE.Sprite(new THREE.SpriteMaterial({ map: iconTex.mrob1, depthTest: false })); icon.renderOrder = 12; icon.visible = false; g.add(icon);
+    scene.add(g);
+    return { g, body, wood, cover, load, hp, icon, label: null, shown: -1, id: null };
+  }
+  let cvV = null;
+
   // selection ring + target line
   const selRing = new THREE.Mesh(new THREE.RingGeometry(0.7, 0.9, 32), new THREE.MeshBasicMaterial({ color: 0xffe08a, transparent: true, opacity: 0.9, depthWrite: false }));
   selRing.rotation.x = -Math.PI / 2; selRing.visible = false; scene.add(selRing);
@@ -2511,6 +2806,7 @@ function startGame() {
     if (kind === 'flag') { const F = flagById(S, id); return toScreen(F.x, 2, F.z); }
     if (kind === 'shop') { const D = CFG.shops[id]; return toScreen(D.x, 1, D.z); }
     if (kind === 'array') { const A = S.arrays.find(x => x.id === id); return toScreen(A.x, A.built ? 1.4 : 0.3, A.z); }
+    if (kind === 'caravan') { const C = S.caravan; return C ? toScreen(C.x, 1, C.z) : null; }
   };
 
   const den0 = CFG.lairs[0];
@@ -2552,6 +2848,7 @@ function startGame() {
     for (const a of S.adv) if (!a.dead && !a.inside) consider('adv', a.id, a.x, 1, a.z, 42);
     for (const v of S.vil) if (!v.dead && !v.inside) consider('vil', v.id, v.x, 0.9, v.z, 38);
     for (const m of S.mobs) if (!m.dead && m.state !== 'scatter') consider('mob', m.id, m.x, 0.8, m.z, 38);
+    if (S.caravan) consider('caravan', S.caravan.id, S.caravan.x, 1, S.caravan.z, 55);
     if (!best) {
       for (const L of S.lairs) consider('lair', L.id, L.x, 1, L.z, 70);
       consider('hall', 0, 0, 2, 0, 70);
@@ -2617,6 +2914,7 @@ function startGame() {
     if (sel.kind === 'flag' || sel.kind === 'ground') key += '|' + aliveAdv(S).map(a => a.id).join(',') + (sel.kind === 'flag' && !flagById(S, sel.id) ? 'x' : '') + (sel.kind === 'ground' ? sel.x.toFixed(2) + ',' + sel.z.toFixed(2) : '');
     if (sel.kind === 'shop') { const sh = S.shops[sel.id]; key += '|' + sh.level + '|' + aliveAdv(S).map(a => a.id).join(','); }
     if (sel.kind === 'array') key += '|' + (arrayById(S, sel.id).built ? 'b' : 'p') + (S.shops.arrays.built ? 'm' : '');
+    if (sel.kind === 'caravan') key += '|' + (S.caravan && S.caravan.id === sel.id ? S.caravan.state : 'x') + '|' + aliveAdv(S).map(a => a.id).join(',');
     if (key !== cardKey) { cardKey = key; card.innerHTML = cardHTML(); card.hidden = false; }
     updateCard();
   }
@@ -2716,6 +3014,54 @@ function startGame() {
     setF('arange', String(st.range)); setF('admg', `${st.dmg} a shot`);
     setF('ashots', `${A.shots}, costing ${A.spent}g`); setF('akills', `${A.kills} (no coin from array kills)`);
   }
+  // ---------- step 7: the caravan card ----------
+  const CV_LABEL = { in: 'Coming to the guild hall', load: 'Loading at the guild hall', out: 'On the west road', wreck: 'Robbed' };
+  function caravanHTML() {
+    const C = S.caravan, x = '<button class="x" data-act="close" aria-label="Close">✕</button>';
+    if (!C || C.id !== sel.id) return `<header><h2>Merchant caravan</h2>${x}</header><p class="why">This caravan has gone. The next one comes along the east road in about <b data-f="cvnext"></b>.</p>`;
+    return `<header><h2>Merchant caravan</h2><span class="sub" data-f="cvsub"></span>${x}</header>
+      <div class="now"><img data-f="icon" alt=""><div><b data-f="state"></b><p data-f="why"></p></div></div>
+      <div class="grid"><span>Goods</span><span data-f="goods"></span><span>Wagon</span><span data-f="hpbar"></span><span>Danger</span><span data-f="cth"></span><span>Escort bounty</span><span data-f="bounty"></span></div>
+      <div class="row"><button class="gold" data-act="e25" data-f="e25"></button><button class="gold" data-act="e50" data-f="e50"></button></div>
+      <div class="row" data-f="ecRow" hidden><button data-act="ecancel" data-f="ecBtn"></button></div>
+      <p class="note">Escorts walk beside the wagon to the west edge and fight whatever comes for it, with no retreat, so they ask more than for a destroy bounty. The bounty is shared evenly by the escorts still with it when it arrives, and comes back to you if the caravan is lost. Up to ${CFG.caravan.max} escorts.</p>
+      <h3>Escorting</h3><ul class="stance" data-f="escorts"></ul>
+      <h3>What the adventurers think</h3><ul class="stance">${stanceRows('es')}</ul>`;
+  }
+  function stanceOfEscort(a, C) {
+    if (a.state === 'escort' && a.target === C.id) return ['on', a.onDuty ? 'Guarding the wagon' : 'On the way'];
+    if (a.inside) return ['busy', `Resting in the hall (${pct(a.hp / a.max)})`];
+    if (a.state === 'quest') return ['busy', 'Busy with a bounty'];
+    if (a.state === 'flag') return ['busy', 'Guarding a defend flag'];
+    if (C.state === 'wreck') return ['busy', 'Nothing left to escort'];
+    if (isHealer(a) && !escortTakers(S, C).some(o => !isHealer(o))) return ['maybe', 'Joins only when someone else escorts'];
+    const e = evalEscort(S, a, C);
+    if (e.full) return ['maybe', `Has ${CFG.caravan.max} escorts already`];
+    if (e.b > 0 && e.willing) return ['yes', 'Will take it'];
+    if (e.need === Infinity) return ['no', `Too dangerous at level ${a.lvl}`];
+    if (e.b <= 0) return e.need === 0 ? ['maybe', 'Would escort for any bounty'] : ['maybe', `Would escort for about ${e.need}g`];
+    return ['no', `Too risky for ${e.b}g, would go for about ${e.need}g`];
+  }
+  function updateCaravanCard() {
+    const C = S.caravan;
+    if (!C || C.id !== sel.id) { setF('cvnext', `${Math.max(0, Math.ceil(S.caravanT - S.t))} s`); return; }
+    const K = CFG.caravan, attacked = C.state === 'out' && S.t - C.hitT < 1.5, ik = attacked ? 'mrob' : 'escort';
+    const img = card.querySelector('[data-f="icon"]'); if (img && img.dataset.st !== ik) { img.src = iconURL[ik]; img.dataset.st = ik; }
+    setF('cvsub', CV_LABEL[C.state]); setF('state', attacked ? 'Under attack' : CV_LABEL[C.state]); setF('why', C.why);
+    const sf = surplusFood(S);
+    setF('goods', C.state === 'wreck' ? `Taken by the bandits (${C.food} food)` : C.state === 'out' ? (C.food ? `${C.food} food, worth ${C.value}g at the west edge` : 'Empty') :
+      `Will buy ${sf} food (${sf * K.price}g) when it leaves. Villagers keep ${K.keep}, the rest sells at ${K.price}g a food.`);
+    setF('hpbar', hpBar(C.hp / C.max) + `<em>${Math.ceil(C.hp)} / ${C.max}</em>`, true);
+    const T = escortThreat(S, C); setF('cth', `${T.desc} (threat ${fmt(T.th)})`);
+    setF('bounty', C.bounty ? `${C.bounty}g, shared by the escorts when it arrives` : 'None posted');
+    const open = C.state !== 'wreck', has = C.bounty > 0;
+    for (const [f, amt] of [['e25', 25], ['e50', 50]]) { const b = card.querySelector(`[data-f="${f}"]`); if (!b) continue; const t = has ? `Raise by ${amt}g` : `Post ${amt}g escort`; if (b.textContent !== t) b.textContent = t; b.disabled = !open || S.gold < amt; }
+    const cr = card.querySelector('[data-f="ecRow"]'), cb = card.querySelector('[data-f="ecBtn"]');
+    if (cr && cb) { cr.hidden = !has; const on = escortTakers(S, C), t = !has ? '' : on.length ? `Can't cancel: ${on.map(a => a.name).join(', ').replace(/, ([^,]*)$/, ' and $1')} took it` : `Cancel escort and refund ${C.bounty}g`; if (cb.textContent !== t) cb.textContent = t; cb.disabled = on.length > 0; }
+    const g = escortTakers(S, C);
+    setF('escorts', g.length ? g.map(a => `<li data-adv="${a.id}"><span class="tunic" style="background:${a.color}"></span><span class="nm">${esc(a.name)} <small>${clsLv(a)}</small></span><span class="st ${a.fighting ? 'no' : 'on'}">${a.fighting ? 'Fighting' : a.onDuty ? 'With the wagon' : 'On the way'}, ${pct(a.hp / a.max)}</span></li>`).join('') : '<li>Nobody yet.</li>', true);
+    for (const a of aliveAdv(S)) { const [cls, txt] = stanceOfEscort(a, C); const el = card.querySelector(`[data-f="es${a.id}"]`); if (el) { if (el.textContent !== txt) el.textContent = txt; el.className = 'st ' + cls; } }
+  }
   const CLS_SHORT = { warrior: 'Fights up close and takes the hits.', archer: 'Shoots from afar. Fragile up close.', magician: 'Fire that burns groups. Slow, fragile.', healer: 'Follows others and heals. Weak alone.' };
   function cardHTML() {
     if (sel.kind === 'ground') {
@@ -2756,8 +3102,8 @@ function startGame() {
       const L = lairById(S, sel.id);
       if (!L.alive) return `<header><h2>${esc(L.name)}</h2><button class="x" data-act="close" aria-label="Close">✕</button></header><p class="why">Destroyed. Nothing lives here any more.</p>`;
       const rows = aliveAdv(S).map(a => `<li data-adv="${a.id}"><span class="tunic" style="background:${a.color}"></span><span class="nm">${esc(a.name)} <small>${clsLv(a)}</small></span><span class="st" data-f="st${a.id}"></span></li>`).join('');
-      return `<header><h2>${esc(L.name)}</h2><span class="sub">Threat level ${L.level}</span><button class="x" data-act="close" aria-label="Close">✕</button></header>
-      <div class="grid"><span>Health</span><span data-f="lhp"></span><span>${esc(CFG.mobs[L.mob].plural[0].toUpperCase() + CFG.mobs[L.mob].plural.slice(1))}</span><span data-f="mobs"></span><span>Bounty</span><span data-f="bounty"></span></div>
+      return `<header><h2>${esc(L.name)}</h2><span class="sub" data-f="lthreat"></span><button class="x" data-act="close" aria-label="Close">✕</button></header>
+      <div class="grid"><span>Health</span><span data-f="lhp"></span><span>${esc(CFG.mobs[L.mob].plural[0].toUpperCase() + CFG.mobs[L.mob].plural.slice(1))}</span><span data-f="mobs"></span><span>Bounty</span><span data-f="bounty"></span>${L.raidEvery ? '<span>Caravans robbed</span><span data-f="ltier"></span>' : ''}</div>
       <div class="row"><button class="gold" data-act="b25" data-f="b25"></button><button class="gold" data-act="b50" data-f="b50"></button></div>
       <div class="row" data-f="cancelRow" hidden><button data-act="cancel" data-f="cancelBtn"></button></div>
       <h3>What the adventurers think</h3><ul class="stance">${rows || '<li>No adventurers yet. The guild hall recruits them over time.</li>'}</ul>`;
@@ -2773,11 +3119,11 @@ function startGame() {
       <div class="row"><button class="gold" data-act="horn" data-f="hornBtn">Sound the recall horn</button></div>
       ${flagBlock('hall', 'at the hall door')}
       <h3>Treasury</h3>
-      <div class="grid"><span>Tax collected</span><span data-f="tax"></span><span>Deliveries</span><span data-f="del"></span><span>Last 60 s</span><span data-f="tax60"></span><span>Paid in bounties</span><span data-f="paid"></span><span>Spent on building</span><span data-f="built"></span><span>Defend flags</span><span data-f="flagsL"></span><span>Recall horn</span><span data-f="hornL"></span><span>Array shots</span><span data-f="arrL"></span><span>Stolen</span><span data-f="stolen"></span></div>
-      <p class="why">Gold comes in two ways: ${Math.round(CFG.taxRate * 100)}% tax on every sale at the specialists (blacksmith, alchemist, array master), and a small payment for each load villagers bring home.</p>
+      <div class="grid"><span>Tax collected</span><span data-f="tax"></span><span>Deliveries</span><span data-f="del"></span><span>Last 60 s</span><span data-f="tax60"></span><span>Paid in bounties</span><span data-f="paid"></span><span>Spent on building</span><span data-f="built"></span><span>Defend flags</span><span data-f="flagsL"></span><span>Recall horn</span><span data-f="hornL"></span><span>Array shots</span><span data-f="arrL"></span><span>Caravans</span><span data-f="cvL"></span><span>Escort bounties</span><span data-f="escL"></span><span>Stolen</span><span data-f="stolen"></span></div>
+      <p class="why">Gold comes in three ways: ${Math.round(CFG.taxRate * 100)}% tax on every sale at the specialists (blacksmith, alchemist, array master), a small payment for each load villagers bring home, and the merchant caravan, which buys the surplus food at ${CFG.caravan.price}g a food and pays when it reaches the far edge.</p>
       <h3>Stores</h3>
       <div class="grid"><span>Wood</span><span data-f="swood"></span><span>Stone</span><span data-f="sstone"></span><span>Food</span><span data-f="sfood"></span></div>
-      <p class="why">Villagers eat from the food store. If it runs out, they work at half speed. Wood and stone, with gold, pay for upgrading the specialists and building arrays.</p>
+      <p class="why">Villagers eat from the food store. If it runs out, they work at half speed. They keep ${CFG.caravan.keep} food; the rest goes on the caravan. Wood and stone, with gold, pay for upgrading the specialists and building arrays.</p>
       <h3>Inside the hall</h3><ul class="stance">${inside.map(a => `<li data-adv="${a.id}"><span class="tunic" style="background:${a.color}"></span><span class="nm">${esc(a.name)} <small>${clsLv(a)}</small></span><span class="st" data-f="in${a.id}"></span></li>`).join('')}${vin.map(v => `<li data-vil="${v.id}"><span class="tunic" style="background:${v.color}"></span><span class="nm">${esc(v.name)} <small>villager</small></span><span class="st">Sheltering</span></li>`).join('') || (inside.length ? '' : '<li>Nobody is inside right now.</li>')}</ul>`;
     }
     if (sel.kind === 'vil') {
@@ -2815,6 +3161,7 @@ function startGame() {
     }
     if (sel.kind === 'shop') return shopHTML(sel.id);
     if (sel.kind === 'array') return arrayHTML(sel.id);
+    if (sel.kind === 'caravan') return caravanHTML();
     return '';
   }
   const setF = (f, v, html) => { const el = card.querySelector(`[data-f="${f}"]`); if (!el) return; if (html) { if (el.innerHTML !== v) el.innerHTML = v; } else if (el.textContent !== v) el.textContent = v; };
@@ -2862,7 +3209,10 @@ function startGame() {
     } else if (sel.kind === 'lair') {
       const L = lairById(S, sel.id); if (!L.alive) return;
       setF('lhp', hpBar(L.hp / L.max, 'foe') + `<em>${Math.ceil(L.hp)} / ${L.max}</em>`, true);
-      setF('mobs', `${guardsOf(S, L).length} guarding, ${L.cap} at most`);
+      const ng = guardsOf(S, L).length;
+      setF('mobs', ng > L.cap ? `${ng} guarding: ${L.cap} usually, plus raiders back from the road` : `${ng} guarding, ${L.cap} at most`);
+      setF('lthreat', `Threat level ${Math.round((L.level + CFG.campTier.threat * L.tier) * 10) / 10}${L.tier ? `, tier ${L.tier}` : ''}`);
+      setF('ltier', L.robbed ? `${L.robbed}, worth ${L.stolen}g. ${tierText(L)} Destroy it and half the goods' worth (${Math.round(L.stolen * CFG.campTier.goodsBack)}g) comes back.` : 'None yet. Each caravan it robs makes it stronger.');
       setF('bounty', S.bounty[L.id] ? `${S.bounty[L.id]}g, paid when it is destroyed` : 'None posted');
       const has = S.bounty[L.id] > 0;
       for (const [f, amt] of [['b25', 25], ['b50', 50]]) {
@@ -2906,7 +3256,11 @@ function startGame() {
       }
     } else if (sel.kind === 'shop') updateShopCard(sel.id);
     else if (sel.kind === 'array') updateArrayCard(sel.id);
+    else if (sel.kind === 'caravan') updateCaravanCard();
     else if (sel.kind === 'hall') {
+      const cvs = S.caravanLog.filter(l => l.result === 'delivered' && l.value).length, rob = S.caravanLog.filter(l => l.result === 'robbed').length;
+      setF('cvL', S.ledger.caravans || rob ? `${S.ledger.caravans}g from ${cvs} caravan${cvs === 1 ? '' : 's'}${rob ? `, ${rob} robbed` : ''}${S.ledger.goodsBack ? `, ${S.ledger.goodsBack}g of goods back` : ''}` : S.caravan ? 'The first one is on the road' : `The first one comes in about ${Math.max(0, Math.ceil(S.caravanT - S.t))} s`);
+      setF('escL', S.ledger.escorts ? `${S.ledger.escorts}g posted, ${S.ledger.escortRefunds}g back` : 'None');
       setF('arrL', S.ledger.arrayShots ? `${S.ledger.arrayShots}g for ${S.stats.arrayShots} shots` : 'None fired');
       setF('hhp', hpBar(S.hall.hp / S.hall.max) + `<em>${Math.ceil(S.hall.hp)} / ${S.hall.max}</em>`, true);
       const vAlive = S.vil.filter(v => !v.dead).length;
@@ -2943,6 +3297,8 @@ function startGame() {
     else if (act === 'b25' || act === 'b50') { postBounty(S, sel.id, act === 'b25' ? 25 : 50); updateCard(); }
     else if (act === 'cancel') { cancelBounty(S, sel.id); updateCard(); }
     else if (act === 'horn') { soundHorn(S); updateCard(); }
+    else if (act === 'e25' || act === 'e50') { postEscort(S, act === 'e25' ? 25 : 50); updateCard(); }
+    else if (act === 'ecancel') { cancelEscort(S); updateCard(); }
     else if (act && act.startsWith('cls_')) { setRecruitClass(S, act.slice(4)); updateCard(); }
     else if (act === 'openflag') select({ kind: 'flag', id: +b.dataset.id });
     else if (act === 'fr25' || act === 'fr50') { raiseFlag(S, sel.id, act === 'fr25' ? 25 : 50); updateCard(); }
@@ -3051,6 +3407,27 @@ function startGame() {
       if (ik) { const key = ik + (m.fighting ? 1 : 0); if (v.iconKey !== key) { v.icon.material.map = iconTex[key]; v.icon.material.needsUpdate = true; v.iconKey = key; } v.icon.scale.set(sc * 0.8, sc * 0.8, 1); v.icon.position.y = MOB_H[m.kind] + sc * 0.35; }
     }
     for (const [k, v] of unitV) if (typeof k === 'string' && k[0] === 'm' && !liveMob.has(+k.slice(1))) { scene.remove(v.g); unitV.delete(k); }
+    // step 7: the caravan
+    const C = S.caravan;
+    if (C && (!cvV || cvV.id !== C.id)) { if (cvV) { scene.remove(cvV.g); if (cvV.label) cvV.label.material.map.dispose(); } cvV = makeCaravanV(); cvV.id = C.id; cvV.lastX = C.x; cvV.lastZ = C.z; cvV.bob = 0; cvV.g.rotation.y = C.face; }
+    if (!C && cvV) { scene.remove(cvV.g); if (cvV.label) cvV.label.material.map.dispose(); cvV = null; }
+    if (C && cvV) {
+      const v = cvV, moved = Math.hypot(C.x - v.lastX, C.z - v.lastZ); v.lastX = C.x; v.lastZ = C.z;
+      v.bob = moved > 0.001 ? v.bob + dt * 7 : 0;
+      v.g.position.set(C.x, heightAt(C.x, C.z), C.z);
+      let dr = C.face - v.g.rotation.y; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); v.g.rotation.y += dr * Math.min(1, dt * 4);
+      v.body.position.y = Math.abs(Math.sin(v.bob)) * 0.05;
+      const wreck = C.state === 'wreck';
+      v.body.rotation.z = wreck ? 0.35 : 0; v.wood.color.set(wreck ? '#3e342c' : '#8a5e36'); v.cover.visible = !wreck;
+      v.wood.emissive.setHex(S.t - C.hitT < 0.15 ? 0x662222 : 0x000000);
+      v.load.visible = C.state === 'out' && C.food > 0;
+      v.hp.set(C.hp / C.max, 2.9 + sc * 0.3, 2.2 * sc * 0.8, 0.18 * sc * 0.8, !wreck && C.hp < C.max);
+      const attacked = C.state === 'out' && S.t - C.hitT < 1.5;
+      v.icon.visible = attacked; if (attacked) { v.icon.scale.set(sc * 0.9, sc * 0.9, 1); v.icon.position.y = 3.3 + sc * 0.4; }
+      const shown = wreck ? 0 : C.bounty;
+      if (v.shown !== shown) { v.shown = shown; if (v.label) { v.g.remove(v.label); v.label.material.map.dispose(); v.label = null; } if (shown > 0) { v.label = textSprite(shown + 'g', '#ffe08a', 46); v.g.add(v.label); } }
+      if (v.label) { v.label.position.set(0, 3.4 + sc * (attacked ? 1.1 : 0.4), 0); v.label.scale.set(sc * 0.7 * v.label.userData.aspect, sc * 0.7, 1); }
+    }
     // work sites
     for (const st of S.sites) {
       const v = siteV[st.id];
@@ -3099,6 +3476,7 @@ function startGame() {
         v.ringMat.color.setHex(hasB ? 0xf0c040 : 0xe0503c); v.ringMat.opacity = hasB ? 0.55 + 0.25 * pulse : (S.everPosted ? 0.25 : 0.3 + 0.45 * pulse);
         const shake = S.t - L.hitT < 0.12 ? (Math.random() - 0.5) * 0.15 : 0; v.body.position.x = shake;
         if (v.g.userData.fire) v.g.userData.fire.scale.y = 0.85 + 0.3 * Math.abs(Math.sin(now * 0.013));
+        v.tierFlag.visible = L.tier > 0; if (L.tier) { v.tierFlag.scale.setScalar(1 + 0.35 * L.tier); v.tierFlag.rotation.y = Math.sin(now * 0.002) * 0.2; }
         if (v.shown !== S.bounty[L.id]) {
           v.shown = S.bounty[L.id]; if (v.label) { v.g.remove(v.label); v.label.material.map.dispose(); v.label = null; }
           if (v.shown > 0) { v.label = textSprite(v.shown + 'g', '#ffe08a', 46); v.g.add(v.label); }
@@ -3149,6 +3527,7 @@ function startGame() {
       else if (sel.kind === 'site') { const st = siteById(S, sel.id); sx = st.x; sz = st.z; r = CFG.siteKinds[st.kind].r + 1; }
       else if (sel.kind === 'flag') { const F = flagById(S, sel.id); if (F) { sx = F.x; sz = F.z; r = 1.3; } else select(null); }
       else if (sel.kind === 'ground') { sx = sel.x; sz = sel.z; r = CFG.flag.guardR / 0.8; }
+      else if (sel.kind === 'caravan') { const C = S.caravan; if (C && C.id === sel.id) { sx = C.x; sz = C.z; r = 2.6; } }
       if (sx != null) { selRing.visible = true; selRing.position.set(sx, heightAt(sx, sz) + 0.07, sz); selRing.scale.setScalar(r); }
       if (sel && (sel.kind === 'adv' || sel.kind === 'vil' || sel.kind === 'mob')) {
         const a = sel.kind === 'mob' ? mobById(S, sel.id) : unitById(S, sel.id);
@@ -3183,6 +3562,7 @@ function startGame() {
     }
     if (m.targetId != null) { const u = unitById(S, m.targetId); if (u && !u.dead && !u.inside) return [u.x, u.z, 0.8]; }
     if (m.state === 'raid') return [0, 0, 4.2];
+    if (m.state === 'rob' && S.caravan) return [S.caravan.x, S.caravan.z, 2.2];
     if (m.state === 'return') { const L = lairById(S, m.lairId); return [L.x, L.z, L.r + 1.2]; }
     if (m.state === 'prowl' && m.goal) return [m.goal.x, m.goal.z, 1.5];
     return null;
@@ -3196,6 +3576,7 @@ function startGame() {
     if (a.state === 'flag') { const F = flagById(S, a.target); if (F) return a.sx != null && !a.onDuty ? [a.sx, a.sz, 0.6] : [F.x, F.z, 1.2]; }
     if (a.state === 'horn' && a.wx != null) return [a.wx, a.wz, 0.8];
     if (a.state === 'follow') { const b = advById(S, a.target); if (b && !b.dead && !b.inside) return [b.x, b.z, 0.8]; }
+    if (a.state === 'escort' && S.caravan) return [S.caravan.x, S.caravan.z, 2.2];
     if (a.state === 'idle' && a.wx != null) return [a.wx, a.wz, 0.6];
     return null;
   }
@@ -3223,14 +3604,17 @@ function startGame() {
       renderCard(); updateRoster();
       // v3.3: the horn and the flag are taught when they first matter, at the first raid
       const raidHint = S.firstRaidT != null && S.t - S.firstRaidT < 25 && !S.stats.horns && !S.stats.flagsPlanted;
+      // step 7: the escort bounty is taught when the first caravans come, until the player posts one
+      const cvHint = !raidHint && S.caravan && S.caravan.id <= 2 && S.caravan.state !== 'wreck' && !S.ledger.escorts && (S.caravan.state !== 'out' || S.caravan.food > 0);
       // step 6: the blacksmith is taught when an adventurer first has gold for gear and nowhere to buy it
-      const smithHint = !raidHint && S.everPosted && !S.shops.smith.built && aliveAdv(S).some(a => (a.weapon < 1 || a.armour < 1) && a.gold >= CFG.gear.price[1]);
-      const den = lairById(S, 'den'), clsHint = !raidHint && !smithHint && S.everPosted && !S.pickedCls && aliveAdv(S).length < CFG.maxAdv && ((den && !den.alive) || S.t > 75) && S.t < 170;
+      const smithHint = !raidHint && !cvHint && S.everPosted && !S.shops.smith.built && aliveAdv(S).some(a => (a.weapon < 1 || a.armour < 1) && a.gold >= CFG.gear.price[1]);
+      const den = lairById(S, 'den'), clsHint = !raidHint && !cvHint && !smithHint && S.everPosted && !S.pickedCls && aliveAdv(S).length < CFG.maxAdv && ((den && !den.alive) || S.t > 75) && S.t < 170;
       const ht = raidHint ? 'Bandits are raiding. Tap the guild hall to sound the recall horn or plant a defend flag'
+        : cvHint ? 'A merchant caravan has come for your surplus food, and bandits will go for it. Tap the wagon to post an escort bounty'
         : smithHint ? 'An adventurer has gold for better gear. Tap the empty plot in front of the guild hall to build a blacksmith'
         : clsHint ? 'Tap the guild hall to choose who it recruits next: warrior, archer, magician or healer' : 'Tap the wolf den to post a bounty';
       if (hint.textContent !== ht) hint.textContent = ht;
-      hint.hidden = !!sel || (!raidHint && !clsHint && !smithHint && (S.everPosted || S.t < 2));   // never under an open card
+      hint.hidden = !!sel || (!raidHint && !cvHint && !clsHint && !smithHint && (S.everPosted || S.t < 2));   // never under an open card
       if (S.won && $('won').hidden) { $('won').hidden = false; $('wonText').textContent = `Every threat is gone, on day ${Math.floor(S.wonT / 60) + 1}.`; }
     }
     renderer.render(scene, camera);
