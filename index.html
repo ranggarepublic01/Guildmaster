@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<title>Guildmaster, step 7: the caravan and escorts</title>
+<title>Guildmaster, step 7b: caravan goods and the guild guard</title>
 <style>
 :root{--panel:rgba(26,34,31,.93);--panel2:rgba(40,50,45,.95);--ink:#f1ead9;--muted:#b4bcaa;--brass:#d6a94a;--brass2:#f0c866;--line:rgba(241,234,217,.14);--red:#e0624f;--green:#86c86a;
 --serif:"Palatino Linotype","Book Antiqua",Palatino,"Noto Serif",Georgia,serif;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
@@ -84,6 +84,7 @@ ol time{display:block;color:var(--muted);font-size:11.5px}
 .clsPick button{min-height:54px;border-radius:11px;border:1px solid var(--line);background:rgba(255,255,255,.06);text-align:left;padding:8px 11px}
 .clsPick button b{display:block;font:600 15.5px/1.2 var(--serif)}
 .clsPick button small{display:block;color:var(--muted);font-size:12px;line-height:1.3;margin-top:2px}
+.clsPick.sell{grid-template-columns:1fr 1fr 1fr}
 .clsPick button.on{border-color:var(--brass2);background:rgba(214,169,74,.2);box-shadow:inset 0 0 0 1px var(--brass2)}
 .clsPick button.on b{color:var(--brass2)}
 @media (orientation:landscape) and (max-height:560px){.clsPick{grid-template-columns:repeat(4,1fr);gap:6px}.clsPick button{min-height:44px;padding:6px 4px;text-align:center}.clsPick button small{display:none}.clsPick button b{font-size:14px}}
@@ -110,7 +111,7 @@ ol time{display:block;color:var(--muted);font-size:11.5px}
 <div id="hint" hidden>Tap the wolf den to post a bounty</div>
 <div id="card" hidden></div>
 <div id="won" hidden><div><h2>Map cleared</h2><p id="wonText"></p><button id="againBtn">Play again</button></div></div>
-<div id="tag">Step 7 test build: caravan, escorts, camp tiers</div>
+<div id="tag">Step 7b test build: caravan goods, guild guard</div>
 <script>/**
  * @license
  * Copyright 2010-2023 Three.js Authors
@@ -130,7 +131,7 @@ const fmt = v => (Math.round(v * 10) / 10).toFixed(1);
 
 const CFG = {
   mapHalf: 72,   // v3.2: about 144 units across (was 96)
-  hall: { x: 0, z: 0, r: 3.2, hp: 600 },
+  hall: { x: 0, z: 0, r: 3.2, hp: 600, repairAfter: 20, repair: 1 },   // step 7b (Rawa, 30 Sep): slow self-repair until paid repair (by ad) comes with the platform wiring
   houses: [{ x: -6.5, z: 9, r: 1.3 }, { x: -8.5, z: -3, r: 1.3 }, { x: 2, z: -8.5, r: 1.3 }, { x: -4, z: -8, r: 1.3 }, { x: 10.5, z: -2.5, r: 1.3 }],
   townR: 13,
   startGold: 300, taxRate: 0.4, // treasury is fed only by tax on specialist sales
@@ -153,7 +154,7 @@ const CFG = {
     wearHit: 0.02, wearHeal: 0.012, wearTaken: 0.025, worn: 0.5, repairK: 0.5, saveK: 0.4 },
   potion: [{ heal: 45, price: 12, name: 'healing potion' }, { heal: 70, price: 16, name: 'strong healing potion' }],
   ward: { price: 40, range: 6, dmg: 6, cd: 2 },      // array gear: set beside an adventurer guarding a flag or the village; its shots are free
-  array: { cost: 40, wood: 10, stone: 15, range: [12, 14], dmg: [9, 13], cd: 1.6, shot: 1 },
+  array: { cost: 40, wood: 10, stone: 15, range: [12, 14], dmg: [9, 13], cd: 1.6, shot: 1, per: 4 },   // step 7b (Rawa, 30 Sep): 1g for every 4 shots (1g a shot is kept for a later hard mode)
   arrayPlots: [
     { id: 'a1', x: -6.1, z: 13.1, place: 'south-west' }, { id: 'a2', x: -13.2, z: 4.8, place: 'west' }, { id: 'a3', x: -12.7, z: -5.9, place: 'north-west' },
     { id: 'a4', x: 5.7, z: -12.2, place: 'north' }, { id: 'a5', x: 13.0, z: 3.5, place: 'east' }, { id: 'a6', x: 0, z: 14.5, place: 'south' }
@@ -215,10 +216,14 @@ const CFG = {
   caravan: {
     route: { in: [[71, 8], [16, 8]], stop: [3.5, 6.5], out: [[-4.5, 5.5], [-12.5, 8.5], [-30, 14], [-71, 12]] },
     first: [190, 230], every: [180, 300], speed: 1.8, load: 20, hp: 240, r: 1.2,
-    keep: 20, price: 3,                     // villagers keep 20 food; the rest goes on the caravan at 3g a food, paid when it reaches the far edge
+    // step 7b (Rawa, 30 Sep): the guildmaster chooses which goods the caravan buys. Each good switched on sells all of it above its reserve.
+    goods: { food: { keep: 20, price: 3, on: true }, wood: { keep: 0, price: 2, on: false }, stone: { keep: 0, price: 3, on: false } },
     escortR: 9, sideR: 2.4, max: 3, ask: 0.5,  // escorts walk beside it and fight whatever comes within escortR; no retreat, so they ask more, like a flag
     wreck: 12
   },
+  // step 7b (Rawa, 30 Sep): the guild guard. Two guards, free, at the hall door. Their only task is the guild hall: they fight
+  // enemies attacking it (raiders near it, or anything that attacks them there), never retreat, never leave, and a fallen one is replaced.
+  guard: { n: 2, hp: 116, dmg: 12, cd: 1.0, range: 1.5, speed: 3.1, zone: 6, replace: 60, heal: 2, healAfter: 10, posts: [[-1.7, 4.7], [1.7, 4.7]] },
   // each caravan the camp robs makes it one tier stronger (at most 3): bandits hit harder and last longer, raiders carry a potion
   campTier: { max: 3, k: 0.2, threat: 0.5, potion: 40, goodsBack: 0.5 }
 };
@@ -248,7 +253,7 @@ function newSim(seed) {
     ledger: { tax: 0, bounties: 0, refunds: 0, recent: [], deliveries: 0, recentDel: [], builds: 0, stolen: 0, recovered: 0, flags: 0, flagRefunds: 0, horn: 0, wages: 0, killPay: 0, arrayShots: 0, caravans: 0, escorts: 0, escortRefunds: 0, goodsBack: 0 },
     shops: {}, arrays: [],
     nextCls: 'warrior', pickedCls: false, shots: [],
-    caravan: null, caravanT: 0, cvn: 0, caravanLog: [],
+    guards: [], guardQ: [], caravan: null, caravanT: 0, cvn: 0, caravanLog: [], sell: { food: CFG.caravan.goods.food.on, wood: CFG.caravan.goods.wood.on, stone: CFG.caravan.goods.stone.on },
     flags: [], fid: 1, horn: null, hornReadyT: 0, hornN: 0, raidLog: [], firstRaidT: null, won: false, wonT: 0, names: shuffle(NAMES.slice(), R), everPosted: false,
     vil: [], sites: [], res: Object.assign({}, CFG.startRes), vilQ: [], hungry: false, vnames: shuffle(VNAMES.slice(), R),
     stats: { deaths: 0, retreats: 0, kills: 0, potions: 0, shopTrips: 0, levelUps: 0, spent: 0, cleared: {}, posted: {}, firstTaken: {}, firstArrive: {}, quests: [],
@@ -256,8 +261,8 @@ function newSim(seed) {
       flagDeaths: 0, hornDeaths: 0, horns: 0, hornHeard: 0, hornAnswers: 0, hornPays: 0, flagTakes: 0, flagsPlanted: 0, recheckSwitch: 0, flagKills: 0,
       byCls: {}, heals: 0, healed: 0, overheal: 0, healShare: 0, healerOutT: 0, healerMeleeT: 0, follows: 0, splashHits: 0, guardHealer: 0,
       repairs: 0, repairG: 0, breaks: 0, brokenT: 0, bought: {}, firstBuy: {}, upgraded: {}, builtShop: {}, resSpent: { wood: 0, stone: 0 },
-      arrayShots: 0, arrayKills: 0, arrayDmg: 0, arraySilent: 0, arrayStole: 0, wardShots: 0, wardKills: 0, wardSets: 0, noSmithWant: 0,
-      escortTakes: 0, escortDeaths: 0, escortKills: 0, robParties: 0, tierUps: 0, skippedRaids: 0 }
+      sold: { food: 0, wood: 0, stone: 0 }, arrayShots: 0, arrayKills: 0, arrayDmg: 0, arraySilent: 0, arrayStole: 0, wardShots: 0, wardKills: 0, wardSets: 0, noSmithWant: 0,
+      guardDmg: 0, guardKills: 0, guardDeaths: 0, escortTakes: 0, escortDeaths: 0, escortKills: 0, robParties: 0, tierUps: 0, skippedRaids: 0 }
   };
   for (const k of CFG.clsOrder) S.stats.byCls[k] = { recruited: 0, kills: 0, deaths: 0, dmg: 0, t: 0, idleT: 0, xp: 0, gold: 0 };
   for (const k of CFG.shopOrder) { const D = CFG.shops[k]; S.shops[k] = { id: k, name: D.name, x: D.x, z: D.z, built: !!D.built, level: D.built ? 1 : 0, sales: 0, tax: 0, customers: 0 }; }
@@ -271,6 +276,7 @@ function newSim(seed) {
   // villagers start already at work on the sites that come built
   const start = S.sites.filter(s => s.built);
   for (let i = 0; i < CFG.vil.start; i++) addVillager(S, start.length ? start[i % start.length] : null);
+  for (let i = 0; i < CFG.guard.n; i++) addGuard(S, i);
   S.caravanT = randIn(R, CFG.caravan.first);
   S.wild = {};
   for (const k in CFG.wild) {
@@ -289,7 +295,9 @@ function advById(S, id) { for (const a of S.adv) if (a.id === id) return a; retu
 function mobById(S, id) { for (const m of S.mobs) if (m.id === id) return m; return null; }
 function vilById(S, id) { for (const v of S.vil) if (v.id === id) return v; return null; }
 function siteById(S, id) { for (const s of S.sites) if (s.id === id) return s; return null; }
-function unitById(S, id) { return advById(S, id) || vilById(S, id); }
+function guardById(S, id) { for (const g of S.guards) if (g.id === id) return g; return null; }
+function unitById(S, id) { return advById(S, id) || vilById(S, id) || guardById(S, id); }
+function hitUnit(S, u, dmg, m) { if (u.type === 'vil') hitVil(S, u, dmg, m); else if (u.type === 'guard') hitGuard(S, u, dmg, m); else hitAdv(S, u, dmg, m); }
 function roamer(m) { return m.state === 'prowl' || m.state === 'raid' || m.state === 'rob'; }
 function mobGroup(m) { return m.def.plural; }
 function aMob(m) { return m.def.a; }
@@ -1171,6 +1179,7 @@ function updateWard(S, a, dt) {
 }
 function arrayStats(S) { const k = S.shops.arrays.level >= 2 ? 1 : 0, A = CFG.array; return { range: A.range[k], dmg: A.dmg[k] }; }
 // each array fires on its own; every shot costs the treasury a little, and with nothing in the treasury it falls silent
+const SHOT_COST = `${CFG.array.shot}g for every ${CFG.array.per} shots`;
 function updateArrays(S, dt) {
   const st = arrayStats(S);
   for (const A of S.arrays) {
@@ -1179,12 +1188,13 @@ function updateArrays(S, dt) {
     const m = nearestMobTo(S, A.x, A.z, st.range, arrayFoe);
     A.targetId = m ? m.id : null;
     if (!m) { A.silent = false; continue; }
-    if (S.gold < CFG.array.shot) {
-      if (!A.silent) { A.silent = true; A.silentT = S.t; event(S, `The ${A.place} array is silent: the treasury is empty and every shot costs ${CFG.array.shot}g.`, 'bad', A.x, A.z); }
+    const pay = (A.acc || 0) + 1 / CFG.array.per >= 1 - 1e-9;   // this shot completes a coin's worth
+    if (pay && S.gold < CFG.array.shot) {
+      if (!A.silent) { A.silent = true; A.silentT = S.t; event(S, `The ${A.place} array is silent: the treasury is empty and shots cost ${SHOT_COST}.`, 'bad', A.x, A.z); }
       S.stats.arraySilent += dt; A.cd = 0.25; continue;
     }
-    A.silent = false; A.cd = CFG.array.cd; A.shots++; A.spent += CFG.array.shot; A.shotT = S.t;
-    S.gold -= CFG.array.shot; S.ledger.arrayShots += CFG.array.shot; S.stats.arrayShots++;
+    A.silent = false; A.cd = CFG.array.cd; A.shots++; A.shotT = S.t; S.stats.arrayShots++;
+    if (pay) { A.acc = 0; A.spent += CFG.array.shot; S.gold -= CFG.array.shot; S.ledger.arrayShots += CFG.array.shot; } else A.acc = (A.acc || 0) + 1 / CFG.array.per;
     S.shots.push({ kind: 'array', x0: A.x, z0: A.z, x: m.x, z: m.z, y: 0.8, t: S.t, by: A.id }); if (S.shots.length > 80) S.shots.shift();
     arrayHit(S, m, st.dmg * (0.9 + S.R() * 0.2), A);
   }
@@ -1219,7 +1229,7 @@ function buildArray(S, id) {
   const A = arrayById(S, id); if (!A || A.built || !shopBuilt(S, 'arrays')) return false;
   const c = arrayCost(); if (!canPay(S, c)) return false;
   payCost(S, c); A.built = true; A.builtT = S.t; A.cd = 0.5;
-  event(S, `Built an array on the ${A.place} plot for ${costText(c)}. Each shot costs ${CFG.array.shot}g from the treasury.`, 'gold', A.x, A.z);
+  event(S, `Built an array on the ${A.place} plot for ${costText(c)}. Its shots cost ${SHOT_COST} from the treasury.`, 'gold', A.x, A.z);
   return true;
 }
 
@@ -1262,6 +1272,7 @@ function pickPrey(S, m) {
   const vr = m.state === 'prowl' ? CFG.wolfHunt.villagerAggro : m.state === 'raid' ? 5 : 3.5;
   let best = null, bd = 1e9;
   for (const a of S.adv) { if (a.dead || a.inside) continue; const d = d2(m.x, m.z, a.x, a.z); if (d < def.aggro && d < bd) { bd = d; best = a; } }
+  for (const g of S.guards) { if (g.dead) continue; const d = d2(m.x, m.z, g.x, g.z); if (d < def.aggro && d < bd) { bd = d; best = g; } }
   for (const v of S.vil) {
     if (v.dead || v.inside) continue;
     if (m.state === 'prowl' && d2(v.x, v.z, CFG.hall.x, CFG.hall.z) < CFG.townR - 3) continue;
@@ -1320,7 +1331,7 @@ function updateMob(S, m, dt) {
     if (d > def.range) moveTo(m, tgt.x, tgt.z, def.speed * sprint, dt, def.range * 0.9);
     else {
       m.fighting = true; m.face = Math.atan2(tgt.x - m.x, tgt.z - m.z);
-      if (m.cd <= 0) { m.cd = def.cd; m.swingT = S.t; const dmg = def.dmg * (m.dmgK || 1) * (0.85 + S.R() * 0.3); if (tgt.type === 'vil') hitVil(S, tgt, dmg, m); else hitAdv(S, tgt, dmg, m); }
+      if (m.cd <= 0) { m.cd = def.cd; m.swingT = S.t; const dmg = def.dmg * (m.dmgK || 1) * (0.85 + S.R() * 0.3); hitUnit(S, tgt, dmg, m); }
     }
     return;
   }
@@ -1580,6 +1591,7 @@ function separate(S) {
   const us = [];
   for (const a of S.adv) if (!a.dead && !a.inside) us.push(a);
   for (const v of S.vil) if (!v.dead && !v.inside) us.push(v);
+  for (const g of S.guards) if (!g.dead) us.push(g);
   for (const m of S.mobs) if (!m.dead && m.state !== 'scatter') us.push(m);
   for (let i = 0; i < us.length; i++) {
     const u = us[i];
@@ -1613,6 +1625,7 @@ function step(S, dt) {
   updateHorn(S);
   while (S.vilQ.length && S.t >= S.vilQ[0]) { S.vilQ.shift(); addVillager(S, null); }
   for (const a of S.adv) if (!a.dead) { updateAdv(S, a, dt); updateWard(S, a, dt); }
+  updateGuards(S, dt);
   for (const v of S.vil) if (!v.dead) updateVil(S, v, dt);
   for (const m of S.mobs) if (!m.dead) updateMob(S, m, dt);
   updateCaravan(S, dt);
@@ -1625,7 +1638,8 @@ function step(S, dt) {
   }
   separate(S);
   if (S.mobs.some(m => m.gone)) S.mobs = S.mobs.filter(m => !m.gone);
-  if (S.t - S.hall.hitT > 6) S.hall.hp = Math.min(S.hall.max, S.hall.hp + 3 * dt);
+  if (S.guards.some(g => g.dead && S.t - g.deadT > 3)) S.guards = S.guards.filter(g => !g.dead || S.t - g.deadT <= 3);
+  if (S.t - S.hall.hitT > CFG.hall.repairAfter) S.hall.hp = Math.min(S.hall.max, S.hall.hp + CFG.hall.repair * dt);
 }
 // player lever: post or raise a bounty
 function postBounty(S, lairId, amount) {
@@ -1776,25 +1790,116 @@ function updateHorn(S) {
   }
 }
 
+// ===== step 7b: the guild guard =====
+const GUARD_NAMES = ['Aldo', 'Berit', 'Conn', 'Dagna', 'Emil', 'Frida', 'Gunn', 'Hild'];
+function addGuard(S, slot) {
+  const P = CFG.guard.posts[slot], name = GUARD_NAMES[(S.guardN = (S.guardN || 0) + 1) % GUARD_NAMES.length];
+  const g = { id: S.nid++, type: 'guard', slot, name, x: P[0], z: P[1] + 1.2, hp: CFG.guard.hp, max: CFG.guard.hp, state: 'post', why: '', thoughts: [], dead: false, face: 0, cd: 0,
+    fighting: false, wantMove: false, lastHitT: -99, target: null, color: '#2f4f8a', kills: 0 };
+  S.guards.push(g);
+  thought(S, g, 'Standing guard at the guild hall door. The guild guard fights only enemies that attack the hall.');
+  if (S.t > 0) event(S, `${name} of the guild guard has taken the post at the hall door.`, 'good', g.x, g.z);
+  return g;
+}
+function inGuardZone(m) { return d2(m.x, m.z, CFG.hall.x, CFG.hall.z) < CFG.hall.r + CFG.guard.zone; }
+// what a guard fights: an enemy raiding the hall near it, or one attacking this guard. Nothing else is their business.
+function guardFoe(S, g) {
+  let best = null, bd = 1e9;
+  for (const m of S.mobs) {
+    if (!activeMob(m) || m.wild && m.targetId !== g.id) continue;
+    if (!((m.state === 'raid' && inGuardZone(m)) || (m.targetId === g.id && inGuardZone(m)))) continue;
+    const d = d2(g.x, g.z, m.x, m.z); if (d < bd) { bd = d; best = m; }
+  }
+  return best;
+}
+function updateGuards(S, dt) {
+  const G = CFG.guard;
+  while (S.guardQ.length && S.t >= S.guardQ[0][0]) { const [, slot] = S.guardQ.shift(); addGuard(S, slot); }
+  for (const g of S.guards) {
+    if (g.dead) continue;
+    g.cd -= dt; g.fighting = false; g.wantMove = false;
+    const m = guardFoe(S, g);
+    if (m) {
+      g.target = m.id; g.at = null;
+      if (g.state !== 'fight' || g.foeId !== m.id) { g.state = 'fight'; g.foeId = m.id; thought(S, g, m.targetId === g.id ? `${capF(aMob(m))} attacked me at the hall door. Fighting it off.` : `${capF(aMob(m))} is attacking the guild hall. Fighting it.`); }
+      const d = d2(g.x, g.z, m.x, m.z);
+      if (d > G.range + 0.3) { moveTo(g, m.x, m.z, G.speed, dt, G.range * 0.85); continue; }
+      g.fighting = true; g.face = Math.atan2(m.x - g.x, m.z - g.z);
+      if (g.cd <= 0) { g.cd = G.cd; g.swingT = S.t; guardStrike(S, g, m, G.dmg * (0.85 + S.R() * 0.3)); }
+      continue;
+    }
+    g.target = null;
+    // back to the post; if someone stands on it, the guard keeps watch from where it got to
+    if (g.state === 'return' && S.t - (g.retT || 0) > 6) g.at = [g.x, g.z];
+    const P = g.at || G.posts[g.slot];
+    if (d2(g.x, g.z, P[0], P[1]) > 1.0) {
+      if (g.state !== 'return') { g.state = 'return'; g.retT = S.t; thought(S, g, 'Going back to my post at the hall door.'); }
+      moveTo(g, P[0], P[1], G.speed * 0.8, dt, 0.5);
+    } else {
+      if (g.state !== 'post') { g.state = 'post'; thought(S, g, 'Standing guard at the guild hall door. The guild guard fights only enemies that attack the hall.'); }
+      g.face = 0;
+      if (S.t - g.lastHitT > G.healAfter) g.hp = Math.min(g.max, g.hp + G.heal * dt);
+    }
+  }
+}
+// a guard's blow: guild pay, so its kills drop no coin and give no experience; stolen coin still comes back to the treasury
+function guardStrike(S, g, m, dmg) {
+  const took = Math.min(dmg, m.hp); m.hp -= dmg; m.hitT = S.t; S.stats.guardDmg += took;
+  if (!m.wild && !m.targetId) m.targetId = g.id;
+  if (m.raidN != null) { const r = S.raidLog[m.raidN]; if (r.hitT == null) { r.hitT = S.t; r.firstBy = 'the guild guard'; } }
+  if (m.hp > 0) return;
+  m.dead = true; m.gone = true; g.kills++; S.stats.guardKills++;
+  if (m.raidN != null) S.raidLog[m.raidN].killed++;
+  if (m.loot) {
+    if (m.raidN != null) S.raidLog[m.raidN].recovered += m.loot;
+    S.gold += m.loot; S.ledger.recovered += m.loot; fx(S, m.x, m.z, '+' + m.loot + 'g back', 'recover');
+    event(S, `The guild guard brought down a bandit carrying ${m.loot}g of your coin. It is back in the treasury.`, 'good', m.x, m.z); m.loot = 0;
+  }
+  fx(S, m.x, m.z, 'no coin', 'nocoin');
+  note(S, g, `Brought down ${aMob(m)} at the hall.`);
+}
+function hitGuard(S, g, dmg, m) {
+  g.hp -= dmg; g.lastHitT = S.t;
+  if (g.hp > 0) return;
+  g.hp = 0; g.dead = true; g.deadT = S.t; S.stats.guardDeaths++;
+  thought(S, g, `Fell defending the guild hall against ${aMob(m)}.`);
+  event(S, `${g.name} of the guild guard has fallen. A new guard takes the post in ${CFG.guard.replace} s.`, 'bad', g.x, g.z);
+  for (const o of S.mobs) if (o.targetId === g.id) o.targetId = null;
+  S.guardQ.push([S.t + CFG.guard.replace, g.slot]); S.guardQ.sort((a, b) => a[0] - b[0]);
+  S.guards = S.guards.filter(x => !x.dead || x === g);   // the fallen one stays a moment for the view, then goes
+}
+
 // ===== step 7: the merchant caravan, robbing it, the camp tiering up, escort bounties =====
 // the camp whose raiders go for the caravan: the living lair that raids (the bandit camp)
 function robberCamp(S) { for (const L of S.lairs) if (L.alive && L.raidEvery) return L; return null; }
 function tierK(L) { return 1 + CFG.campTier.k * (L && L.tier || 0); }
-function surplusFood(S) { return Math.max(0, Math.floor(S.res.food - CFG.caravan.keep)); }
-function caravanLoaded(C) { return !!C && C.state === 'out' && C.food > 0; }
+function surplusFood(S) { return Math.max(0, Math.floor(S.res.food - CFG.caravan.goods.food.keep)); }
+// step 7b: what the caravan would buy right now, from the goods the guildmaster has switched on
+const GOODS = ['food', 'wood', 'stone'];
+function forSale(S) {
+  const cargo = {}; let units = 0, value = 0;
+  for (const k of GOODS) { const G = CFG.caravan.goods[k], n = S.sell[k] ? Math.max(0, Math.floor(S.res[k] - G.keep)) : 0; cargo[k] = n; units += n; value += n * G.price; }
+  return { cargo, units, value };
+}
+function cargoText(cargo) { const b = GOODS.filter(k => cargo[k] > 0).map(k => `${cargo[k]} ${k}`); return b.length ? b.join(', ').replace(/, ([^,]*)$/, ' and $1') : 'nothing'; }
+function setSell(S, k, on) { if (!(k in S.sell)) return false; S.sell[k] = !!on; return true; }
+// Rawa (30 Sep): an escort bounty never reaches the worth of the goods it guards
+function escortRoom(S, C) { if (!C) return 0; const v = C.state === 'out' ? C.value : forSale(S).value; return Math.max(0, v - 1 - C.bounty); }
+function caravanLoaded(C) { return !!C && C.state === 'out' && C.value > 0; }
 // bandits leave the village alone while a caravan is on the map with goods coming or on board
-function caravanDraw(S) { const C = S.caravan; return !!C && (C.state === 'in' || C.state === 'load' ? surplusFood(S) > 0 : caravanLoaded(C)); }
+function caravanDraw(S) { const C = S.caravan; return !!C && (C.state === 'in' || C.state === 'load' ? forSale(S).value > 0 : caravanLoaded(C)); }
 function escortTakers(S, C) { return C ? S.adv.filter(a => !a.dead && a.state === 'escort' && a.target === C.id) : []; }
 function robbersOf(S, C) { return S.mobs.filter(m => activeMob(m) && m.state === 'rob' && m.cvId === C.id); }
 function spawnCaravan(S) {
   const R0 = CFG.caravan.route, p = R0.in[0];
   const C = { id: ++S.cvn, type: 'caravan', x: p[0], z: p[1], hp: CFG.caravan.hp, max: CFG.caravan.hp, state: 'in', path: R0.in.slice(1).concat([R0.stop]), wi: 0,
-    food: 0, value: 0, bounty: 0, posted: 0, t0: S.t, loadT: 0, hitT: -99, face: -Math.PI / 2, robSent: false, takenT: null, wreckT: 0, why: '', wantMove: false };
-  C.why = surplusFood(S) > 0 ? `Coming to the guild hall to buy your surplus food (${surplusFood(S)} in store beyond what the villagers need).` : 'Coming to the guild hall to buy food. The villagers have none to spare right now.';
+    food: 0, cargo: { food: 0, wood: 0, stone: 0 }, value: 0, bounty: 0, posted: 0, t0: S.t, loadT: 0, hitT: -99, face: -Math.PI / 2, robSent: false, takenT: null, wreckT: 0, why: '', wantMove: false };
+  const fs = forSale(S);
+  C.why = fs.value > 0 ? `Coming to the guild hall to buy your goods: ${cargoText(fs.cargo)} for sale right now (${fs.value}g).` : 'Coming to the guild hall to buy goods. Nothing is for sale right now: switch on a good on the caravan card, or wait for the villagers to bring more.';
   S.caravan = C; S.caravanT = S.t + randIn(S.R, CFG.caravan.every);
-  const log = { id: C.id, t: S.t, food: 0, value: 0, result: null, endT: null, bounty: 0, escorts: 0, robbers: 0, hitT: null };
+  const log = { id: C.id, t: S.t, food: 0, cargo: null, value: 0, result: null, endT: null, bounty: 0, escorts: 0, robbers: 0, hitT: null };
   S.caravanLog.push(log); C.log = log;
-  event(S, 'A merchant caravan is coming along the east road to buy your surplus food.', 'gold', C.x, C.z);
+  event(S, 'A merchant caravan is coming along the east road to buy your goods.', 'gold', C.x, C.z);
   wakeIdle(S);
   return C;
 }
@@ -1810,26 +1915,29 @@ function updateCaravan(S, dt) {
   if (!S.caravan) { if (S.t >= S.caravanT) spawnCaravan(S); return; }
   const C = S.caravan, K = CFG.caravan; C.wantMove = false;
   if (C.state === 'wreck') { C.wreckT += dt; if (C.wreckT > K.wreck) { const took = escortTakers(S, C); S.caravan = null; for (const a of took) decide(S, a); } return; }
-  if (C.state === 'in') { if (caravanMove(C, dt, K.speed)) { C.state = 'load'; C.loadT = 0; C.why = `At the guild hall, loading the surplus food. Leaves by the west road in ${K.load} s.`; event(S, 'The caravan has reached the guild hall and is loading food.', 'info', C.x, C.z); } return; }
+  if (C.state === 'in') { if (caravanMove(C, dt, K.speed)) { C.state = 'load'; C.loadT = 0; C.why = `At the guild hall, loading goods. Leaves by the west road in ${K.load} s.`; event(S, 'The caravan has reached the guild hall and is loading goods.', 'info', C.x, C.z); } return; }
   if (C.state === 'load') {
     C.loadT += dt;
-    C.why = `At the guild hall, loading the surplus food. Leaves by the west road in ${Math.max(1, Math.ceil(K.load - C.loadT))} s.`;
+    C.why = `At the guild hall, loading goods. Leaves by the west road in ${Math.max(1, Math.ceil(K.load - C.loadT))} s.`;
     if (C.loadT < K.load) return;
-    const food = surplusFood(S); S.res.food -= food; S.stats.caravanFood = (S.stats.caravanFood || 0) + food;
-    C.food = food; C.value = food * K.price; C.log.food = food; C.log.value = C.value;
+    const fs = forSale(S);
+    for (const k of GOODS) { S.res[k] -= fs.cargo[k]; S.stats.sold[k] += fs.cargo[k]; }
+    C.cargo = fs.cargo; C.food = fs.units; C.value = fs.value; C.log.food = fs.units; C.log.cargo = fs.cargo; C.log.value = C.value;
+    // the escort bounty stays below the worth of what was actually loaded; anything above comes back
+    if (C.bounty > 0 && C.bounty > Math.max(0, C.value - 1)) { const back = C.bounty - Math.max(0, C.value - 1); C.bounty -= back; S.gold += back; S.ledger.escortRefunds += back; event(S, `The goods are worth only ${C.value}g, so ${back}g of the escort bounty is back in the treasury.`, 'gold', C.x, C.z); }
     C.state = 'out'; C.path = K.route.out; C.wi = 0;
     const L = robberCamp(S);
-    if (food > 0) {
-      C.why = `Carrying ${food} food, worth ${C.value}g to the guild when it reaches the west edge.` + (L ? ` The road passes the ${L.name.toLowerCase()}.` : '');
-      event(S, `The caravan left with ${food} food, worth ${C.value}g if it reaches the west edge.`, 'gold', C.x, C.z);
+    if (C.value > 0) {
+      C.why = `Carrying ${cargoText(C.cargo)}, worth ${C.value}g to the guild when it reaches the west edge.` + (L ? ` The road passes the ${L.name.toLowerCase()}.` : '');
+      event(S, `The caravan left with ${cargoText(C.cargo)}, worth ${C.value}g if it reaches the west edge.`, 'gold', C.x, C.z);
       if (L && !C.robSent) {   // bandits go for the caravan first (v2)
         C.robSent = true; S.stats.robParties++; C.log.robbers = L.raidSize;
         for (let i = 0; i < L.raidSize; i++) { const m = spawnMob(S, L, 'rob'); m.cvId = C.id; }
         event(S, `Bandits from the ${L.name} are going for the caravan!`, 'bad', L.x, L.z);
       }
     } else {
-      C.why = 'Leaving empty: the villagers had no food to spare. Bandits have nothing to rob from it.';
-      event(S, 'The caravan left empty: the villagers need all the food in the store.', 'warn', C.x, C.z);
+      C.why = 'Leaving empty: nothing was for sale. Bandits have nothing to rob from it.';
+      event(S, 'The caravan left empty: nothing was for sale. The caravan card chooses which goods it buys.', 'warn', C.x, C.z);
     }
     return;
   }
@@ -1838,12 +1946,12 @@ function updateCaravan(S, dt) {
   if (C.hp <= 0) { robCaravan(S, C); return; }
   if (halted) { C.why = `Under attack! The driver has stopped the wagon (${pct(C.hp / C.max)} left).`; return; }
   if (caravanMove(C, dt, K.speed)) { deliverCaravan(S, C); return; }
-  if (C.food > 0) C.why = `Carrying ${C.food} food, worth ${C.value}g to the guild when it reaches the west edge.` + (robbersOf(S, C).length ? ' Bandits are coming for it.' : '');
+  if (C.value > 0) C.why = `Carrying ${cargoText(C.cargo)}, worth ${C.value}g to the guild when it reaches the west edge.` + (robbersOf(S, C).length ? ' Bandits are coming for it.' : '');
 }
 function deliverCaravan(S, C) {
   S.gold += C.value; S.ledger.caravans += C.value; C.log.result = 'delivered'; C.log.endT = S.t;
   if (C.value) fx(S, C.x, C.z, '+' + C.value + 'g', 'coin');
-  event(S, C.value ? `The caravan reached the west edge. +${C.value}g to the treasury for ${C.food} food.` : 'The empty caravan left by the west road.', C.value ? 'good' : 'info', C.x, C.z);
+  event(S, C.value ? `The caravan reached the west edge. +${C.value}g to the treasury for ${cargoText(C.cargo)}.` : 'The empty caravan left by the west road.', C.value ? 'good' : 'info', C.x, C.z);
   const took = escortTakers(S, C);
   payEscort(S, C);
   S.caravan = null;
@@ -1868,11 +1976,11 @@ function payEscort(S, C) {
 function robCaravan(S, C) {
   const L = lairById(S, robbersOf(S, C)[0] ? robbersOf(S, C)[0].lairId : (robberCamp(S) || {}).id);
   C.state = 'wreck'; C.wreckT = 0; C.hp = 0; C.log.result = 'robbed'; C.log.endT = S.t;
-  C.why = `Robbed. The bandits took its ${C.food} food.`;
+  C.why = `Robbed. The bandits took its ${cargoText(C.cargo)}.`;
   if (C.bounty > 0) { S.gold += C.bounty; S.ledger.escortRefunds += C.bounty; fx(S, C.x, C.z, '+' + C.bounty + 'g back', 'recover'); }
   const back = C.bounty; C.bounty = 0;
   for (const a of escortTakers(S, C)) thought(S, a, 'The bandits broke the caravan and took its goods. No escort pay.');
-  event(S, `Bandits robbed the caravan and took ${C.food} food (worth ${C.value}g).` + (back ? ` The ${back}g escort bounty is back in the treasury.` : ''), 'bad', C.x, C.z);
+  event(S, `Bandits robbed the caravan and took ${cargoText(C.cargo)} (worth ${C.value}g).` + (back ? ` The ${back}g escort bounty is back in the treasury.` : ''), 'bad', C.x, C.z);
   if (L) {
     L.stolen += C.value; L.robbed++;
     if (L.tier < CFG.campTier.max) tierUp(S, L);
@@ -1892,7 +2000,7 @@ function escortThreat(S, C) {
   const lv = [], bits = [];
   const rob = robbersOf(S, C), L = robberCamp(S);
   if (rob.length) { for (const m of rob) lv.push(m.def.level + CFG.campTier.threat * (lairById(S, m.lairId).tier || 0)); bits.push(rob.length === 1 ? 'a bandit going for it' : `${rob.length} bandits going for it`); }
-  else if (L && !C.robSent && (C.state === 'out' ? C.food > 0 : surplusFood(S) > 0)) {
+  else if (L && !C.robSent && (C.state === 'out' ? C.value > 0 : forSale(S).value > 0)) {
     for (let i = 0; i < L.raidSize; i++) lv.push(CFG.mobs[L.mob].level + CFG.campTier.threat * L.tier);
     bits.push(`the ${L.name.toLowerCase()} will send ${L.raidSize} ${CFG.mobs[L.mob].plural}` + (L.tier ? ` (tier ${L.tier})` : ''));
   }
@@ -1902,7 +2010,7 @@ function escortThreat(S, C) {
   }
   lv.sort((x, y) => y - x);
   const th = lv.length ? lv[0] + 0.35 * (lv.length - 1) : CFG.flag.quiet;
-  return { th, desc: bits.length ? capF(bits.join(' and ')) : (C.state === 'out' && !C.food ? 'Empty, nothing for bandits to rob' : 'No bandits after it') };
+  return { th, desc: bits.length ? capF(bits.join(' and ')) : (C.state === 'out' && !C.value ? 'Empty, nothing for bandits to rob' : 'No bandits after it') };
 }
 function escortPower(S, a, C) {
   if (!isHealer(a)) return power(a);
@@ -1932,7 +2040,8 @@ function escortEnemy(S, C) {
 // player levers: post or raise an escort bounty on the caravan; cancel it while nobody has taken it
 function postEscort(S, amount) {
   const C = S.caravan;
-  if (!C || !(C.state === 'in' || C.state === 'load' || C.state === 'out') || !(amount > 0) || S.gold < amount) return false;
+  if (!C || !(C.state === 'in' || C.state === 'load' || C.state === 'out') || !(amount > 0)) return false;
+  amount = Math.min(amount, escortRoom(S, C)); if (!(amount > 0) || S.gold < amount) return false;
   S.gold -= amount; S.ledger.escorts += amount; C.bounty += amount; C.posted += amount; C.log.bounty = C.posted; S.everPosted = true;
   event(S, `Escort bounty on the caravan is now ${C.bounty}g.`, 'gold', C.x, C.z);
   wakeIdle(S);
@@ -2014,7 +2123,7 @@ function wildBite(S, m, tgt, dt) {
   const d = d2(m.x, m.z, tgt.x, tgt.z);
   if (d > m.def.range) return false;
   m.fighting = true; m.face = Math.atan2(tgt.x - m.x, tgt.z - m.z);
-  if (m.cd <= 0) { m.cd = m.def.cd; m.swingT = S.t; const dmg = m.def.dmg * (0.85 + S.R() * 0.3); if (tgt.type === 'vil') hitVil(S, tgt, dmg, m); else hitAdv(S, tgt, dmg, m); }
+  if (m.cd <= 0) { m.cd = m.def.cd; m.swingT = S.t; const dmg = m.def.dmg * (0.85 + S.R() * 0.3); hitUnit(S, tgt, dmg, m); }
   return true;
 }
 function updateWild(S, m, dt) {
@@ -2093,7 +2202,7 @@ const GM = window.GM = { CFG, newSim, step, postBounty, cancelBounty, buildSite,
   plantFlag, raiseFlag, cancelFlag, soundHorn, hornReady, hornWouldAnswer, flagThreat, evalFlag, flagSpot, flagFor, advInTown,
   setRecruitClass, rawPower, evalFollow, healAmt,
   buildShop, upgradeShop, buildArray, canPay, shopCost, arrayCost, wantBuy, repairCost, condEff, arrayStats,
-  postEscort, cancelEscort, evalEscort, escortThreat, escortTakers, surplusFood, threatOf };
+  postEscort, cancelEscort, evalEscort, escortThreat, escortTakers, surplusFood, threatOf, forSale, setSell, escortRoom, cargoText };
 function stanceOfFlag(S, a, F) {
   if (a.state === 'flag' && a.target === F.id) return ['on', a.onDuty ? 'Standing guard' : 'On the way'];
   if (a.inside) return ['busy', `Resting in the hall (${pct(a.hp / a.max)})`];
@@ -2124,6 +2233,8 @@ const ICON_STYLE = {
   rest: { bg: '#4b4f86', label: 'Resting in the hall' },
   retreat: { bg: '#b0362e', label: 'Retreating' },
   defend: { bg: '#8a5a24', label: 'Defending the village' },
+  gpost: { bg: '#2f4f8a', label: 'Guarding the hall' },
+  gfight: { bg: '#2f4f8a', label: 'Defending the hall' },
   chase: { bg: '#5f7f34', label: 'Chasing a monster' },
   axe: { bg: '#7a5a2e', label: 'Cutting wood' },
   pick: { bg: '#5f6670', label: 'Breaking stone' },
@@ -2219,7 +2330,7 @@ function drawGlyph(g, st, s) {
   } else if (st === 'rest') { // z z
     g.font = `bold ${s * 0.3}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
     g.fillText('z', c - s * 0.08, c + s * 0.06); g.font = `bold ${s * 0.22}px sans-serif`; g.fillText('z', c + s * 0.12, c - s * 0.1);
-  } else if (st === 'defend') { // shield
+  } else if (st === 'defend' || st === 'gpost' || st === 'gfight') { // shield
     g.beginPath(); g.moveTo(c, c - s * 0.24); g.lineTo(c + s * 0.19, c - s * 0.16); g.lineTo(c + s * 0.16, c + s * 0.08);
     g.quadraticCurveTo(c + s * 0.1, c + s * 0.2, c, c + s * 0.26); g.quadraticCurveTo(c - s * 0.1, c + s * 0.2, c - s * 0.16, c + s * 0.08);
     g.lineTo(c - s * 0.19, c - s * 0.16); g.closePath(); g.fill();
@@ -2808,6 +2919,7 @@ function startGame() {
     if (kind === 'shop') { const D = CFG.shops[id]; return toScreen(D.x, 1, D.z); }
     if (kind === 'array') { const A = S.arrays.find(x => x.id === id); return toScreen(A.x, A.built ? 1.4 : 0.3, A.z); }
     if (kind === 'caravan') { const C = S.caravan; return C ? toScreen(C.x, 1, C.z) : null; }
+    if (kind === 'guard') { const g = guardById(S, id); return g ? toScreen(g.x, 1, g.z) : null; }
   };
 
   const den0 = CFG.lairs[0];
@@ -2850,6 +2962,7 @@ function startGame() {
     for (const v of S.vil) if (!v.dead && !v.inside) consider('vil', v.id, v.x, 0.9, v.z, 38);
     for (const m of S.mobs) if (!m.dead && m.state !== 'scatter') consider('mob', m.id, m.x, 0.8, m.z, 38);
     if (S.caravan) consider('caravan', S.caravan.id, S.caravan.x, 1, S.caravan.z, 55);
+    for (const g of S.guards) if (!g.dead) consider('guard', g.id, g.x, 1, g.z, 40);
     if (!best) {
       for (const L of S.lairs) consider('lair', L.id, L.x, 1, L.z, 70);
       consider('hall', 0, 0, 2, 0, 70);
@@ -2915,6 +3028,7 @@ function startGame() {
     if (sel.kind === 'flag' || sel.kind === 'ground') key += '|' + aliveAdv(S).map(a => a.id).join(',') + (sel.kind === 'flag' && !flagById(S, sel.id) ? 'x' : '') + (sel.kind === 'ground' ? sel.x.toFixed(2) + ',' + sel.z.toFixed(2) : '');
     if (sel.kind === 'shop') { const sh = S.shops[sel.id]; key += '|' + sh.level + '|' + aliveAdv(S).map(a => a.id).join(','); }
     if (sel.kind === 'array') key += '|' + (arrayById(S, sel.id).built ? 'b' : 'p') + (S.shops.arrays.built ? 'm' : '');
+    if (sel.kind === 'guard') key += guardById(S, sel.id) ? '' : 'x';
     if (sel.kind === 'caravan') key += '|' + (S.caravan && S.caravan.id === sel.id ? S.caravan.state : 'x') + '|' + aliveAdv(S).map(a => a.id).join(',');
     if (key !== cardKey) { cardKey = key; card.innerHTML = cardHTML(); card.hidden = false; }
     updateCard();
@@ -2958,14 +3072,14 @@ function startGame() {
     return `<header><h2>${D.name}</h2><span class="sub" data-f="slvl"></span>${x}</header>
       <p class="why">${esc(D.does)}</p>
       <h3>For sale</h3><div class="grid">${saleRows(id, sh.level)}</div>
-      ${id === 'arrays' ? `<p class="note">Each array shot costs ${CFG.array.shot}g from the treasury, and arrays fall silent when it is empty. Enemies they kill drop no coin. Tap an array plot around the village to build one.</p>` : ''}
+      ${id === 'arrays' ? `<p class="note">Array shots cost ${SHOT_COST} from the treasury, and arrays fall silent when it is empty. Enemies they kill drop no coin. Tap an array plot around the village to build one.</p>` : ''}
       <div class="grid"><span>Sales</span><span data-f="ssales"></span><span>Tax to treasury</span><span data-f="stax"></span></div>
       ${sh.level < 2 ? `<h3>Upgrade</h3><p class="why">${esc(D.up2)}</p><div class="row"><button class="gold" data-act="sup" data-f="sup">Upgrade for ${costText(D.up)}</button></div><p class="note" data-f="supnote"></p>` : `<p class="note">Fully upgraded. ${esc(D.up2)}</p>`}
       <h3>Adventurers</h3><ul class="stance">${rows}</ul>`;
   }
   function arrayHTML(id) {
     const A = arrayById(S, id), st = arrayStats(S), x = '<button class="x" data-act="close" aria-label="Close">✕</button>';
-    const about = `It fires on its own at monsters and raiders in range. Each shot costs ${CFG.array.shot}g from the treasury, it falls silent when the treasury is empty, and enemies it kills drop no coin.`;
+    const about = `It fires on its own at monsters and raiders in range. Its shots cost ${SHOT_COST} from the treasury, it falls silent when the treasury is empty, and enemies it kills drop no coin.`;
     if (!A.built) return `<header><h2>Array plot</h2><span class="sub">${capF(A.place)} of the village</span>${x}</header>
       <p class="why">A defensive array can stand here. ${about}</p>
       <div class="grid"><span>Range</span><span>${st.range}</span><span>Damage</span><span>${st.dmg} a shot</span><span>Cost</span><span>${costText(arrayCost())}</span></div>
@@ -3011,7 +3125,7 @@ function startGame() {
     }
     const m = A.targetId != null ? mobById(S, A.targetId) : null;
     setF('astate', A.silent ? 'Silent' : m ? 'Firing' : 'Watching');
-    setF('awhy', A.silent ? `The treasury is empty. Every shot costs ${CFG.array.shot}g, so it cannot fire until coin comes in.` : m ? `Shooting at ${aMob(m)}${m.state === 'raid' ? ' raiding the village' : ''}. ${CFG.array.shot}g a shot from the treasury.` : `Nothing hostile within ${st.range}. It costs nothing while it waits.`);
+    setF('awhy', A.silent ? `The treasury is empty. Shots cost ${SHOT_COST}, so it cannot fire until coin comes in.` : m ? `Shooting at ${aMob(m)}${m.state === 'raid' ? ' raiding the village' : ''}. ${SHOT_COST} from the treasury.` : `Nothing hostile within ${st.range}. It costs nothing while it waits.`);
     setF('arange', String(st.range)); setF('admg', `${st.dmg} a shot`);
     setF('ashots', `${A.shots}, costing ${A.spent}g`); setF('akills', `${A.kills} (no coin from array kills)`);
   }
@@ -3023,7 +3137,12 @@ function startGame() {
     return `<header><h2>Merchant caravan</h2><span class="sub" data-f="cvsub"></span>${x}</header>
       <div class="now"><img data-f="icon" alt=""><div><b data-f="state"></b><p data-f="why"></p></div></div>
       <div class="grid"><span>Goods</span><span data-f="goods"></span><span>Wagon</span><span data-f="hpbar"></span><span>Danger</span><span data-f="cth"></span><span>Escort bounty</span><span data-f="bounty"></span></div>
+      <h3>What it buys</h3>
+      ${sellPick()}
+      <p class="note" data-f="sellNote"></p>
+      <h3>Escort</h3>
       <div class="row"><button class="gold" data-act="e25" data-f="e25"></button><button class="gold" data-act="e50" data-f="e50"></button></div>
+      <p class="note" data-f="escNote"></p>
       <div class="row" data-f="ecRow" hidden><button data-act="ecancel" data-f="ecBtn"></button></div>
       <p class="note">Escorts walk beside the wagon to the west edge and fight whatever comes for it, with no retreat, so they ask more than for a destroy bounty. The bounty is shared evenly by the escorts still with it when it arrives, and comes back to you if the caravan is lost. Up to ${CFG.caravan.max} escorts.</p>
       <h3>Escorting</h3><ul class="stance" data-f="escorts"></ul>
@@ -3043,20 +3162,36 @@ function startGame() {
     if (e.b <= 0) return e.need === 0 ? ['maybe', 'Would escort for any bounty'] : ['maybe', `Would escort for about ${e.need}g`];
     return ['no', `Too risky for ${e.b}g, would go for about ${e.need}g`];
   }
+  const sellPick = () => `<div class="clsPick sell">${GOODS.map(k => `<button data-act="sell_${k}" data-f="sell_${k}" aria-pressed="false"><b>${capF(k)}</b><small data-f="sellx_${k}"></small></button>`).join('')}</div>`;
+  function updateSell() {
+    for (const k of GOODS) {
+      const b = card.querySelector(`[data-f="sell_${k}"]`), G = CFG.caravan.goods[k]; if (!b) continue;
+      const on = S.sell[k]; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      const n = Math.max(0, Math.floor(S.res[k]) - G.keep);
+      setF('sellx_' + k, `${on ? 'Selling' : 'Keeping'}, ${G.price}g each. ${G.keep ? `${n} spare (keeps ${G.keep})` : `${n} in store`}`);
+    }
+  }
   function updateCaravanCard() {
     const C = S.caravan;
     if (!C || C.id !== sel.id) { setF('cvnext', `${Math.max(0, Math.ceil(S.caravanT - S.t))} s`); return; }
     const K = CFG.caravan, attacked = C.state === 'out' && S.t - C.hitT < 1.5, ik = attacked ? 'mrob' : 'escort';
     const img = card.querySelector('[data-f="icon"]'); if (img && img.dataset.st !== ik) { img.src = iconURL[ik]; img.dataset.st = ik; }
     setF('cvsub', CV_LABEL[C.state]); setF('state', attacked ? 'Under attack' : CV_LABEL[C.state]); setF('why', C.why);
-    const sf = surplusFood(S);
-    setF('goods', C.state === 'wreck' ? `Taken by the bandits (${C.food} food)` : C.state === 'out' ? (C.food ? `${C.food} food, worth ${C.value}g at the west edge` : 'Empty') :
-      `Will buy ${sf} food (${sf * K.price}g) when it leaves. Villagers keep ${K.keep}, the rest sells at ${K.price}g a food.`);
+    const fs = forSale(S), loading = C.state === 'in' || C.state === 'load';
+    setF('goods', C.state === 'wreck' ? `Taken by the bandits (${cargoText(C.cargo)})` : C.state === 'out' ? (C.value ? `${capF(cargoText(C.cargo))}, worth ${C.value}g at the west edge` : 'Empty') :
+      fs.value ? `Will buy ${cargoText(fs.cargo)} (${fs.value}g) when it leaves the hall.` : 'Nothing for sale yet. Switch on a good below.');
+    for (const k of GOODS) {
+      const b = card.querySelector(`[data-f="sell_${k}"]`), G = K.goods[k]; if (!b) continue;
+    }
+    updateSell();
+    setF('sellNote', loading ? 'Tap a good to sell or keep it. Everything switched on goes on the wagon when it leaves the hall, except the food the villagers need. Your choice stays for the next caravans.' : 'Loaded. Your choice applies to the next caravan.');
+    const room = escortRoom(S, C);
+    setF('escNote', C.state === 'wreck' ? '' : (C.state === 'out' ? C.value : fs.value) <= 0 ? 'Nothing on board worth guarding, so no escort.' : `An escort can't cost as much as the goods it guards: up to ${room + C.bounty}g on this caravan${room <= 0 ? ', and that is reached' : ''}.`);
     setF('hpbar', hpBar(C.hp / C.max) + `<em>${Math.ceil(C.hp)} / ${C.max}</em>`, true);
     const T = escortThreat(S, C); setF('cth', `${T.desc} (threat ${fmt(T.th)})`);
     setF('bounty', C.bounty ? `${C.bounty}g, shared by the escorts when it arrives` : 'None posted');
     const open = C.state !== 'wreck', has = C.bounty > 0;
-    for (const [f, amt] of [['e25', 25], ['e50', 50]]) { const b = card.querySelector(`[data-f="${f}"]`); if (!b) continue; const t = has ? `Raise by ${amt}g` : `Post ${amt}g escort`; if (b.textContent !== t) b.textContent = t; b.disabled = !open || S.gold < amt; }
+    for (const [f, amt] of [['e25', 25], ['e50', 50]]) { const b = card.querySelector(`[data-f="${f}"]`); if (!b) continue; const a2 = Math.min(amt, room), t = a2 <= 0 ? (has ? `Raise by ${amt}g` : `Post ${amt}g escort`) : has ? `Raise by ${a2}g` : `Post ${a2}g escort`; if (b.textContent !== t) b.textContent = t; b.disabled = !open || a2 <= 0 || S.gold < a2; }
     const cr = card.querySelector('[data-f="ecRow"]'), cb = card.querySelector('[data-f="ecBtn"]');
     if (cr && cb) { cr.hidden = !has; const on = escortTakers(S, C), t = !has ? '' : on.length ? `Can't cancel: ${on.map(a => a.name).join(', ').replace(/, ([^,]*)$/, ' and $1')} took it` : `Cancel escort and refund ${C.bounty}g`; if (cb.textContent !== t) cb.textContent = t; cb.disabled = on.length > 0; }
     const g = escortTakers(S, C);
@@ -3112,7 +3247,7 @@ function startGame() {
     if (sel.kind === 'hall') {
       const inside = S.adv.filter(a => a.inside && !a.dead), vin = S.vil.filter(v => v.inside && !v.dead);
       return `<header><h2>Guild hall</h2><span class="sub">Your branch</span><button class="x" data-act="close" aria-label="Close">✕</button></header>
-      <div class="grid"><span>Health</span><span data-f="hhp"></span><span>Adventurers</span><span data-f="count"></span><span>Next recruit</span><span data-f="recruit"></span><span>Villagers</span><span data-f="vcount"></span></div>
+      <div class="grid"><span>Health</span><span data-f="hhp"></span><span>Adventurers</span><span data-f="count"></span><span>Next recruit</span><span data-f="recruit"></span><span>Villagers</span><span data-f="vcount"></span><span>Guild guard</span><span data-f="gcount"></span></div>
       <h3>Who the hall recruits next</h3>
       <div class="clsPick">${CFG.clsOrder.map(k => `<button data-act="cls_${k}" data-f="cls_${k}" aria-pressed="false"><b>${CFG.cls[k].name}</b><small>${CLS_SHORT[k]}</small></button>`).join('')}</div>
       <p class="note" data-f="clsNote"></p>
@@ -3121,10 +3256,11 @@ function startGame() {
       ${flagBlock('hall', 'at the hall door')}
       <h3>Treasury</h3>
       <div class="grid"><span>Tax collected</span><span data-f="tax"></span><span>Deliveries</span><span data-f="del"></span><span>Last 60 s</span><span data-f="tax60"></span><span>Paid in bounties</span><span data-f="paid"></span><span>Spent on building</span><span data-f="built"></span><span>Defend flags</span><span data-f="flagsL"></span><span>Recall horn</span><span data-f="hornL"></span><span>Array shots</span><span data-f="arrL"></span><span>Caravans</span><span data-f="cvL"></span><span>Escort bounties</span><span data-f="escL"></span><span>Stolen</span><span data-f="stolen"></span></div>
-      <p class="why">Gold comes in three ways: ${Math.round(CFG.taxRate * 100)}% tax on every sale at the specialists (blacksmith, alchemist, array master), a small payment for each load villagers bring home, and the merchant caravan, which buys the surplus food at ${CFG.caravan.price}g a food and pays when it reaches the far edge.</p>
+      <p class="why">Gold comes in three ways: ${Math.round(CFG.taxRate * 100)}% tax on every sale at the specialists (blacksmith, alchemist, array master), a small payment for each load villagers bring home, and the merchant caravan, which buys the goods you choose on its card (food ${CFG.caravan.goods.food.price}g, wood ${CFG.caravan.goods.wood.price}g, stone ${CFG.caravan.goods.stone.price}g each) and pays when it reaches the far edge.</p>
       <h3>Stores</h3>
       <div class="grid"><span>Wood</span><span data-f="swood"></span><span>Stone</span><span data-f="sstone"></span><span>Food</span><span data-f="sfood"></span></div>
-      <p class="why">Villagers eat from the food store. If it runs out, they work at half speed. They keep ${CFG.caravan.keep} food; the rest goes on the caravan. Wood and stone, with gold, pay for upgrading the specialists and building arrays.</p>
+      <h3>The caravan buys</h3>${sellPick()}
+      <p class="why">Villagers eat from the food store. If it runs out, they work at half speed. They keep ${CFG.caravan.goods.food.keep} food; the rest can go on the caravan. Wood and stone, with gold, pay for upgrading the specialists and building arrays.</p>
       <h3>Inside the hall</h3><ul class="stance">${inside.map(a => `<li data-adv="${a.id}"><span class="tunic" style="background:${a.color}"></span><span class="nm">${esc(a.name)} <small>${clsLv(a)}</small></span><span class="st" data-f="in${a.id}"></span></li>`).join('')}${vin.map(v => `<li data-vil="${v.id}"><span class="tunic" style="background:${v.color}"></span><span class="nm">${esc(v.name)} <small>villager</small></span><span class="st">Sheltering</span></li>`).join('') || (inside.length ? '' : '<li>Nobody is inside right now.</li>')}</ul>`;
     }
     if (sel.kind === 'vil') {
@@ -3163,6 +3299,14 @@ function startGame() {
     if (sel.kind === 'shop') return shopHTML(sel.id);
     if (sel.kind === 'array') return arrayHTML(sel.id);
     if (sel.kind === 'caravan') return caravanHTML();
+    if (sel.kind === 'guard') {
+      const g = guardById(S, sel.id); if (!g) return `<header><h2>Guild guard</h2><button class="x" data-act="close" aria-label="Close">✕</button></header><p class="why">This guard has fallen. A new one takes the post at the hall door.</p>`;
+      return `<header><span class="tunic" style="background:${g.color}"></span><h2>${esc(g.name)}</h2><span class="sub">Guild guard</span><button class="x" data-act="close" aria-label="Close">✕</button></header>
+      <div class="now"><img data-f="icon" alt=""><div><b data-f="state"></b><p data-f="why"></p></div></div>
+      <div class="grid"><span>Health</span><span data-f="hpbar"></span><span>Brought down</span><span data-f="gkills"></span></div>
+      <p class="note">The guild guard comes with your branch and costs nothing. Its only task is the guild hall: it fights enemies that attack the hall, never leaves the door and never retreats. Its kills drop no coin. A fallen guard is replaced after ${CFG.guard.replace} s.</p>
+      <details><summary>Recent thoughts</summary><ol data-f="log"></ol></details>`;
+    }
     return '';
   }
   const setF = (f, v, html) => { const el = card.querySelector(`[data-f="${f}"]`); if (!el) return; if (html) { if (el.innerHTML !== v) el.innerHTML = v; } else if (el.textContent !== v) el.textContent = v; };
@@ -3258,6 +3402,13 @@ function startGame() {
     } else if (sel.kind === 'shop') updateShopCard(sel.id);
     else if (sel.kind === 'array') updateArrayCard(sel.id);
     else if (sel.kind === 'caravan') updateCaravanCard();
+    else if (sel.kind === 'guard') {
+      const g = guardById(S, sel.id); if (!g) return;
+      const ik = g.state === 'fight' ? 'gfight' : 'gpost', img = card.querySelector('[data-f="icon"]'); if (img && img.dataset.st !== ik) { img.src = iconURL[ik]; img.dataset.st = ik; }
+      setF('state', g.dead ? 'Fallen' : g.state === 'fight' ? 'Defending the hall' + (g.fighting ? ', fighting' : '') : g.state === 'return' ? 'Going back to the door' : 'Guarding the hall');
+      setF('why', g.why); setF('hpbar', hpBar(g.hp / g.max) + `<em>${Math.ceil(g.hp)} / ${g.max}</em>`, true); setF('gkills', String(g.kills));
+      setF('log', g.thoughts.map(t => `<li><time>${clock(t.t)}</time>${esc(t.text)}</li>`).join(''), true);
+    }
     else if (sel.kind === 'hall') {
       const cvs = S.caravanLog.filter(l => l.result === 'delivered' && l.value).length, rob = S.caravanLog.filter(l => l.result === 'robbed').length;
       setF('cvL', S.ledger.caravans || rob ? `${S.ledger.caravans}g from ${cvs} caravan${cvs === 1 ? '' : 's'}${rob ? `, ${rob} robbed` : ''}${S.ledger.goodsBack ? `, ${S.ledger.goodsBack}g of goods back` : ''}` : S.caravan ? 'The first one is on the road' : `The first one comes in about ${Math.max(0, Math.ceil(S.caravanT - S.t))} s`);
@@ -3265,8 +3416,11 @@ function startGame() {
       setF('arrL', S.ledger.arrayShots ? `${S.ledger.arrayShots}g for ${S.stats.arrayShots} shots` : 'None fired');
       setF('hhp', hpBar(S.hall.hp / S.hall.max) + `<em>${Math.ceil(S.hall.hp)} / ${S.hall.max}</em>`, true);
       const vAlive = S.vil.filter(v => !v.dead).length;
+      const gAlive = S.guards.filter(g => !g.dead).length;
+      setF('gcount', `${gAlive} of ${CFG.guard.n} at the door` + (S.guardQ.length ? `, a new guard in ${Math.max(0, Math.ceil(S.guardQ[0][0] - S.t))} s` : '') + '. They fight only enemies that attack the hall.');
       setF('vcount', `${vAlive} of ${CFG.vil.start}` + (S.vilQ.length ? `, next arrives in ${Math.max(0, Math.ceil(S.vilQ[0] - S.t))} s` : ''));
       setF('del', S.ledger.deliveries + 'g'); setF('built', S.ledger.builds + 'g'); setF('stolen', S.ledger.stolen ? `${S.ledger.stolen}g, ${S.ledger.recovered}g recovered` : 'Nothing');
+      updateSell();
       setF('swood', String(S.res.wood)); setF('sstone', String(S.res.stone)); setF('sfood', Math.floor(S.res.food) + (S.hungry ? ', empty: villagers work at half speed' : ''));
       setF('count', `${aliveAdv(S).length} of ${CFG.maxAdv}`);
       const nc = CFG.cls[S.nextCls].name;
@@ -3300,6 +3454,7 @@ function startGame() {
     else if (act === 'horn') { soundHorn(S); updateCard(); }
     else if (act === 'e25' || act === 'e50') { postEscort(S, act === 'e25' ? 25 : 50); updateCard(); }
     else if (act === 'ecancel') { cancelEscort(S); updateCard(); }
+    else if (act && act.startsWith('sell_')) { const k = act.slice(5); setSell(S, k, !S.sell[k]); updateCard(); }
     else if (act && act.startsWith('cls_')) { setRecruitClass(S, act.slice(4)); updateCard(); }
     else if (act === 'openflag') select({ kind: 'flag', id: +b.dataset.id });
     else if (act === 'fr25' || act === 'fr50') { raiseFlag(S, sel.id, act === 'fr25' ? 25 : 50); updateCard(); }
@@ -3380,6 +3535,17 @@ function startGame() {
       if (v.iconKey !== key) { v.icon.material.map = iconTex[key]; v.icon.material.needsUpdate = true; v.iconKey = key; }
       v.icon.scale.set(sc, sc, 1); v.icon.position.y = 2.0 + sc * 0.4;
     }
+    // step 7b: the guild guard (a warrior's figure in the guild's blue, with armour)
+    for (const g of S.guards) {
+      let v = unitV.get('g' + g.id);
+      if (!v) { v = makeAdvV({ cls: 'warrior', color: g.color }); v.gear({ weapon: 1 }); v.band.visible = true; v.band.material = mat('#d6c28a'); unitV.set('g' + g.id, v); }
+      if (g.dead) { v.dying = (v.dying || 0) + dt; v.body.rotation.z = Math.min(1.5, v.dying * 3); v.icon.visible = false; v.hp.set(0, 0, 1, 1, false); continue; }
+      syncUnit(v, g, true, dt, now);
+      const key = (g.state === 'fight' ? 'gfight' : 'gpost') + (g.fighting ? 1 : 0);
+      if (v.iconKey !== key) { v.icon.material.map = iconTex[key]; v.icon.material.needsUpdate = true; v.iconKey = key; }
+      v.icon.scale.set(sc * 0.85, sc * 0.85, 1); v.icon.position.y = 2.0 + sc * 0.4;
+    }
+    for (const [k, v] of unitV) if (typeof k === 'string' && k[0] === 'g' && !S.guards.some(g => 'g' + g.id === k)) { scene.remove(v.g); unitV.delete(k); }
     // villagers
     for (const u of S.vil) {
       let v = unitV.get('v' + u.id);
@@ -3529,6 +3695,7 @@ function startGame() {
       else if (sel.kind === 'flag') { const F = flagById(S, sel.id); if (F) { sx = F.x; sz = F.z; r = 1.3; } else select(null); }
       else if (sel.kind === 'ground') { sx = sel.x; sz = sel.z; r = CFG.flag.guardR / 0.8; }
       else if (sel.kind === 'caravan') { const C = S.caravan; if (C && C.id === sel.id) { sx = C.x; sz = C.z; r = 2.6; } }
+      else if (sel.kind === 'guard') { const g = guardById(S, sel.id); if (g && !g.dead) { sx = g.x; sz = g.z; } }
       if (sx != null) { selRing.visible = true; selRing.position.set(sx, heightAt(sx, sz) + 0.07, sz); selRing.scale.setScalar(r); }
       if (sel && (sel.kind === 'adv' || sel.kind === 'vil' || sel.kind === 'mob')) {
         const a = sel.kind === 'mob' ? mobById(S, sel.id) : unitById(S, sel.id);

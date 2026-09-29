@@ -1,10 +1,11 @@
-// Headless bot harness for Guildmaster (step 7). Usage: node guildmaster_bot_harness.js index.html <scenario> [runs=30] [minutes=10]
+// Headless bot harness for Guildmaster (step 7b). Usage: node guildmaster_bot_harness.js index.html <scenario> [runs=30] [minutes=10]
 // scenarios: campPush normal noBounty farSites cancel | step 4: raidHorn raidFlag normalHorn farFlag flagDanger
 // step 5: mixed mixedPush mixedNoBounty mixedHorn mixedFlag mixedFar twoHealers allArcher allMagician allHealer (the scripted player picks each recruit's class)
 // step 6: noSmith shops arrays arraysAll arraysNormal arraysBroke wardFlag. From step 6 the scripted player builds the blacksmith at 20 s in every
 // scenario except noSmith (only the alchemist comes built), so the older scenarios keep their meaning.
 // step 7: caravanNone caravanEscort caravanEscort25 caravanEscortNormal caravanEscortLate caravanFar. From step 7 a caravan comes in every scenario; the older
 // scenarios never post an escort, so their bandits rob it and the camp tiers up (compare with step 6 with that in mind).
+// step 7b: caravanSellAll caravanSellAllNone (the caravan buys wood and stone as well as food). The guild guard stands in every scenario.
 // Works on older builds too: step 4-6 levers are skipped when the build does not have them, and raids are detected here, not read from the sim.
 const fs = require('fs'), vm = require('vm');
 // file: index.html (the game's own script is taken from its last <script> block) or a plain .js sim
@@ -29,10 +30,11 @@ function run(GM, seed, scen, minutes) {
   let pendingRaid = false, freeAway = 0, cancelled = false, hallFlagId = null, raidOverT = null, farFlagT = null, farFlagDutyT = null, dangerFlagT = null;
   const hornTimes = [];   // [t sounded, t first answerer home]
   const hasFlags = !!GM.plantFlag, hasHorn = !!GM.soundHorn, hasCls = !!GM.setRecruitClass, hasShops = !!GM.buildShop;
-  let healerBad = 0, healerQuest = 0, resErr = 0, brokeT = null, arraysBuiltT = null, tierEnd = null, escortPostedFor = new Set(), escortBad = 0;
+  let healerBad = 0, healerQuest = 0, resErr = 0, brokeT = null, arraysBuiltT = null, tierEnd = null, escortPostedFor = new Set(), escortBad = 0, escortOver = 0;
   const hasCaravan = !!GM.postEscort;
   const Lx = (L, k) => (L[k] || 0);
   const wildKinds = ['deer', 'boar', 'bear'];
+  let hallMin = S.hall.hp;
   for (let i = 0; S.t < T; i++) {
     // ---- scripted player ----
     const den = S.lairs.find(l => l.id === 'den'), camp = S.lairs.find(l => l.id === 'camp');
@@ -86,14 +88,19 @@ function run(GM, seed, scen, minutes) {
       if (scen.broke && brokeT == null && S.t > 200) { brokeT = S.t; if (S.gold >= 1) GM.postBounty(S, 'camp', Math.floor(S.gold)); }
     }
     // step 7: the scripted player posts an escort bounty on each caravan once it is at the hall (or as soon as it has spare coin), and can raise it
+    if (scen.sellAll && GM.setSell && i === 0) { GM.setSell(S, 'wood', true); GM.setSell(S, 'stone', true); }
     if (scen.escort && hasCaravan && S.caravan && !escortPostedFor.has(S.caravan.id) && S.caravan.state === (scen.escortWhen || 'load') && S.caravan.state !== 'wreck') {
-      const want = scen.escort; if (S.gold >= want && GM.surplusFood(S) + (S.caravan.food || 0) > 0 && GM.postEscort(S, want)) escortPostedFor.add(S.caravan.id);
+      const want = scen.escort, worth = GM.forSale ? (S.caravan.state === 'out' ? S.caravan.value : GM.forSale(S).value) : GM.surplusFood(S) + (S.caravan.food || 0);
+      if (S.gold >= want && worth > 0 && GM.postEscort(S, want)) escortPostedFor.add(S.caravan.id);
     }
     for (const a of S.adv) prevState.set(a, a.state);
+    if (S.hall.hp < hallMin) hallMin = S.hall.hp;
     GM.step(S, DT);
     for (const a of S.adv) if (!a.dead && a.cls === 'healer') { if (a.state === 'quest') healerQuest++; if (a.state === 'hunt' || a.state === 'game' || a.state === 'chase') healerBad++; }
     // step 7: an escort always has a caravan to escort; a healer escorts only with someone else on it
     if (hasCaravan) for (const a of S.adv) if (!a.dead && a.state === 'escort') { const C = S.caravan; if (!C || C.id !== a.target) escortBad++; }
+    // step 7b: an escort bounty stays below the worth of the goods once they are loaded
+    if (GM.escortRoom && S.caravan && S.caravan.state === 'out' && S.caravan.bounty > 0 && S.caravan.bounty >= S.caravan.value) escortOver++;
     // ---- step 4 checks: raids, free defence, horn ----
     for (const m of S.mobs) if (!m.dead && m.state === 'raid' && !seenRaider.has(m.id)) {
       seenRaider.add(m.id); pendingRaid = true;
@@ -125,7 +132,7 @@ function run(GM, seed, scen, minutes) {
       if (willing >= 2) campReadyT = S.t;
     }
     if (lvlAt5 == null && S.t >= 300) { const al = S.adv.filter(a => !a.dead); lvlAt5 = al.reduce((s, a) => s + a.lvl, 0) / Math.max(1, al.length); gearAt5 = al.filter(a => a.weapon > 0).length / Math.max(1, al.length); }
-    const units = [...S.adv.filter(a => !a.dead && !a.inside), ...S.vil.filter(v => !v.dead && !v.inside), ...S.mobs.filter(m => !m.dead && m.state !== 'scatter')];
+    const units = [...S.adv.filter(a => !a.dead && !a.inside), ...S.vil.filter(v => !v.dead && !v.inside), ...S.mobs.filter(m => !m.dead && m.state !== 'scatter'), ...(S.guards || []).filter(g => !g.dead)];
     for (const u of units) {
       let k = track.get(u); if (!k) { k = { x: u.x, z: u.z, px: u.x, pz: u.z, walked: 0, t: 0, mv: 0 }; track.set(u, k); }
       k.t += DT; if (u.wantMove && !u.fighting) k.mv += DT; k.walked += d2(u.x, u.z, k.px, k.pz); k.px = u.x; k.pz = u.z;
@@ -145,7 +152,7 @@ function run(GM, seed, scen, minutes) {
       if (hasCaravan && Math.abs(Lx(L, 'escorts') - Lx(L, 'escortRefunds') - onCv - paidOut) > 0.01) potErr++;
       if (Math.abs(exp - S.gold) > 0.01) ledgerErr++;
       // step 6: wood and stone in the store are what was delivered, less what upgrades and arrays used
-      if (S.stats.resSpent) for (const r of ['wood', 'stone']) if (Math.abs(CFG.startRes[r] + S.stats.delivered[r] - S.stats.resSpent[r] - S.res[r]) > 0.01 || S.res[r] < 0) resErr++;
+      if (S.stats.resSpent) for (const r of ['wood', 'stone']) if (Math.abs(CFG.startRes[r] + S.stats.delivered[r] - S.stats.resSpent[r] - (S.stats.sold ? S.stats.sold[r] : 0) - S.res[r]) > 0.01 || S.res[r] < 0) resErr++;
       if (S.flags) { const pots = S.flags.reduce((t, F) => t + F.pot, 0); if (Math.abs(pots - (L.flags - L.flagRefunds - L.wages - L.killPay)) > 0.01 || S.flags.some(F => F.pot < 0)) potErr++; }
       if (S.gold < 0) bad.push('negative gold');
     }
@@ -189,7 +196,9 @@ function run(GM, seed, scen, minutes) {
     cv: S.caravanLog ? S.caravanLog.map(l => ({ food: l.food, value: l.value, result: l.result, bounty: l.bounty, escorts: l.escorts, t: l.t })) : null,
     cvIncome: Lx(Ld, 'caravans'), escPosted: Lx(Ld, 'escorts'), escBack: Lx(Ld, 'escortRefunds'), goodsBack: Lx(Ld, 'goodsBack'), escortTakes: st.escortTakes || 0, escortDeaths: st.escortDeaths || 0,
     escortKills: st.escortKills || 0, tier: S.lairs.find(l => l.id === 'camp').tier || 0, tierUps: st.tierUps || 0, campStolen: S.lairs.find(l => l.id === 'camp').stolen || 0, skippedRaids: st.skippedRaids || 0, escortBad, hungryT: st.hungryT || 0,
-    escortPaid: st.escortPaid || 0
+    escortPaid: st.escortPaid || 0,
+    // step 7b
+    escortOver, sold: st.sold || null, guardKills: st.guardKills || 0, guardDeaths: st.guardDeaths || 0, guardDmg: st.guardDmg || 0, hallMin: hallMin, hallEnd: S.hall.hp
   };
 }
 module.exports = { load, run };
@@ -229,7 +238,10 @@ if (require.main === module) {
     caravanEscort25: { classes: MIX, escort: 25 },                                                                 // same, 25g
     caravanEscortLate: { classes: MIX, escort: 50, escortWhen: 'out' },                                            // posted only once it has left the hall
     caravanEscortNormal: { bounties: true, classes: MIX, escort: 50 },                                             // den, then camp, plus escorts
-    caravanFar: { classes: MIX, escort: 50, farSites: true }                                                       // all six sites (road farm: more food) plus escorts
+    caravanFar: { classes: MIX, escort: 50, farSites: true },                                                      // all six sites (road farm: more food) plus escorts
+    // step 7b
+    caravanSellAll: { classes: MIX, escort: 50, sellAll: true },                                                   // the caravan buys food, wood and stone; 50g escorts
+    caravanSellAllNone: { classes: MIX, sellAll: true }                                                            // same, no escorts
   };
   const GM = load(file), rs = [];
   const t0 = Date.now();
@@ -278,9 +290,10 @@ if (require.main === module) {
     const cvs = all(r => r.cv), loaded = cvs.filter(c => c.food > 0), del = loaded.filter(c => c.result === 'delivered'), robbed = cvs.filter(c => c.result === 'robbed');
     const esc = loaded.filter(c => c.bounty > 0), escDel = esc.filter(c => c.result === 'delivered'), noEsc = loaded.filter(c => !c.bounty), noEscDel = noEsc.filter(c => c.result === 'delivered');
     const tiers = {}; for (const r of rs) tiers[r.tier] = (tiers[r.tier] || 0) + 1;
-    console.log(`CARAVAN ${r1(cvs.length / rs.length)}/run (first at median ${r1(mdn(rs.map(r => r.cv[0] && r.cv[0].t).filter(x => x != null)))} s), loaded ${loaded.length} with median ${r1(mdn(loaded.map(c => c.food)))} food (${r1(mdn(loaded.map(c => c.value)))}g), empty ${cvs.filter(c => c.result && !c.food).length} | delivered ${del.length}/${loaded.length}, robbed ${robbed.length} | with an escort bounty ${escDel.length}/${esc.length} delivered, without ${noEscDel.length}/${noEsc.length}` +
+    console.log(`CARAVAN ${r1(cvs.length / rs.length)}/run (first at median ${r1(mdn(rs.map(r => r.cv[0] && r.cv[0].t).filter(x => x != null)))} s), loaded ${loaded.length} with median ${r1(mdn(loaded.map(c => c.food)))} goods (${r1(mdn(loaded.map(c => c.value)))}g), empty ${cvs.filter(c => c.result && !c.food).length} | delivered ${del.length}/${loaded.length}, robbed ${robbed.length} | with an escort bounty ${escDel.length}/${esc.length} delivered, without ${noEscDel.length}/${noEsc.length}` +
       ` | income ${r1(avg(r => r.cvIncome))}g/run, escort posted ${r1(avg(r => r.escPosted))}g, refunded ${r1(avg(r => r.escBack))}g, paid ${r1(avg(r => r.escortPaid))}g, escorts per delivered escorted caravan ${r1(escDel.reduce((t, c) => t + c.escorts, 0) / Math.max(1, escDel.length))}, takes ${r1(avg(r => r.escortTakes))}/run, deaths on escort ${r1(avg(r => r.escortDeaths))}/run, kills ${r1(avg(r => r.escortKills))}/run` +
       ` | camp tier at end ${Object.entries(tiers).map(([k, n]) => 't' + k + ' ' + n).join(', ')}, tier-ups ${r1(avg(r => r.tierUps))}/run, stolen ${r1(avg(r => r.campStolen))}g/run, goods back ${r1(avg(r => r.goodsBack))}g/run | village raids skipped for a caravan ${r1(avg(r => r.skippedRaids))}/run | hungry ${r1(avg(r => r.hungryT))} s/run`);
   }
-  console.log(`CHECKS stuck ${stuck.length}${stuck.length ? ' e.g. ' + stuck.slice(0, 4).join(' | ') : ''}  no-reason ${noWhy.length}${noWhy.length ? ' ' + noWhy.slice(0, 5).join(',') : ''}  ledger errors ${rs.reduce((s, r) => s + r.ledgerErr, 0)}  pot errors ${rs.reduce((s, r) => s + r.potErr, 0)}  horn paid more than answered ${cnt(r => r.hornPays > r.hornAnswers)}  store errors ${rs.reduce((s, r) => s + (r.resErr || 0), 0)}  escort without caravan ${rs.reduce((s, r) => s + (r.escortBad || 0), 0)}  other ${bad.join(', ') || 'none'}`);
+  if (rs[0].sold) console.log(`STEP7B sold/run: ${['food', 'wood', 'stone'].map(k => k + ' ' + r1(avg(r => r.sold[k]))).join(', ')} | guild guard: kills ${r1(avg(r => r.guardKills))}/run, deaths ${r1(avg(r => r.guardDeaths))}/run, share of all damage ${r1(100 * rs.reduce((t, r) => t + r.guardDmg, 0) / Math.max(1, rs.reduce((t, r) => t + r.guardDmg + r.advDmg + r.arrayDmg, 0)))}% | hall lowest ${r1(avg(r => r.hallMin))} of 600 (worst ${r1(Math.min(...rs.map(r => r.hallMin)))}), at the end ${r1(avg(r => r.hallEnd))}`);
+  console.log(`CHECKS stuck ${stuck.length}${stuck.length ? ' e.g. ' + stuck.slice(0, 4).join(' | ') : ''}  no-reason ${noWhy.length}${noWhy.length ? ' ' + noWhy.slice(0, 5).join(',') : ''}  ledger errors ${rs.reduce((s, r) => s + r.ledgerErr, 0)}  pot errors ${rs.reduce((s, r) => s + r.potErr, 0)}  horn paid more than answered ${cnt(r => r.hornPays > r.hornAnswers)}  store errors ${rs.reduce((s, r) => s + (r.resErr || 0), 0)}  escort without caravan ${rs.reduce((s, r) => s + (r.escortBad || 0), 0)}  escort worth the goods or more ${rs.reduce((s, r) => s + (r.escortOver || 0), 0)}  other ${bad.join(', ') || 'none'}`);
 }
