@@ -43,8 +43,9 @@ and what to confirm in `MIGRATION.md`, section 7, and in 1e below. The sim is un
 as built and waves are sized past it; a stronger bandit camp so a sensible player clears the map at about 9–12 min; wave attackers
 stay at the hall until it or they fall; one new enemy kind (a brute); waves every 2 min, growing by 2; arrays required from about wave 3;
 a 45 s warning; waves march straight to the hall; the camp holds its village raids during a wave. Details under Threats, **Waves (v3.8)**.
-**Step 8 built 5 Nov 2026** (see 1f). The build choices are in 1e to confirm. One result needs Rawa's decision: arrays help but are not
-strictly required (1e, first item).
+**Step 8 built 5 Nov 2026** (see 1f). The build choices are in 1e to confirm.
+**v3.9 decided 5 Nov 2026** (Rawa, on the step 8 result that a player could win without arrays): make waves harder, so skipping arrays rarely
+wins. **Step 8b built 5 Nov 2026:** stronger waves alone did not do this, so waves now come every 95 s, not every 2 min (1e, to confirm; 1f).
 **Moving to a new chat:** see `MIGRATION.md` (where things stand, Claude Code or a claude.ai chat, tools, a map of `index.html`).
 **From step 6 the build moves to Claude Code.** Keep this file, `index.html` (the step 5 build) and
 `guildmaster_bot_harness.js` in one project folder, with `CLAUDE.md` pointing to them. The last claude.ai
@@ -314,7 +315,7 @@ build link, for reference: https://claude.ai/artifact/HpUoHyAbPg8UaJdLb22gbF
     shows they are too weak (about half a guard's damage today, and each covers only its own side of the hall).
   - **The camp holds its village raids** while a wave is warned or on the map, as it does for a caravan. Robbers still go for caravans.
   - **Pay:** no new bounty kind. In-town free defence, the horn and defend flags apply as they stand.
-  - *(Step 8 as built: the numbers that differ from the above are in 1e, step 8. Results are in 1f.)*
+  - *(Step 8b as built: waves come every 95 s, not every 2 min. This and the other numbers that differ from the above are in 1e, step 8. Results are in 1f.)*
 - **Guild guard:** the starting squad. It defends the village centre on its own and
   cannot be commanded. It does not retreat *(v3)*. *(v3.7, Rawa 30 Sep)* Built in step 7b. Its only task is the guild hall: it
   fights enemies that attack the hall, and nothing else.
@@ -396,8 +397,8 @@ Which number the leaderboard shows is open (see 1e).
 7b. ~~*(v3.7)* The caravan buys the goods the player chooses; escort capped below the goods' worth; the guild guard; slow hall
     self-repair; cheaper array shots.~~ Done 30 Sep.
 8. ~~Scouted waves that escalate over time. *(v3.1)* Raiders damage the hall and take treasury
-   coin; waves tuned so arrays are required. *(v3.8)* Includes wood at 1g and the stronger camp.~~ Done 5 Nov. Arrays help but are
-   not strictly required: see 1e, for Rawa to decide.
+   coin; waves tuned so arrays are required. *(v3.8)* Includes wood at 1g and the stronger camp.~~ Done 5 Nov. *(v3.9)* Step 8b: waves
+   made harder so that skipping arrays rarely wins. Done 5 Nov.
 9. *(v3)* Missions: the tutorial village, the coin score to guild headquarters, and a fresh
    start in the next village. *(v3.5)* Different villages (layout, lairs, sites, caravan route,
    starting coin, wave timing), and a headquarters letter before each village and a reply after
@@ -419,21 +420,15 @@ Which number the leaderboard shows is open (see 1e).
 - Each new village: a new map layout, or the same map with new threat positions?
 - Recruit cost per class, and a cap on how many adventurers the guild can hold.
 - Whether more houses mean more villagers.
-- *(step 8, for Rawa to decide)* **Are arrays required enough?** v3.8 asks for arrays to be required from about wave 3, with the hall falling
-  by about wave 3 without them. Measured (30 runs, played out to 20 min):
-  - A player who neither answers waves nor builds arrays loses at wave 3 or 4. That part holds.
-  - A player who answers every wave with the horn and a hall flag and rushes the camp, without arrays, still wins 19/30 (median 9.6 min) with
-    about 287g left. The same player with arrays wins 24/30 (median 10.7 min) with about 12g left (the scripted player puts all spare coin
-    into arrays, so a thriftier player would keep more).
-  - So arrays are a safety choice: they raise the win rate but cost time and score. Holding without clearing is different: there, arrays and the
-    horn buy one wave (hall falls at wave 6, about 15.1 min, against wave 5, about 13.1 min).
-  - Options: keep this and judge it on the phone (Claude's suggestion, since the scripted player answers every wave perfectly, which a
-    person will not), or make waves 3 and 4 hit harder so that skipping arrays rarely wins.
+- *(step 8b, to confirm)* **Waves every 95 s, not every 2 min.** Rawa chose harder waves so that skipping arrays rarely wins (v3.9). Eighteen settings
+  were tried with the bot. Stronger waves, more brutes, stronger or cheaper arrays and a slower camp did not separate the two players; both lost about equally. The
+  reason is the race: without arrays a player clears the camp sooner, so many finish before wave 4 arrives and stronger waves never reach them. A faster
+  rhythm brings wave 4 before the camp can fall. Measured: 22/30 wins with arrays, 7/30 without (1f). To go back, set `CFG.wave.every` and `first`.
 - *(step 8, to confirm)* Choices made in the build:
   - **Numbers that went past the v3.8 decisions, because adventurers with the horn held every wave and arrays hardly mattered:** waves also grow
-    in strength, +40% strength (health, damage, coin, experience) per wave from wave 3 (v3.8 had this only past the 20-enemy cap, at +15% a wave); brutes are 2 in wave 3
+    in strength, +30% strength (health, damage, coin, experience) per wave from wave 3 (v3.8 had this only past the 20-enemy cap, at +15% a wave; step 8 used +40%, lowered in 8b); brutes are 2 in wave 3
     and one more each wave after; array damage 18–26 every 1.3 s (was 9–13 every 1.6 s, about 2.5× the damage per second, same cost).
-  - First warning at 220 s, so the first wave appears at the map edge at 4 min 25 s, and the next every 2 min.
+  - First warning at 190 s, so the first wave appears at the map edge at 3 min 55 s (4 min 25 s in step 8), and the next every 95 s.
   - Camp: level 6, 900 health, 6 guards (was 4, 420, 4). Clears at a median 10.7 min with no waves.
   - Brute: level 5, 300 health, 14 damage (24 to the hall), slow (1.9), 60 experience, 18–28 coin.
   - Apart from brutes, one enemy in three is a wolf and the rest are bandits. Wolves hit the hall but steal nothing. Wave enemies only turn on adventurers and guards within 3.5 units or
@@ -877,6 +872,31 @@ Other results:
 - **The camp holds raids:** about 2–8 village raids a run are held for a wave.
 - **Arrays required?** Only partly; see 1e, first step 8 item.
 
+**Step 8b, harder waves (v3.9).** Built 5 Nov, in `builds/step8b.html`. First warning 190 s (was 220), a wave every 95 s (was 120), +30% strength a wave from wave 3 (was +40%).
+Checks clean in all 46 scenarios. Tested in the browser pane at 390×844 and 844×390: banner, a real tap on it, hints; no console errors, no sideways scroll. Draw calls: 140
+quiet, 229 with wave 1 on screen, 266 at the highest seen. That is more than the 155 noted above, which was one view. **Not measured: frame rate on a phone.**
+
+Who survives (30 runs, played out to 20 min; step 8 in brackets):
+
+| Scripted player | Won | Median win | Hall fell | Median fall | At wave | Coin at end (all runs) |
+|---|---|---|---|---|---|---|
+| `waveFull`: arrays, horn, flag, camp | 22 (24) | 10.0 min (10.7) | 8 (6) | 11.1 min | 5 | 3g (12g) |
+| `waveFullNoArrays`: horn, flag, camp | 7 (19) | 9.3 min (9.6) | 23 (11) | 9.6 min | 4 | 213g (287g) |
+| `waveCamp`: camp only, ignores waves | 7 (15) | 8.5 min (8.5) | 23 (15) | 9.5 min | 4 | 341g (380g) |
+| `waveNoArrays`: no bounties, no answer | 0 (0) | | 30 (30) | 9.4 min | 4 | 508g (553g) |
+| `waveNoArraysHorn`: no bounties, horn, flag | 0 (0) | | 30 (30) | 11.2 min | 5 | 403g (436g) |
+| `waveDefend`: no bounties, arrays, horn, flag | 0 (0) | | 30 (30) | 12.7 min | 6 | 49g (83g) |
+
+Step 8 against step 8b (older scripted players, 30 runs, 12 min, won and lost): campPush 1 and 26, now 2 and 28; normal 1 and 21, now 0 and 29; mixed 1 and 21, now 0 and 30;
+mixedPush 15 and 12, now 11 and 19; shops 10 and 14, now 13 and 17; arraysNormal 11 and 13, now 12 and 18; caravanEscortNormal 15 and 14, now 7 and 23; mixedHorn 0 and 0, now 0 and 9.
+`waveOff` is unchanged (21/30 at 10.7 min), as it has no waves.
+
+- **Arrays now matter:** from wave 4 they do 25–49% of the damage in `waveFull`, and wins go from 7/30 to 22/30 with them.
+- **Still possible without arrays:** 7/30, by clearing the camp before wave 4 or 5 brings the hall down. Those wins are a fast, risky route, not the normal one.
+- **Coin:** the array player ends with very little (median 3g), because the scripted player spends all spare coin on arrays. A person would likely keep more. Check the score feels right in step 9.
+- **Treasury after a wave** still goes both ways for a player who answers waves. Arrays fall silent for lack of coin for at most 10.3 s a run. Tier-2 gear: never bought (0/30 in all 46).
+- **Stalling** still does not pay: six arrays, horn and flag fall at wave 6 or 7 (median 12.8 min), with 0g.
+
 **Tuning notes for the content pass**
 - First success is fast: the den falls about 23 s after posting. *(v3)* Keep that for the
   tutorial village. From mission 2, target about 2 min.
@@ -910,7 +930,7 @@ Other results:
   run shared by 2–3 adventurers. Recheck after step 8.)*
 - *(step 6)* The blacksmith now costs the player 70g, which delays the camp bounty when sites are built early (`mixedFar`
   5.8 min, was 4.5).
-- *(step 8)* Tier-2 gear is still almost never bought, even in 20-minute games (none in 45 of 46 scenarios, 1 run of 30 in the shops scenario). Adventurers earn more, but spend it on potions,
+- *(step 8)* Tier-2 gear is still almost never bought, even in 20-minute games (once in all of step 8, never in 8b). Adventurers earn more, but spend it on potions,
   repairs and tier-1 armour. Worth a look in the tuning pass (step 10).
 - *(step 5)* A healer makes the camp fall in under 2 min from mission start. Keep for the tutorial village;
   from mission 2 the target is about 2 min for the first success.

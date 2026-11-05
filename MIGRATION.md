@@ -11,19 +11,19 @@ Written 5 Nov 2026, at the end of the session that built steps 7 and 7b and the 
 ## 1. Where things stand
 
 - **Repository:** `https://github.com/ranggarepublic01/Guildmaster` (private), default branch `main`.
-- **On `main`:** steps 1–8, 7b, the graphics pass, this file and the test tools.
+- **On `main`:** steps 1–8, 7b, 8b, the graphics pass, this file and the test tools.
 - **Build order (brief, 1d):**
-  - Steps 1–8 are done, plus 7b (Rawa's v3.7 decisions) and the graphics pass.
+  - Steps 1–8 are done, plus 7b (Rawa's v3.7 decisions), 8b (harder waves, v3.9) and the graphics pass.
   - **Next: step 9**, missions: the tutorial village, the coin score, a fresh start in the next village.
-- **Latest build copy:** `builds/step8.html`, the same as `index.html`.
-- **Not yet done by Rawa:** the Android phone test of steps 7, 7b, 8 and the new graphics.
+- **Latest build copy:** `builds/step8b.html`, the same as `index.html`.
+- **Not yet done by Rawa:** the Android phone test of steps 7, 7b, 8, 8b and the new graphics.
 
 ### Before step 9 (open)
 
-1. **Are arrays required enough?** A player who answers every wave with the horn and a flag can still win without arrays (19/30, against 24/30 with them, and with
-   more coin left). See the brief, 1e, first step 8 item.
+1. **Waves every 95 s:** Rawa asked for harder waves so that skipping arrays rarely wins. Only a faster rhythm did this (22/30 wins with arrays, 7/30 without), and it replaces
+   the decided 2 minutes. To confirm. See the brief, 1e, first step 8b item.
 2. **Step 8's build choices** (brief, 1e): waves that grow stronger from wave 3, more brutes, stronger arrays. These went past the v3.8 decisions.
-3. **The phone test:** the look, the frame rate, and a wave on screen (155 draw calls, was 90–120). Until then waves stay at about 20 enemies at most.
+3. **The phone test:** the look, the frame rate, and a wave on screen (up to 266 draw calls seen, was 90–120). Until then waves stay at about 20 enemies at most.
 
 ---
 
