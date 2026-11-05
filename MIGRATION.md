@@ -4,32 +4,26 @@ How to carry on this project in a new chat, either a **Claude Code** session or 
 brief and points into it. The brief (`playgama_game_brief_guildmaster_v3_6.md`) stays the single source of truth for the
 design. This file covers where the work stands and how the work is run.
 
-Written 5 Nov 2026, at the end of the session that built steps 7 and 7b and the graphics pass.
+Written 5 Nov 2026, at the end of the session that built steps 7 and 7b and the graphics pass. Updated 5 Nov after step 8.
 
 ---
 
 ## 1. Where things stand
 
 - **Repository:** `https://github.com/ranggarepublic01/Guildmaster` (private), default branch `main`.
-- **Merged into `main`:** steps 1–7 (pull request #1).
-- **Not merged yet:** pull request #2 on branch `claude/pensive-keller-7j4tdu`.
-  - It holds step 7b, the graphics pass, this file and the test tools.
-  - **Merge it before starting the new chat**, so the new chat starts from `main` with everything in it.
+- **On `main`:** steps 1–8, 7b, the graphics pass, this file and the test tools.
 - **Build order (brief, 1d):**
-  - Steps 1–7 are done, plus 7b (Rawa's v3.7 decisions) and the graphics pass.
-  - **Next: step 8**, scouted waves that escalate. Raiders damage the hall, and waves are tuned so arrays are required.
-- **Latest build copy:** `builds/step7b.html`. `index.html` is the same plus the graphics pass.
-- **Not yet done by Rawa:** the Android phone test of steps 7, 7b and the new graphics.
+  - Steps 1–8 are done, plus 7b (Rawa's v3.7 decisions) and the graphics pass.
+  - **Next: step 9**, missions: the tutorial village, the coin score, a fresh start in the next village.
+- **Latest build copy:** `builds/step8.html`, the same as `index.html`.
+- **Not yet done by Rawa:** the Android phone test of steps 7, 7b, 8 and the new graphics.
 
-### Questions waiting for Rawa before step 8 (brief, 1e)
+### Before step 9 (open)
 
-1. **Wood swamps the caravan.**
-   - About 240 wood is sold a run, nearly tripling caravan pay (689g a run against 270g for food alone).
-   - Options: wood at 1g, a cap per caravan, or leave it for waves and upgrades to use up.
-2. **The guild guard stops nearly every raid.**
-   - Raids reached the hall 0–2 times per 30 runs.
-   - Keep the guard as it is, for step 8's waves to be balanced against it?
-3. **The graphics pass** (section 5 below): confirm the look on the phone, especially the frame rate with shadows on.
+1. **Are arrays required enough?** A player who answers every wave with the horn and a flag can still win without arrays (19/30, against 24/30 with them, and with
+   more coin left). See the brief, 1e, first step 8 item.
+2. **Step 8's build choices** (brief, 1e): waves that grow stronger from wave 3, more brutes, stronger arrays. These went past the v3.8 decisions.
+3. **The phone test:** the look, the frame rate, and a wave on screen (155 draw calls, was 90–120). Until then waves stay at about 20 enemies at most.
 
 ---
 
@@ -43,19 +37,20 @@ Claude Code can run the bot harness, the headless browser tests, git and pull re
 3. A first message that works:
 
    > Read CLAUDE.md, MIGRATION.md and the brief. Then answer/confirm the open questions with me (MIGRATION.md section 1)
-   > before starting step 8. Propose step 8's design points as questions first, as in steps 6 and 7.
+   > before starting step 9. Propose step 9's design points as questions first, as in steps 6, 7 and 8.
 
 **Cloud session notes (all learned the hard way):**
 - Node is on PATH, and Playwright with Chromium is installed globally (`npm root -g`). Don't run `playwright install`.
 - The scratchpad folder is wiped when the session's machine restarts, so keep test scripts in `tools/` (now in the repo).
-- 4 cores: run scenarios in parallel with `xargs -P4`. All 37 scenarios × 30 runs × 12 min take about 20 minutes, and both
-  builds (for a comparison) about 40.
+- 4 cores: run scenarios in parallel with `xargs -P4`. The 37 older scenarios took about 20 minutes before waves; step 8's 46, with both builds, took 75 minutes on 8 cores, so expect
+  longer on 4.
 - A command that matches its own command line, like `pkill -f guildmaster_bot_harness`, kills the shell running it. Kill
   harness processes by PID instead.
 - Commit and push before long waits. Unpushed work is lost if the session ends.
 
 **On Rawa's PC:** Node is a portable copy at `%LOCALAPPDATA%\Programs\node\node-v24.19.0-win-x64\node.exe` (not on PATH).
-The Claude Code browser pane opens the game through `tools/serve.js` (see `.claude/launch.json`).
+The Claude Code browser pane opens the game through `tools/serve.js` (see `.claude/launch.json`). Playwright is not installed there, so `tools/ui_test.js`
+does not run; test in the browser pane with real clicks (brief, section 6).
 
 ---
 
@@ -74,14 +69,15 @@ decide open questions and draft brief changes. Then bring the decisions back to 
 2. A first message that works:
 
    > This is the Guildmaster project. Read MIGRATION.md and the brief. Let's settle the open questions in MIGRATION.md
-   > section 1, then plan step 8 as questions for me, without writing code. At the end, write the brief changes as a list
+   > section 1, then plan step 9 as questions for me, without writing code. At the end, write the brief changes as a list
    > I can give to Claude Code.
 
 3. When decisions are made, open a Claude Code session (Option A). Paste the list in and ask it to build, test and update
    the brief.
 
 The older claude.ai artifact build link in the brief (step 5) is out of date. To play the current build on a phone,
-ask Claude Code to publish `index.html` as a private claude.ai link.
+copy `index.html` to the phone and open it in Chrome. It is one self-contained file. (Publishing it as a claude.ai link needs a session
+to read the whole page first, and the game code alone is about 160,000 tokens, too much for one session on 5 Nov.)
 
 ---
 
@@ -139,7 +135,8 @@ The page exposes `window.GM` for tests:
 | 1159 | Ward stones and arrays |
 | 1298 / 1379 | Monsters, and lairs (spawning, wolf hunts, raids) |
 | 1439 / 1507 | Villagers |
-| 1618 | `step(S, dt)`: one tick of everything |
+| 1647 | `step(S, dt)`: one tick of everything |
+| 1676 | Waves (step 8): `waveMake`, `spawnWave`, `updateWaves`; numbers in `CFG.wave` |
 | 1645 | Player levers: bounties, cancel |
 | 1666 | Defend flags and the recall horn |
 | 1793 | Guild guard (step 7b) |

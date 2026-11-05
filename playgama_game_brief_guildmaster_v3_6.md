@@ -39,6 +39,12 @@ intended; the hall repairs slowly on its own until a paid repair by ad (platform
 defends the hall; arrays cost less per shot (1g a shot kept for a later hard mode). **Step 7b built 30 Sep 2026** (see 1f).
 **Graphics pass 5 Nov 2026** (Rawa: bright toy-like look; ground, nature, lighting, buildings, units; best look always). Details
 and what to confirm in `MIGRATION.md`, section 7, and in 1e below. The sim is unchanged.
+**v3.8 decided 5 Nov 2026** (Rawa, on the open questions and the design points before step 8): wood sells at 1g; the guild guard stays
+as built and waves are sized past it; a stronger bandit camp so a sensible player clears the map at about 9–12 min; wave attackers
+stay at the hall until it or they fall; one new enemy kind (a brute); waves every 2 min, growing by 2; arrays required from about wave 3;
+a 45 s warning; waves march straight to the hall; the camp holds its village raids during a wave. Details under Threats, **Waves (v3.8)**.
+**Step 8 built 5 Nov 2026** (see 1f). The build choices are in 1e to confirm. One result needs Rawa's decision: arrays help but are not
+strictly required (1e, first item).
 **Moving to a new chat:** see `MIGRATION.md` (where things stand, Claude Code or a claude.ai chat, tools, a map of `index.html`).
 **From step 6 the build moves to Claude Code.** Keep this file, `index.html` (the step 5 build) and
 `guildmaster_bot_harness.js` in one project folder, with `CLAUDE.md` pointing to them. The last claude.ai
@@ -289,6 +295,26 @@ build link, for reference: https://claude.ai/artifact/HpUoHyAbPg8UaJdLb22gbF
 - *(v3.1)* **What a wave costs:** defence bounties, array shots, and raiders who reach the
   guild hall. Those raiders damage the hall and take coin from the treasury, even when it
   does not fall. Waves are tuned so adventurers alone cannot hold them; arrays are needed.
+- *(v3.8, Rawa 5 Nov)* **Waves, as decided before step 8.** Numbers are starting values, tuned with the bot:
+  - **Why the camp gets stronger:** the scripted player cleared the map at a median 4.3 min, at about level 2, so a player could win
+    having met one wave or none. The camp (health, guards, threat) is raised so a sensible player clears the map at about 9–12 min, with
+    the first wave warning near minute 4. The win rule does not change. The tutorial village can keep a fast camp (step 9).
+  - **Where from:** a random map edge (v3). A scout's warning 45 s ahead, as a banner with a countdown and an arrow to the direction,
+    then about 25 s of walking in.
+  - **Rhythm:** every 2 minutes, about 4, 6, 8, 10 enemies, so about 4–5 waves in a 10–12 min mission. At most about 20 enemies until the
+    frame rate on Rawa's Android is known; past the cap, waves grow in strength instead.
+  - **Who:** wolves and bandits, and from wave 3 a new **brute**: slow, tough, hits the hall hard, with its own model and tap card.
+  - **On the way:** they march straight to the hall and fight only whoever attacks or blocks them. Villagers flee as now. Sites take no
+    damage. Wave enemies ignore the caravan (only camp bandits rob it).
+  - **At the hall:** they stay and keep hitting until the hall or they fall, stealing 4g a blow. Killing one returns the coin it holds.
+    (Found before the build: a raider leaves after 20g, which is 5 blows and 45 damage, so 14 or more unopposed raiders were needed
+    to bring down the 600-health hall.) Small camp raids keep the grab-and-run rule.
+  - **Arrays required from about wave 3:** waves 1 and 2 can be held without arrays, at a cost in hall health and coin; without arrays the
+    hall falls by about wave 3. A hint after wave 1 points to the quarry and the array master. Array power may be raised if the bot
+    shows they are too weak (about half a guard's damage today, and each covers only its own side of the hall).
+  - **The camp holds its village raids** while a wave is warned or on the map, as it does for a caravan. Robbers still go for caravans.
+  - **Pay:** no new bounty kind. In-town free defence, the horn and defend flags apply as they stand.
+  - *(Step 8 as built: the numbers that differ from the above are in 1e, step 8. Results are in 1f.)*
 - **Guild guard:** the starting squad. It defends the village centre on its own and
   cannot be commanded. It does not retreat *(v3)*. *(v3.7, Rawa 30 Sep)* Built in step 7b. Its only task is the guild hall: it
   fights enemies that attack the hall, and nothing else.
@@ -369,8 +395,9 @@ Which number the leaderboard shows is open (see 1e).
 7. ~~Caravan every 3–5 min, bandits' caravan targeting and camp tier-up, and escort bounties.~~ Done 29 Sep.
 7b. ~~*(v3.7)* The caravan buys the goods the player chooses; escort capped below the goods' worth; the guild guard; slow hall
     self-repair; cheaper array shots.~~ Done 30 Sep.
-8. Scouted waves that escalate over time. *(v3.1)* Raiders damage the hall and take treasury
-   coin; waves tuned so arrays are required.
+8. ~~Scouted waves that escalate over time. *(v3.1)* Raiders damage the hall and take treasury
+   coin; waves tuned so arrays are required. *(v3.8)* Includes wood at 1g and the stronger camp.~~ Done 5 Nov. Arrays help but are
+   not strictly required: see 1e, for Rawa to decide.
 9. *(v3)* Missions: the tutorial village, the coin score to guild headquarters, and a fresh
    start in the next village. *(v3.5)* Different villages (layout, lairs, sites, caravan route,
    starting coin, wave timing), and a headquarters letter before each village and a reply after
@@ -392,6 +419,30 @@ Which number the leaderboard shows is open (see 1e).
 - Each new village: a new map layout, or the same map with new threat positions?
 - Recruit cost per class, and a cap on how many adventurers the guild can hold.
 - Whether more houses mean more villagers.
+- *(step 8, for Rawa to decide)* **Are arrays required enough?** v3.8 asks for arrays to be required from about wave 3, with the hall falling
+  by about wave 3 without them. Measured (30 runs, played out to 20 min):
+  - A player who neither answers waves nor builds arrays loses at wave 3 or 4. That part holds.
+  - A player who answers every wave with the horn and a hall flag and rushes the camp, without arrays, still wins 19/30 (median 9.6 min) with
+    about 287g left. The same player with arrays wins 24/30 (median 10.7 min) with about 12g left (the scripted player puts all spare coin
+    into arrays, so a thriftier player would keep more).
+  - So arrays are a safety choice: they raise the win rate but cost time and score. Holding without clearing is different: there, arrays and the
+    horn buy one wave (hall falls at wave 6, about 15.1 min, against wave 5, about 13.1 min).
+  - Options: keep this and judge it on the phone (Claude's suggestion, since the scripted player answers every wave perfectly, which a
+    person will not), or make waves 3 and 4 hit harder so that skipping arrays rarely wins.
+- *(step 8, to confirm)* Choices made in the build:
+  - **Numbers that went past the v3.8 decisions, because adventurers with the horn held every wave and arrays hardly mattered:** waves also grow
+    in strength, +40% strength (health, damage, coin, experience) per wave from wave 3 (v3.8 had this only past the 20-enemy cap, at +15% a wave); brutes are 2 in wave 3
+    and one more each wave after; array damage 18–26 every 1.3 s (was 9–13 every 1.6 s, about 2.5× the damage per second, same cost).
+  - First warning at 220 s, so the first wave appears at the map edge at 4 min 25 s, and the next every 2 min.
+  - Camp: level 6, 900 health, 6 guards (was 4, 420, 4). Clears at a median 10.7 min with no waves.
+  - Brute: level 5, 300 health, 14 damage (24 to the hall), slow (1.9), 60 experience, 18–28 coin.
+  - Apart from brutes, one enemy in three is a wolf and the rest are bandits. Wolves hit the hall but steal nothing. Wave enemies only turn on adventurers and guards within 3.5 units or
+    villagers within 1.5, and go back to marching if a target gets 7 units away.
+  - If the last lair falls during a wave, the player wins at once and the wave does not need clearing.
+  - Hall at 0 is a loss, on a new "The guild hall has fallen" screen with Try again (for now it restarts the mission; missions come in step 9).
+  - Display: a banner with a countdown and a rotating arrow (tap it to pan the camera), an arrow on the ground, a "Waves" row on the hall card, and
+    a "Wave N, from the X" line on enemy cards. A hint at the first warning, and for 40 s after a beaten wave if no arrays are built
+    (quarry, then array master, then a + plot).
 - *(step 7b, to confirm)* Choices made in the build:
   - Caravan prices: food 3g, wood 2g, stone 3g. Reserves: food 20, wood 0, stone 0. Food is switched on at the start, wood and
     stone off. The switches are on the caravan card and the guild hall card, work at any time, and stay as set; what is on is
@@ -407,14 +458,15 @@ Which number the leaderboard shows is open (see 1e).
   - Hall repair: 1 health a second once nothing has hit it for 20 s (was 3 a second after 6 s).
   - Array cost: 1g for every 4 shots, charged on the fourth. An array whose next shot would cost a coin falls silent while the
     treasury has less than 1g.
-- *(step 7b, open, for Rawa)* **Wood swamps the caravan.** Nothing uses much wood yet, so it piles up (about 240 sold a run) and
+- *(v3.8, Rawa 5 Nov: wood at 1g. Done in step 8; selling everything with 50g escorts now earns 345g a run, was 689g, though waves cut those runs short.)* **Wood swamps the caravan.** Nothing uses much wood yet, so it piles up (about 240 sold a run) and
   selling it nearly triples caravan pay (689g a run against 270g for food alone, with 50g escorts). Wood at 1g, a cap per
   caravan, or leave it for waves and upgrades to use up?
 - *(graphics pass, to confirm)* Bright toy-like look: smooth ground colours, round and pine trees, bushes, flowers and grass
   tufts, warm sun with real shadows that follow the camera, a timber-framed guild hall with chimney smoke, colourful houses,
   brighter shops and lairs, units 1.25× bigger with dark outlines, floating text that stacks. Draw calls about 90–120 (were
-  35–85). To confirm on Rawa's Android: the look, the frame rate with shadows, and the outlines at the widest zoom.
-- *(step 7b, open, for Rawa)* **The guild guard stops nearly every raid** (hall reached 0–2 times per 30 runs, was 26–71 with no
+  35–85). To confirm on Rawa's Android: the look, the frame rate with shadows, and the outlines at the widest zoom. *(5 Nov: the frame rate
+  also sets the wave cap, about 20 enemies until known.)*
+- *(v3.8, Rawa 5 Nov: keep the guard as built; waves are sized past it; recheck with the wave results.)* **The guild guard stops nearly every raid** (hall reached 0–2 times per 30 runs, was 26–71 with no
   response), so the horn and hall flag matter much less until step 8's waves. Keep as it is for step 8 to balance against?
 - *(step 3, to confirm)* Choices made in the build: killing a bandit who carries stolen coin
   returns it to the treasury; adventurers chase roaming monsters only within 15 units or near
@@ -783,6 +835,48 @@ stood on it (it now keeps watch from where it got to).
   coin or experience, so they level and gear more slowly before taking the camp.
 - Tier-2 gear is still never bought.
 
+**Step 8, scouted waves.** Built 5 Nov. Waves come every 2 min from a random edge, after a 45 s warning with a banner and arrow. They march to the
+hall and stay until it or they fall. Also in: the brute, wood at 1g, the stronger camp, the lose screen. Checks clean in all 46 scenarios (stuck 0,
+no-reason 0, ledger, stores, escorts). UI tested in the browser pane at 390×844 and 844×390 with real clicks: banner and pan, brute card, hall row, array hint,
+lose screen; no console errors, no sideways scroll. Draw calls reached 155 with a wave on screen (was 90–120). **Not measured: frame rate on a phone.**
+
+Who survives (30 runs, played out to 20 min):
+
+| Scripted player | Won | Median win | Hall fell | Median fall | At wave | Coin at end (all runs) |
+|---|---|---|---|---|---|---|
+| `waveFull`: arrays, horn, flag, camp | 24/30 | 10.7 min | 6/30 | 11.4 min | 4 | 12g |
+| `waveFullNoArrays`: horn, flag, camp | 19/30 | 9.6 min | 11/30 | 11.5 min | 4 | 287g |
+| `waveCamp`: camp only, ignores waves | 15/30 | 8.5 min | 15/30 | 9.6 min | 3 | 380g |
+| `waveNoArrays`: no bounties, no answer | 0/30 | | 30/30 | 11.1 min | 4 | 553g |
+| `waveNoArraysHorn`: no bounties, horn, flag | 0/30 | | 30/30 | 13.1 min | 5 | 436g |
+| `waveDefend`: no bounties, arrays, horn, flag | 0/30 | | 30/30 | 15.1 min | 6 | 83g |
+
+With no waves at all (`waveOff`, 12 min) the camp falls at a median 10.7 min in 21/30 runs, inside the 9–12 min target. Waves speed that up for those who
+survive them (8.5 min in `waveCamp`), because wave kills bring experience and coin; those wins are also the luckier half of the runs.
+
+Step 7b against step 8 (30 runs, 12 min; "lost" is new in step 8). The older scripted players never answer a wave, so most of them lose now, as intended:
+
+| Scenario | 7b won (median) | 8 won (median) | 8 lost | 7b deaths/run | 8 deaths/run |
+|---|---|---|---|---|---|
+| campPush | 30 (5.6) | 1 (10.3) | 26 | 0 | 1.6 |
+| normal | 20 (5.2) | 1 (10.7) | 21 | 0.3 | 2.2 |
+| mixed | 26 (4.3) | 1 (7.8) | 21 | 0.1 | 1.4 |
+| mixedPush | 30 (4.9) | 15 (10.6) | 12 | 0.1 | 0.8 |
+| shops | 29 (3.2) | 10 (10.5) | 14 | 0 | 1.2 |
+| arraysNormal | 29 (3.2) | 11 (9.5) | 13 | 0 | 1.2 |
+| caravanEscortNormal | 29 (4.6) | 15 (9.2) | 14 | 0 | 0.8 |
+| twoHealers | 26 (2.9) | 0 | 16 | 0 | 1.5 |
+| mixedHorn (no bounties) | 0 | 0 | 0 | 0.1 | 0.3 |
+
+Other results:
+- **Arrays:** in `arraysAll`, six arrays' share of all damage rose from 17.5% to 48.8% and kills from 8 to 26.7 a run, for 37.9g of shots. They fell silent for lack of coin
+  for at most 9.4 s a run in any scenario, so an empty treasury is a real but rare danger, as v3.1 wanted.
+- **Does surviving a wave pay?** It varies, as v3.1 wanted, for a player who answers waves: in `waveFull` the treasury ended up in 19/30 wave 2s and 13/23 wave 3s. Wave 1 is down in
+  all 30 there because the player is building arrays. A player who ignores waves comes out ahead on most waves beaten from wave 2 (tax on the coin), which is worth nothing if the hall falls.
+- **Stalling does not pay:** six arrays, horn and flag with no camp bounty fall at wave 6 (median 15.1 min) in all 30 runs, and no score without a win.
+- **The camp holds raids:** about 2–8 village raids a run are held for a wave.
+- **Arrays required?** Only partly; see 1e, first step 8 item.
+
 **Tuning notes for the content pass**
 - First success is fast: the den falls about 23 s after posting. *(v3)* Keep that for the
   tutorial village. From mission 2, target about 2 min.
@@ -816,6 +910,8 @@ stood on it (it now keeps watch from where it got to).
   run shared by 2–3 adventurers. Recheck after step 8.)*
 - *(step 6)* The blacksmith now costs the player 70g, which delays the camp bounty when sites are built early (`mixedFar`
   5.8 min, was 4.5).
+- *(step 8)* Tier-2 gear is still almost never bought, even in 20-minute games (none in 45 of 46 scenarios, 1 run of 30 in the shops scenario). Adventurers earn more, but spend it on potions,
+  repairs and tier-1 armour. Worth a look in the tuning pass (step 10).
 - *(step 5)* A healer makes the camp fall in under 2 min from mission start. Keep for the tutorial village;
   from mission 2 the target is about 2 min for the first success.
 
@@ -945,6 +1041,16 @@ only 6 players on the leaderboard. Plenty started, few finished. Lesson for the 
   caravan pay, escorts, escort refunds and goods back; escort bounties posted = refunded + paid + still on the caravan; no escort
   without a caravan. Fix: a raid's first blow counts only while the raider is still on the raid. In a cloud session (4 cores) the
   64 runs of both builds take about 35 min with `xargs -P4`.
+  *(Step 8)* Waves come in every scenario unless `noWaves` is set, and a run now ends when the hall falls too. New scenarios: waveOff, waveCamp,
+  waveNoArrays, waveNoArraysHorn, waveArrays, waveDefend, waveFull, waveFullNoArrays, waveStall. New levers: `campMax` and `campRamp` (the camp bounty's
+  ceiling and step; the pull caps at 1.6, about 112g, so ramping past that only wastes coin), `arrayFirst`, `arrayDir` (build on the side the scouts
+  name). New report: WAVES (lost, when, at which wave, end treasury, then per wave: reached the hall, beaten, time to clear, lowest hall, stolen, kills
+  and damage by adventurers, arrays and guard, treasury up or down). Wave enemies are reported under WAVES, not RAIDS. `GM_TUNE` tries numbers without
+  editing the game, for example `GM_TUNE="CFG.wave.grow=3"`. Use 20 min for the wave scenarios: at 12 min many games are still undecided. On 8 cores, all
+  46 scenarios on step 8 and 37 on step 7b took about 75 min.
+- *(Guildmaster, step 8)* Playwright is not installed on Rawa's PC, so `tools/ui_test.js` does not run there; test through the browser pane with real
+  clicks. In the pane's emulated portrait, the click frame is 800×600 stretched to 390×844 (css x = x × 0.4875, css y = y × 1.407), so take a screenshot before a
+  coordinate click, and wait a few seconds for the page to update while animation is throttled.
 - *(Guildmaster, step 7)* In a cloud session the phone-size UI tests run in headless Chromium through Playwright
   (`/opt/node22/lib/node_modules/playwright`, browser in `/opt/pw-browsers`), against `tools/serve.js` on port 8765. Cards scroll
   in landscape: scroll a button into view before tapping it. A bandit standing on the camp takes the tap before the camp does.

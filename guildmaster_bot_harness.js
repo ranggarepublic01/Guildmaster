@@ -1,4 +1,4 @@
-// Headless bot harness for Guildmaster (step 7b). Usage: node guildmaster_bot_harness.js index.html <scenario> [runs=30] [minutes=10]
+// Headless bot harness for Guildmaster (step 8). Usage: node guildmaster_bot_harness.js index.html <scenario> [runs=30] [minutes=10]
 // scenarios: campPush normal noBounty farSites cancel | step 4: raidHorn raidFlag normalHorn farFlag flagDanger
 // step 5: mixed mixedPush mixedNoBounty mixedHorn mixedFlag mixedFar twoHealers allArcher allMagician allHealer (the scripted player picks each recruit's class)
 // step 6: noSmith shops arrays arraysAll arraysNormal arraysBroke wardFlag. From step 6 the scripted player builds the blacksmith at 20 s in every
@@ -6,6 +6,8 @@
 // step 7: caravanNone caravanEscort caravanEscort25 caravanEscortNormal caravanEscortLate caravanFar. From step 7 a caravan comes in every scenario; the older
 // scenarios never post an escort, so their bandits rob it and the camp tiers up (compare with step 6 with that in mind).
 // step 7b: caravanSellAll caravanSellAllNone (the caravan buys wood and stone as well as food). The guild guard stands in every scenario.
+// step 8: waveOff waveNoArrays waveNoArraysHorn waveArrays waveDefend waveFull waveFullNoArrays waveCamp waveStall (waves come in every scenario unless noWaves is set).
+// A run now ends when the hall falls too. Wave enemies are reported under WAVES, not RAIDS.
 // Works on older builds too: step 4-6 levers are skipped when the build does not have them, and raids are detected here, not read from the sim.
 const fs = require('fs'), vm = require('vm');
 // file: index.html (the game's own script is taken from its last <script> block) or a plain .js sim
@@ -21,6 +23,7 @@ function run(GM, seed, scen, minutes) {
   const CFG = GM.CFG;
   const S = GM.newSim(seed);
   if (scen.noRaids) for (const L of S.lairs) L.raidEvery = 0;
+  if (scen.noWaves && S.waves) S.waves.off = true;
   const DT = 1 / 30, T = minutes * 60;
   const track = new Map(), stuck = [], noWhy = [], bad = [];
   let campPostedT = null, campTakenT = null, denPosted = false, sitesBuilt = false, lvlAt5 = null, gearAt5 = null;
@@ -39,9 +42,9 @@ function run(GM, seed, scen, minutes) {
     // ---- scripted player ----
     const den = S.lairs.find(l => l.id === 'den'), camp = S.lairs.find(l => l.id === 'camp');
     if (scen.bounties && !denPosted && S.t > 10) { GM.postBounty(S, 'den', 50); denPosted = true; }
-    if (scen.bounties && !den.alive && camp.alive) {
+    if (scen.bounties && !den.alive && camp.alive && !(scen.arrayFirst && S.arrays.filter(A => A.built).length < scen.arrayFirst)) {
       if (campPostedT == null && S.gold >= 100) { GM.postBounty(S, 'camp', 100); campPostedT = S.t; }
-      else if (campPostedT != null && S.bounty.camp < 150 && S.gold >= 25 && S.t - campPostedT > 60 * (S.bounty.camp - 75) / 25) GM.postBounty(S, 'camp', 25);
+      else if (campPostedT != null && S.bounty.camp < (scen.campMax || 150) && S.gold >= 25 && S.t - campPostedT > (scen.campRamp || 60) * (S.bounty.camp - 75) / 25) GM.postBounty(S, 'camp', 25);
     }
     if (scen.farSites && !sitesBuilt && S.t > 30) { for (const id of ['quarry1', 'lumber2', 'quarry2', 'farm2']) GM.buildSite(S, id); sitesBuilt = true; }
     if (scen.cancel && S.t > 20 && S.t < 21 && GM.cancelBounty) { GM.postBounty(S, 'camp', 25); }
@@ -76,9 +79,14 @@ function run(GM, seed, scen, minutes) {
       if (!scen.noSmith && S.t > 20 && !S.shops.smith.built) GM.buildShop(S, 'smith');
       if (scen.quarry && S.t > 40) { const q = S.sites.find(x => x.id === 'quarry1'); if (!q.built) GM.buildSite(S, 'quarry1'); }
       // keep enough back for the camp bounty while it is still wanted
-      const reserve = scen.bounties && camp.alive && campPostedT == null ? 100 : 0, spare = c => S.gold - (c.gold || 0) >= reserve;
+      const reserve = scen.bounties && camp.alive && campPostedT == null && !(scen.arrayFirst && S.arrays.filter(A => A.built).length < scen.arrayFirst) ? 100 : 0, spare = c => S.gold - (c.gold || 0) >= reserve;
       if (scen.arrayMaster && S.t > scen.arrayMaster && !S.shops.arrays.built && spare(GM.shopCost('arrays'))) GM.buildShop(S, 'arrays');
       if (scen.arrays && S.shops.arrays.built) for (const id of scen.arrays) { const A = S.arrays.find(x => x.id === id); if (!A.built && GM.canPay(S, GM.arrayCost()) && spare(GM.arrayCost())) GM.buildArray(S, id); }
+      if (scen.arrayDir && S.shops.arrays.built && S.waves && S.waves.warn && GM.canPay(S, GM.arrayCost()) && spare(GM.arrayCost())) {
+        const e = GM.waveEdge(S.waves.warn.ang); let best = null, bd = 1e9;
+        for (const A of S.arrays) if (!A.built) { const d = Math.hypot(A.x - e.x, A.z - e.z); if (d < bd) { bd = d; best = A; } }
+        if (best) GM.buildArray(S, best.id);
+      }
       if (scen.upgrade) {   // in the order listed: the player saves for the next one rather than buying whatever is cheapest
         const id = scen.upgrade.find(k => S.shops[k].built && S.shops[k].level < 2);
         if (id && GM.canPay(S, CFG.shops[id].up) && spare(CFG.shops[id].up)) GM.upgradeShop(S, id);
@@ -104,6 +112,7 @@ function run(GM, seed, scen, minutes) {
     // ---- step 4 checks: raids, free defence, horn ----
     for (const m of S.mobs) if (!m.dead && m.state === 'raid' && !seenRaider.has(m.id)) {
       seenRaider.add(m.id); pendingRaid = true;
+      if (m.wave) continue;
       let g = raids.find(r => r.t === S.t);
       if (!g) { g = { t: S.t, ids: [], hitT: null, reachedT: null, away: S.adv.filter(a => !a.dead && !a.inside && Math.hypot(a.x, a.z) > 17).length, home: S.adv.filter(a => !a.dead && (a.inside || Math.hypot(a.x, a.z) <= 17)).length }; raids.push(g); }
       g.ids.push(m.id);
@@ -156,7 +165,7 @@ function run(GM, seed, scen, minutes) {
       if (S.flags) { const pots = S.flags.reduce((t, F) => t + F.pot, 0); if (Math.abs(pots - (L.flags - L.flagRefunds - L.wages - L.killPay)) > 0.01 || S.flags.some(F => F.pot < 0)) potErr++; }
       if (S.gold < 0) bad.push('negative gold');
     }
-    if (S.won) break;
+    if (S.won || S.lost) break;
   }
   // no quest beyond tolerance
   for (const q of S.stats.quests) if (q.gap > q.tol + 1e-9) bad.push('quest beyond tolerance');
@@ -172,6 +181,7 @@ function run(GM, seed, scen, minutes) {
     farFlagDuty: farFlagT != null && farFlagDutyT != null ? farFlagDutyT - farFlagT : null, dangerPlanted: dangerFlagT != null,
     dangerTaken: dangerFlagT != null && (st.quests || []).some(q => q.flag != null && q.t >= dangerFlagT),
     campT0: S.stats.firstTaken.camp,
+    lost: !!S.lost, lostT: S.lost ? S.lostT : null, wavesLog: S.waves ? S.waves.log.filter(Boolean) : [], wavesOwed: S.waves ? S.waves.n : 0, endGold: S.gold, waveSkipped: st.waveSkippedRaids || 0, endT: S.t,
     won: S.won, wonT: S.won ? S.wonT : null, campReadyT, campPostedT, campTakenT,
     campT: S.stats.cleared.camp, denT: S.stats.cleared.den,
     idle: S.stats.advIdleT / Math.max(1, S.stats.advT), deaths: S.stats.deaths, vilDeaths: S.stats.vilDeaths,
@@ -241,9 +251,20 @@ if (require.main === module) {
     caravanFar: { classes: MIX, escort: 50, farSites: true },                                                      // all six sites (road farm: more food) plus escorts
     // step 7b
     caravanSellAll: { classes: MIX, escort: 50, sellAll: true },                                                   // the caravan buys food, wood and stone; 50g escorts
-    caravanSellAllNone: { classes: MIX, sellAll: true }                                                            // same, no escorts
+    caravanSellAllNone: { classes: MIX, sellAll: true },                                                           // same, no escorts
+    // step 8
+    waveOff: { bounties: true, classes: MIX, escort: 50, noWaves: true, campMax: 125, campRamp: 20 },                            // the clearing race on its own: no waves
+    waveCamp: { bounties: true, classes: MIX, escort: 50, campMax: 125, campRamp: 20 },                                          // den, then camp, escorts; the player never builds arrays or answers a wave
+    waveNoArrays: { classes: MIX, escort: 50 },                                                                    // no bounties, no arrays, no answer: how long does the hall last?
+    waveNoArraysHorn: { classes: MIX, escort: 50, horn: true, hallFlag: true },                                    // no arrays; horn and a hall flag at every wave and raid
+    waveArrays: { classes: MIX, escort: 50, quarry: true, arrayMaster: 60, arrays: ['a1', 'a2', 'a3', 'a4', 'a5', 'a6'], arrayDir: true },   // no bounties; arrays as coin allows
+    waveFull: { bounties: true, classes: MIX, escort: 50, quarry: true, arrayMaster: 60, arrayDir: true, arrayFirst: 2, horn: true, campMax: 125, campRamp: 20 },   // a sensible player: arrays on the side the scouts name, horn and flag, den then camp
+    waveFullNoArrays: { bounties: true, classes: MIX, escort: 50, horn: true, hallFlag: true, campMax: 125, campRamp: 20 },      // the same player without arrays
+    waveDefend: { classes: MIX, escort: 50, quarry: true, arrayMaster: 60, arrays: ['a1', 'a2', 'a3', 'a4', 'a5', 'a6'], arrayDir: true, horn: true },   // no bounties; arrays and the horn: does it hold?
+    waveStall: { classes: MIX, escort: 50, quarry: true, arrayMaster: 60, arrays: ['a1', 'a2', 'a3', 'a4', 'a5', 'a6'], arrayDir: true, horn: true, hallFlag: true }   // holds without ever clearing: does stalling pay?
   };
   const GM = load(file), rs = [];
+  if (process.env.GM_TUNE) new Function('CFG', process.env.GM_TUNE)(GM.CFG);   // try numbers without editing the game, e.g. GM_TUNE="CFG.wave.grow=3"
   const t0 = Date.now();
   for (let i = 0; i < +runs; i++) rs.push(run(GM, 1000 + i * 7919, SC[scenName], +minutes));
   const avg = f => { const v = rs.map(f).filter(x => x != null); return v.length ? (v.reduce((a, b) => a + b, 0) / v.length) : null; };
@@ -295,5 +316,16 @@ if (require.main === module) {
       ` | camp tier at end ${Object.entries(tiers).map(([k, n]) => 't' + k + ' ' + n).join(', ')}, tier-ups ${r1(avg(r => r.tierUps))}/run, stolen ${r1(avg(r => r.campStolen))}g/run, goods back ${r1(avg(r => r.goodsBack))}g/run | village raids skipped for a caravan ${r1(avg(r => r.skippedRaids))}/run | hungry ${r1(avg(r => r.hungryT))} s/run`);
   }
   if (rs[0].sold) console.log(`STEP7B sold/run: ${['food', 'wood', 'stone'].map(k => k + ' ' + r1(avg(r => r.sold[k]))).join(', ')} | guild guard: kills ${r1(avg(r => r.guardKills))}/run, deaths ${r1(avg(r => r.guardDeaths))}/run, share of all damage ${r1(100 * rs.reduce((t, r) => t + r.guardDmg, 0) / Math.max(1, rs.reduce((t, r) => t + r.guardDmg + r.advDmg + r.arrayDmg, 0)))}% | hall lowest ${r1(avg(r => r.hallMin))} of 600 (worst ${r1(Math.min(...rs.map(r => r.hallMin)))}), at the end ${r1(avg(r => r.hallEnd))}`);
+  if (rs[0].wavesOwed != null && rs.some(r => r.wavesLog.length)) {
+    const mdn2 = a => { const v = a.filter(x => x != null).sort((p, q) => p - q); return v.length ? v[v.length >> 1] : null; };
+    console.log(`WAVES lost ${cnt(r => r.lost)}/${runs} (median ${r1(mdn2(rs.map(r => r.lostT && r.lostT / 60)))} min, at wave ${r1(mdn2(rs.filter(r => r.lost).map(r => r.wavesLog.length)))}); end treasury median ${r1(mdn2(rs.map(r => r.endGold)))}g; village raids held for a wave ${r1(avg(r => r.waveSkipped))}/run`);
+    const nMax = Math.max(...rs.map(r => r.wavesLog.length));
+    for (let n = 1; n <= nMax; n++) {
+      const W = rs.map(r => r.wavesLog[n - 1]).filter(Boolean), done = W.filter(w => w.clearedT != null);
+      const k = key => W.reduce((t, w) => t + w.kills[key], 0) / W.length, dT = W.reduce((t, w) => t + w.dmg.adv + w.dmg.array + w.dmg.guard, 0) || 1, dS = key => Math.round(100 * W.reduce((t, w) => t + w.dmg[key], 0) / dT);
+      const up = done.filter(w => w.goldAfter > w.goldAtWarn).length;
+      console.log(`  wave ${n} (${W[0].size}): met ${W.length}, reached hall ${W.filter(w => w.reachedT != null).length}, beaten ${done.length}, clear ${r1(mdn2(done.map(w => w.clearedT - w.t)))} s, hall low ${Math.round(mdn2(W.map(w => w.hallMin)))}, stolen ${r1(W.reduce((t, w) => t + w.stolen, 0) / W.length)}g (back ${r1(W.reduce((t, w) => t + w.recovered, 0) / W.length)}g), kills adv ${r1(k('adv'))} array ${r1(k('array'))} guard ${r1(k('guard'))}, damage adv ${dS('adv')}% array ${dS('array')}% guard ${dS('guard')}%, treasury up ${up}/${done.length} (median ${r1(mdn2(done.map(w => w.goldAfter - w.goldAtWarn)))}g)`);
+    }
+  }
   console.log(`CHECKS stuck ${stuck.length}${stuck.length ? ' e.g. ' + stuck.slice(0, 4).join(' | ') : ''}  no-reason ${noWhy.length}${noWhy.length ? ' ' + noWhy.slice(0, 5).join(',') : ''}  ledger errors ${rs.reduce((s, r) => s + r.ledgerErr, 0)}  pot errors ${rs.reduce((s, r) => s + r.potErr, 0)}  horn paid more than answered ${cnt(r => r.hornPays > r.hornAnswers)}  store errors ${rs.reduce((s, r) => s + (r.resErr || 0), 0)}  escort without caravan ${rs.reduce((s, r) => s + (r.escortBad || 0), 0)}  escort worth the goods or more ${rs.reduce((s, r) => s + (r.escortOver || 0), 0)}  other ${bad.join(', ') || 'none'}`);
 }

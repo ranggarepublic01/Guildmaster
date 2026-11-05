@@ -3,8 +3,9 @@
 Read `playgama_game_brief_guildmaster_v3_6.md` before any work. It is the single source of truth:
 the design, the locked decisions, the build order, the build choices waiting for Rawa, and what each
 step's bot results showed. `MIGRATION.md` says where the work stands, which pull request to merge first, and how a new
-chat (Claude Code or claude.ai) picks the project up. The next step is step 8 (scouted waves that escalate; raiders damage the hall; arrays
-required) in the build order. Step 7b left two questions for Rawa in 1e (wood price, the guard's strength).
+chat (Claude Code or claude.ai) picks the project up. The next step is step 9 (missions: the tutorial village, the coin score, a fresh start in the next
+village) in the build order. Propose its design points as questions first. Step 8 is done; Rawa still has to test it on a phone and
+decide whether arrays are required enough (brief, 1e, first step 8 item).
 
 ## Files
 - `index.html`: the game. One self-contained file (three.js inlined, no external assets), as Playgama needs.
@@ -13,7 +14,7 @@ required) in the build order. Step 7b left two questions for Rawa in 1e (wood pr
   Scenarios are listed at the top of the file. Use 30 runs × 12 min for the numbers that go in the brief.
   On Rawa's PC, Node is a portable copy (not on PATH): `%LOCALAPPDATA%\Programs\node\node-v24.19.0-win-x64\node.exe`.
   In a cloud session, use `node` from PATH. Nothing to install either way.
-- `builds/`: keep a copy of each finished step (`builds/step7b.html` is the current `index.html`), so every
+- `builds/`: keep a copy of each finished step (`builds/step8.html` is the current `index.html`), so every
   step can be bot-compared with the one before.
 - `tools/ui_test.js`: the phone-size tap test (headless Chromium, portrait and landscape, real taps). Start `tools/serve.js`
   first. `tools/game_only.js` writes the game code without three.js, for uploading to a claude.ai chat.

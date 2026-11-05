@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<title>Guildmaster, step 7b: caravan goods, guild guard, new look</title>
+<title>Guildmaster, step 8: scouted waves</title>
 <style>
 :root{--panel:rgba(26,34,31,.93);--panel2:rgba(40,50,45,.95);--ink:#f1ead9;--muted:#b4bcaa;--brass:#d6a94a;--brass2:#f0c866;--line:rgba(241,234,217,.14);--red:#e0624f;--green:#86c86a;
 --serif:"Palatino Linotype","Book Antiqua",Palatino,"Noto Serif",Georgia,serif;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
@@ -42,9 +42,15 @@ body.paused #pauseBtn{background:var(--brass);color:#1d1a12;border-color:transpa
 .toast{background:rgba(22,28,26,.82);border-left:3px solid var(--muted);padding:6px 11px;border-radius:8px;font-size:13.5px;transition:opacity .5s}
 .toast.good{border-color:var(--green)}.toast.bad{border-color:var(--red)}.toast.warn{border-color:#e6a23c}.toast.gold{border-color:var(--brass2)}
 .toast.out{opacity:0}
+#waveBar{position:fixed;top:var(--hudb,calc(var(--st) + 64px));left:50%;transform:translateX(-50%);width:min(440px,calc(100vw - 40px));min-height:44px;display:flex;align-items:center;gap:10px;background:rgba(92,26,20,.95);border:1px solid #e0624f;border-radius:12px;padding:6px 12px;text-align:left;color:#fff;font-size:14px;line-height:1.25;box-shadow:0 2px 12px rgba(0,0,0,.3)}
+#waveBar:active{background:rgba(120,36,28,.97)}
+#waveBar svg{width:26px;height:26px;flex:none;transition:transform .2s}
+#waveBar b{font:700 20px/1 var(--serif);color:#ffd9a0;margin-left:auto;padding-left:8px;white-space:nowrap}
+body.waveOn #toasts{top:calc(var(--hudb,calc(var(--st) + 64px)) + 54px)}
+body.waveOn #roster{top:calc(var(--hudb,calc(var(--st) + 62px)) + 54px)}
 #hint{position:fixed;left:50%;bottom:calc(var(--sb) + 28px);transform:translateX(-50%);background:var(--panel);border:1px solid var(--brass);border-radius:14px;padding:10px 16px;width:max-content;max-width:calc(100vw - 48px);text-align:center;font-family:var(--serif);font-size:16.5px;pointer-events:none}
 #card{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--sb) + 16px);width:min(440px,calc(100vw - 40px));max-height:min(58vh,560px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 16px 16px;box-shadow:0 6px 24px rgba(0,0,0,.3)}
-@media (orientation:landscape) and (max-height:560px){#toasts{left:calc(var(--sl) + 20px);transform:none;width:min(380px,44vw)}#card{left:auto;right:calc(var(--sr) + 20px);transform:none;width:min(380px,48vw);max-height:calc(100vh - var(--st) - var(--sb) - 90px)}}
+@media (orientation:landscape) and (max-height:560px){#waveBar{left:calc(var(--sl) + 20px);transform:none;width:min(380px,44vw)}#toasts{left:calc(var(--sl) + 20px);transform:none;width:min(380px,44vw)}#card{left:auto;right:calc(var(--sr) + 20px);transform:none;width:min(380px,48vw);max-height:calc(100vh - var(--st) - var(--sb) - 90px)}}
 #card header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 #card h2{font:600 21px/1.1 var(--serif);margin:0}
 #card h3{font:600 15px var(--serif);color:var(--brass2);margin:14px 0 4px}
@@ -108,10 +114,11 @@ ol time{display:block;color:var(--muted);font-size:11.5px}
 </div>
 <ul id="roster" hidden></ul>
 <div id="toasts"></div>
+<button id="waveBar" hidden aria-label="Show where the wave comes from"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10h11V5l8 7-8 7v-5H3z" fill="#ffd9a0"/></svg><span id="waveText"></span><b id="waveTime"></b></button>
 <div id="hint" hidden>Tap the wolf den to post a bounty</div>
 <div id="card" hidden></div>
-<div id="won" hidden><div><h2>Map cleared</h2><p id="wonText"></p><button id="againBtn">Play again</button></div></div>
-<div id="tag">Step 7b test build: caravan goods, guild guard, new look</div>
+<div id="won" hidden><div><h2 id="wonTitle">Map cleared</h2><p id="wonText"></p><button id="againBtn">Play again</button></div></div>
+<div id="tag">Step 8 test build: scouted waves</div>
 <script>/**
  * @license
  * Copyright 2010-2023 Three.js Authors
@@ -154,18 +161,23 @@ const CFG = {
     wearHit: 0.02, wearHeal: 0.012, wearTaken: 0.025, worn: 0.5, repairK: 0.5, saveK: 0.4 },
   potion: [{ heal: 45, price: 12, name: 'healing potion' }, { heal: 70, price: 16, name: 'strong healing potion' }],
   ward: { price: 40, range: 6, dmg: 6, cd: 2 },      // array gear: set beside an adventurer guarding a flag or the village; its shots are free
-  array: { cost: 40, wood: 10, stone: 15, range: [12, 14], dmg: [9, 13], cd: 1.6, shot: 1, per: 4 },   // step 7b (Rawa, 30 Sep): 1g for every 4 shots (1g a shot is kept for a later hard mode)
+  array: { cost: 40, wood: 10, stone: 15, range: [12, 14], dmg: [18, 26], cd: 1.3, shot: 1, per: 4 },   // step 7b (Rawa, 30 Sep): 1g for every 4 shots (1g a shot is kept for a later hard mode)
   arrayPlots: [
     { id: 'a1', x: -6.1, z: 13.1, place: 'south-west' }, { id: 'a2', x: -13.2, z: 4.8, place: 'west' }, { id: 'a3', x: -12.7, z: -5.9, place: 'north-west' },
     { id: 'a4', x: 5.7, z: -12.2, place: 'north' }, { id: 'a5', x: 13.0, z: 3.5, place: 'east' }, { id: 'a6', x: 0, z: 14.5, place: 'south' }
   ],
   mobs: {
     wolf: { name: 'Wolf', plural: 'wolves', a: 'a wolf', level: 1, hp: 24, dmg: 3, speed: 3.4, range: 1.3, cd: 1.1, xp: 10, coins: [3, 6], aggro: 6, leash: 13 },
-    bandit: { name: 'Bandit', plural: 'bandits', a: 'a bandit', level: 3.5, hp: 70, dmg: 9, speed: 2.7, range: 1.5, cd: 1.2, xp: 22, coins: [8, 14], aggro: 7, leash: 15 }
+    bandit: { name: 'Bandit', plural: 'bandits', a: 'a bandit', level: 3.5, hp: 70, dmg: 9, speed: 2.7, range: 1.5, cd: 1.2, xp: 22, coins: [8, 14], aggro: 7, leash: 15 },
+    // step 8 (v3.8): comes only with the waves, from wave 3. Slow and tough, and it hits the hall far harder than it hits people.
+    brute: { name: 'Brute', plural: 'brutes', a: 'a brute', level: 5, hp: 300, dmg: 14, hallDmg: 24, speed: 1.9, range: 1.7, cd: 1.6, xp: 60, coins: [18, 28], aggro: 7, leash: 15 }
   },
+  // step 8 (v3.8, Rawa 5 Nov): scouted waves from a random map edge. They march to the hall and stay until it or they fall.
+  // first = when the first warning goes up; every wave after that is warned this many seconds later.
+  wave: { first: 220, warn: 45, every: 120, size: 4, grow: 2, cap: 20, overK: 0.15, wolfShare: 1 / 3, bruteFrom: 3, bruteBase: 2, bruteEvery: 1, strengthFrom: 3, strength: 0.4, preyR: 3.5, vilR: 1.5, giveUp: 7, spread: 7 },
   lairs: [
     { id: 'den', kind: 'den', name: 'Wolf den', x: 31, z: -26, r: 1.8, level: 1, hp: 120, mob: 'wolf', cap: 3, every: 14, xp: 40, coins: 20 },
-    { id: 'camp', kind: 'camp', name: 'Bandit camp', x: -45, z: 32, r: 2.4, level: 4, hp: 420, mob: 'bandit', cap: 4, every: 16, xp: 110, coins: 45, raidEvery: 80, raidSize: 2 }
+    { id: 'camp', kind: 'camp', name: 'Bandit camp', x: -45, z: 32, r: 2.4, level: 6, hp: 900, mob: 'bandit', cap: 6, every: 16, xp: 110, coins: 45, raidEvery: 80, raidSize: 2 }
   ],
   // ---- step 3: villagers, work sites, resources ----
   vil: { start: 4, hp: 24, speed: 2.5, flee: 3.0, gather: 10, eatEvery: 15, replace: [30, 60], fleeR: 7, sneakR: 3.5, alarmR: 12, calm: 6, perSite: 2, pay: 1 },
@@ -217,7 +229,7 @@ const CFG = {
     route: { in: [[71, 8], [16, 8]], stop: [3.5, 6.5], out: [[-4.5, 5.5], [-12.5, 8.5], [-30, 14], [-71, 12]] },
     first: [190, 230], every: [180, 300], speed: 1.8, load: 20, hp: 240, r: 1.2,
     // step 7b (Rawa, 30 Sep): the guildmaster chooses which goods the caravan buys. Each good switched on sells all of it above its reserve.
-    goods: { food: { keep: 20, price: 3, on: true }, wood: { keep: 0, price: 2, on: false }, stone: { keep: 0, price: 3, on: false } },
+    goods: { food: { keep: 20, price: 3, on: true }, wood: { keep: 0, price: 1, on: false }, stone: { keep: 0, price: 3, on: false } },
     escortR: 9, sideR: 2.4, max: 3, ask: 0.5,  // escorts walk beside it and fight whatever comes within escortR; no retreat, so they ask more, like a flag
     wreck: 12
   },
@@ -254,7 +266,7 @@ function newSim(seed) {
     shops: {}, arrays: [],
     nextCls: 'warrior', pickedCls: false, shots: [],
     guards: [], guardQ: [], caravan: null, caravanT: 0, cvn: 0, caravanLog: [], sell: { food: CFG.caravan.goods.food.on, wood: CFG.caravan.goods.wood.on, stone: CFG.caravan.goods.stone.on },
-    flags: [], fid: 1, horn: null, hornReadyT: 0, hornN: 0, raidLog: [], firstRaidT: null, won: false, wonT: 0, names: shuffle(NAMES.slice(), R), everPosted: false,
+    waves: { n: 0, nextT: CFG.wave.first, warn: null, log: [], off: false }, lost: false, lostT: 0, flags: [], fid: 1, horn: null, hornReadyT: 0, hornN: 0, raidLog: [], firstRaidT: null, won: false, wonT: 0, names: shuffle(NAMES.slice(), R), everPosted: false,
     vil: [], sites: [], res: Object.assign({}, CFG.startRes), vilQ: [], hungry: false, vnames: shuffle(VNAMES.slice(), R),
     stats: { deaths: 0, retreats: 0, kills: 0, potions: 0, shopTrips: 0, levelUps: 0, spent: 0, cleared: {}, posted: {}, firstTaken: {}, firstArrive: {}, quests: [],
       vilDeaths: 0, flees: 0, dropped: 0, delivered: { wood: 0, stone: 0, food: 0 }, trips: 0, hungryT: 0, prowls: 0, advT: 0, advIdleT: 0, chases: 0, lootLost: 0, replaced: [], gameKills: {}, wildSpawned: {},
@@ -262,7 +274,7 @@ function newSim(seed) {
       byCls: {}, heals: 0, healed: 0, overheal: 0, healShare: 0, healerOutT: 0, healerMeleeT: 0, follows: 0, splashHits: 0, guardHealer: 0,
       repairs: 0, repairG: 0, breaks: 0, brokenT: 0, bought: {}, firstBuy: {}, upgraded: {}, builtShop: {}, resSpent: { wood: 0, stone: 0 },
       sold: { food: 0, wood: 0, stone: 0 }, arrayShots: 0, arrayKills: 0, arrayDmg: 0, arraySilent: 0, arrayStole: 0, wardShots: 0, wardKills: 0, wardSets: 0, noSmithWant: 0,
-      guardDmg: 0, guardKills: 0, guardDeaths: 0, escortTakes: 0, escortDeaths: 0, escortKills: 0, robParties: 0, tierUps: 0, skippedRaids: 0 }
+      waveSkippedRaids: 0, guardDmg: 0, guardKills: 0, guardDeaths: 0, escortTakes: 0, escortDeaths: 0, escortKills: 0, robParties: 0, tierUps: 0, skippedRaids: 0 }
   };
   for (const k of CFG.clsOrder) S.stats.byCls[k] = { recruited: 0, kills: 0, deaths: 0, dmg: 0, t: 0, idleT: 0, xp: 0, gold: 0 };
   for (const k of CFG.shopOrder) { const D = CFG.shops[k]; S.shops[k] = { id: k, name: D.name, x: D.x, z: D.z, built: !!D.built, level: D.built ? 1 : 0, sales: 0, tax: 0, customers: 0 }; }
@@ -743,13 +755,14 @@ function hitMob(S, m, dmg, a) {
   if (m.raidN != null) { const g = S.raidLog[m.raidN]; if (g.hitT == null) { g.hitT = S.t; g.firstBy = a.name; } }
   if (m.wild) { if (!isHealer(a) || !m.targetId) wildHit(S, m, a); }
   else if (!m.targetId || (!isHealer(a) && (m.state === 'guard' || vilById(S, m.targetId)))) m.targetId = a.id;   // a healer's weak bolt does not pull a monster off its fight
+  if (m.wave) S.waves.log[m.wave - 1].dmg.adv += Math.min(dmg, m.hp + dmg);
   if (m.hp <= 0) {
-    m.dead = true; m.gone = true;
+    m.dead = true; m.gone = true; waveKill(S, m, 'adv');
     if (m.raidN != null) S.raidLog[m.raidN].killed++;
     if (m.loot) {
       if (m.raidN != null) S.raidLog[m.raidN].recovered += m.loot;
       S.gold += m.loot; S.ledger.recovered += m.loot; fx(S, m.x, m.z, '+' + m.loot + 'g back', 'recover');
-      event(S, `${a.name} got back ${m.loot}g the bandits stole.`, 'good', m.x, m.z); m.loot = 0;
+      event(S, `${a.name} got back ${m.loot}g stolen from the treasury.`, 'good', m.x, m.z); m.loot = 0;
     }
     const c = m.def.coins; let coins = Math.round((c[0] + Math.floor(S.R() * (c[1] - c[0] + 1))) * (m.dmgK || 1));
     if (a.state === 'escort') S.stats.escortKills++;
@@ -778,15 +791,15 @@ function hitMob(S, m, dmg, a) {
 // step 6 (v3.1): an array's shot. Its kills drop no coin and give nobody experience; stolen coin still comes back to the treasury.
 function arrayHit(S, m, dmg, A) {
   const took = Math.min(dmg, m.hp);
-  m.hp -= dmg; m.hitT = S.t; S.stats.arrayDmg += took;
+  m.hp -= dmg; m.hitT = S.t; S.stats.arrayDmg += took; if (m.wave) S.waves.log[m.wave - 1].dmg.array += took;
   if (m.raidN != null) { const g = S.raidLog[m.raidN]; if (g.hitT == null) { g.hitT = S.t; g.firstBy = 'an array'; } }
   if (m.hp > 0) return;
-  m.dead = true; m.gone = true; A.kills++; S.stats.arrayKills++;
+  m.dead = true; m.gone = true; A.kills++; S.stats.arrayKills++; waveKill(S, m, 'array');
   if (m.raidN != null) S.raidLog[m.raidN].killed++;
   if (m.loot) {
     if (m.raidN != null) S.raidLog[m.raidN].recovered += m.loot;
     S.gold += m.loot; S.ledger.recovered += m.loot; fx(S, m.x, m.z, '+' + m.loot + 'g back', 'recover');
-    event(S, `An array brought down a bandit carrying ${m.loot}g of your coin. It is back in the treasury.`, 'good', m.x, m.z); m.loot = 0;
+    event(S, `An array brought down ${aMob(m)} carrying ${m.loot}g of your coin. It is back in the treasury.`, 'good', m.x, m.z); m.loot = 0;
   }
   fx(S, m.x, m.z, 'no coin', 'nocoin');
   // whoever was fighting it loses the kill, and says so
@@ -1269,6 +1282,13 @@ function spawnMob(S, L, mode) {
 // who a monster goes for: adventurers in reach, villagers when hunting (wolves are drawn to them)
 function pickPrey(S, m) {
   const def = m.def;
+  if (m.wave) {   // step 8: a wave marches on the hall. It turns only on whoever stands right in its way.
+    let best = null, bd = CFG.wave.preyR;
+    for (const a of S.adv) { if (a.dead || a.inside) continue; const d = d2(m.x, m.z, a.x, a.z); if (d < bd) { bd = d; best = a; } }
+    for (const g of S.guards) { if (g.dead) continue; const d = d2(m.x, m.z, g.x, g.z); if (d < bd) { bd = d; best = g; } }
+    if (!best) { bd = CFG.wave.vilR; for (const v of S.vil) { if (v.dead || v.inside) continue; const d = d2(m.x, m.z, v.x, v.z); if (d < bd) { bd = d; best = v; } } }
+    return best;
+  }
   const vr = m.state === 'prowl' ? CFG.wolfHunt.villagerAggro : m.state === 'raid' ? 5 : 3.5;
   let best = null, bd = 1e9;
   for (const a of S.adv) { if (a.dead || a.inside) continue; const d = d2(m.x, m.z, a.x, a.z); if (d < def.aggro && d < bd) { bd = d; best = a; } }
@@ -1312,6 +1332,7 @@ function updateMob(S, m, dt) {
     if (tgt && tgt.type === 'vil' && d2(tgt.x, tgt.z, CFG.hall.x, CFG.hall.z) < CFG.townR - 3) tgt = null;   // will not follow prey into the village
     if (!tgt && m.stateT > CFG.wolfHunt.time) packReturn(S, m.lairId, 'Found nothing to eat. Going back to the den.');
   }
+  if (m.wave && tgt && d2(m.x, m.z, tgt.x, tgt.z) > CFG.wave.giveUp) tgt = null;   // a wave does not chase; the hall is what it came for
   if (m.state === 'rob' && tgt && S.caravan && d2(tgt.x, tgt.z, S.caravan.x, S.caravan.z) > CFG.caravan.escortR + 6) tgt = null;   // robbers do not chase far from the wagon
   if (!tgt && m.state !== 'return' && m.state !== 'rob') tgt = pickPrey(S, m);   // robbers go for the wagon, and fight back only when attacked
   m.targetId = tgt ? tgt.id : null;
@@ -1353,11 +1374,18 @@ function updateMob(S, m, dt) {
     if (moveTo(m, H.x, H.z, def.speed, dt, CFG.hall.r + 0.9)) {
       m.fighting = true; m.face = Math.atan2(H.x - m.x, H.z - m.z);
       if (m.cd <= 0) {
-        m.cd = def.cd; m.swingT = S.t; H.hp = Math.max(0, H.hp - def.dmg); H.hitT = S.t;
-        const take = Math.min(Math.floor(S.gold), CFG.raid.steal);
+        m.cd = def.cd; m.swingT = S.t; H.hp = Math.max(0, H.hp - (def.hallDmg || def.dmg) * (m.wave ? m.dmgK : 1)); H.hitT = S.t;
+        if (H.hp <= 0 && !S.lost) { S.lost = true; S.lostT = S.t; event(S, 'The guild hall has fallen.', 'bad', H.x, H.z); return; }
+        const W = m.wave ? S.waves.log[m.wave - 1] : null;
+        if (W && W.reachedT == null) { W.reachedT = S.t; event(S, `Wave ${W.n} has reached the guild hall!`, 'bad', H.x, H.z); }
+        const take = m.kind === 'wolf' ? 0 : Math.min(Math.floor(S.gold), CFG.raid.steal);   // wolves tear at the doors; they have no use for coin
+        if (W) W.stolen += take;
         if (m.raidN != null) { const g = S.raidLog[m.raidN]; if (g.reachedT == null) g.reachedT = S.t; g.stolen += take; }
         if (take > 0) { S.gold -= take; m.loot += take; S.ledger.stolen += take; fx(S, H.x, H.z, '-' + take + 'g', 'steal'); }
-        if (m.loot >= CFG.raid.carry || (S.gold < 1 && m.loot > 0)) {
+        if (m.wave) {   // step 8 (v3.8): a wave does not grab and run. It stays until the hall or it falls.
+          m.why = m.kind === 'wolf' ? `Tearing at the doors of the guild hall with wave ${m.wave}. It will not stop until the hall falls or it is killed.`
+            : `Breaking down the guild hall with wave ${m.wave} and taking coin from your treasury. It will not stop until the hall falls or it is killed.`;
+        } else if (m.loot >= CFG.raid.carry || (S.gold < 1 && m.loot > 0)) {
           mSet(m, 'return', `Grabbed ${m.loot}g from your treasury. Carrying it back to the camp.`);
           event(S, `A bandit is making off with ${m.loot}g from the treasury!`, 'bad', m.x, m.z);
         } else if (!m.stoleMsg && take > 0) { m.stoleMsg = true; m.why = 'Breaking into the guild hall and taking coin from your treasury.'; }
@@ -1405,6 +1433,7 @@ function updateLair(S, L, dt) {
       const raiders = S.mobs.filter(m => !m.dead && (m.state === 'raid' || m.state === 'rob')).length;
       // v2: bandits go for the caravan first; while one is on the map with food to rob, they leave the village alone
       if (caravanDraw(S)) { S.stats.skippedRaids++; L.raidT = L.raidEvery / 2; }
+      else if (waveActive(S)) { S.stats.waveSkippedRaids++; L.raidT = L.raidEvery / 2; }   // step 8 (v3.8): the camp lets the wave do the work
       else if (raiders < 2) {
         const g = { n: S.raidLog.length, t: S.t, from: L.id, ids: [], hitT: null, firstBy: null, reachedT: null, stolen: 0, recovered: 0, killed: 0,
           away: S.adv.filter(a => !a.dead && !advInTown(a)).length, home: S.adv.filter(a => !a.dead && advInTown(a)).length };
@@ -1617,7 +1646,8 @@ function separate(S) {
 }
 function step(S, dt) {
   S.t += dt;
-  if (S.won) return;
+  if (S.won || S.lost) return;
+  updateWaves(S);
   if (S.recruitQ.length) { if (S.t >= S.recruitQ[0]) { S.recruitQ.shift(); recruit(S); } }
   else if (aliveAdv(S).length < CFG.maxAdv) { S.recruitT -= dt; if (S.recruitT <= 0) { recruit(S); S.recruitT = CFG.recruitEvery; } }
   for (const L of S.lairs) updateLair(S, L, dt);
@@ -1640,6 +1670,58 @@ function step(S, dt) {
   if (S.mobs.some(m => m.gone)) S.mobs = S.mobs.filter(m => !m.gone);
   if (S.guards.some(g => g.dead && S.t - g.deadT > 3)) S.guards = S.guards.filter(g => !g.dead || S.t - g.deadT <= 3);
   if (S.t - S.hall.hitT > CFG.hall.repairAfter) S.hall.hp = Math.min(S.hall.max, S.hall.hp + CFG.hall.repair * dt);
+}
+// ---------- step 8 (v3.8): scouted waves ----------
+const COMPASS = ['east', 'south-east', 'south', 'south-west', 'west', 'north-west', 'north', 'north-east'];   // +x is east, +z is south on this map
+function compassOf(ang) { return COMPASS[((Math.round(ang / (TAU / 8)) % 8) + 8) % 8]; }
+function waveCount(n) { return CFG.wave.size + CFG.wave.grow * (n - 1); }
+// who comes in wave n: brutes from wave 3, a third of the rest wolves, the others bandits. Past the size cap, waves grow in strength instead.
+function waveMake(n) {
+  const W = CFG.wave, size = Math.min(W.cap, waveCount(n));
+  const brute = n >= W.bruteFrom ? W.bruteBase + Math.floor((n - W.bruteFrom) / W.bruteEvery) : 0;
+  const wolf = Math.round((size - brute) * W.wolfShare);
+  return { n, size, brute, wolf, bandit: size - brute - wolf, k: 1 + W.strength * Math.max(0, n - W.strengthFrom + 1) + W.overK * Math.max(0, Math.ceil((waveCount(n) - W.cap) / W.grow)) };
+}
+function waveText(c) {
+  const bits = []; for (const k of ['bandit', 'wolf', 'brute']) if (c[k]) bits.push(c[k] + ' ' + (c[k] === 1 ? CFG.mobs[k].name.toLowerCase() : CFG.mobs[k].plural));
+  return bits.join(', ').replace(/, ([^,]*)$/, ' and $1');
+}
+function waveEdge(ang) { const c = Math.cos(ang), z = Math.sin(ang), k = (CFG.mapHalf - 1) / Math.max(Math.abs(c), Math.abs(z)); return { x: c * k, z: z * k }; }
+// the scouts' warning is up, or a wave is still on the map
+function waveActive(S) { return !!S.waves.warn || S.mobs.some(m => !m.dead && m.wave); }
+function waveKill(S, m, by) {
+  if (!m.wave) return;
+  const W = S.waves.log[m.wave - 1]; W.kills[by]++; if (m.loot) W.recovered += m.loot;
+}
+function spawnWave(S, w) {
+  const e = waveEdge(w.ang), px = -Math.sin(w.ang), pz = Math.cos(w.ang), H = CFG.mapHalf - 1, W = CFG.wave;
+  const log = { n: w.n, t: S.t, warnT: w.warnT, name: w.name, size: w.size, comp: w.comp, ids: [], reachedT: null, clearedT: null, stolen: 0, recovered: 0, kills: { adv: 0, array: 0, guard: 0 }, dmg: { adv: 0, array: 0, guard: 0 }, goldAtWarn: w.goldAtWarn, goldAfter: null, hallMin: S.hall.hp, hallAtWarn: w.hallAtWarn };
+  S.waves.log[w.n - 1] = log;
+  const kinds = []; for (const k of ['brute', 'bandit', 'wolf']) for (let i = 0; i < w.comp[k]; i++) kinds.push(k);
+  kinds.forEach((kind, i) => {
+    const def = CFG.mobs[kind], off = (i + 0.5) / kinds.length - 0.5;
+    const x = clamp(e.x + px * off * W.spread * 2 + (S.R() - 0.5), -H, H), z = clamp(e.z + pz * off * W.spread * 2 + (S.R() - 0.5), -H, H);
+    const m = { id: S.nid++, type: 'mob', kind, def, lairId: null, wave: w.n, x, z, hp: def.hp * w.comp.k, max: def.hp * w.comp.k, state: 'raid', stateT: 0, targetId: null, cd: 0, wx: null, wz: 0, pause: 0, dead: false, fade: 0, face: 0, hitT: -99, loot: 0, goal: null, dmgK: w.comp.k, potions: 0,
+      why: `Marching on the guild hall with wave ${w.n}, from the ${w.name}.` };
+    S.mobs.push(m); log.ids.push(m.id);
+  });
+  event(S, `Wave ${w.n} is here, from the ${w.name}: ${waveText(w.comp)}.`, 'bad', e.x, e.z);
+}
+function updateWaves(S) {
+  const V = S.waves; if (V.off) return;
+  if (!V.warn && S.t >= V.nextT) {
+    const n = V.n + 1, ang = S.R() * TAU, comp = waveMake(n), name = compassOf(ang);
+    V.n = n; V.nextT += CFG.wave.every;
+    V.warn = { n, ang, name, comp, size: comp.size, warnT: S.t, at: S.t + CFG.wave.warn, goldAtWarn: S.gold, hallAtWarn: S.hall.hp };
+    const e = waveEdge(ang);
+    event(S, `Scouts report wave ${n} coming from the ${name}: ${waveText(comp)}, in ${CFG.wave.warn} s.`, 'bad', e.x, e.z);
+  }
+  if (V.warn && S.t >= V.warn.at) { const w = V.warn; V.warn = null; spawnWave(S, w); }
+  for (const W of V.log) {
+    if (!W || W.clearedT != null) continue;
+    if (S.hall.hp < W.hallMin) W.hallMin = S.hall.hp;
+    if (!S.mobs.some(m => !m.dead && m.wave === W.n)) { W.clearedT = S.t; W.goldAfter = S.gold; event(S, `Wave ${W.n} is beaten.`, 'good', S.hall.x, S.hall.z); }
+  }
 }
 // player lever: post or raise a bounty
 function postBounty(S, lairId, amount) {
@@ -1844,16 +1926,16 @@ function updateGuards(S, dt) {
 }
 // a guard's blow: guild pay, so its kills drop no coin and give no experience; stolen coin still comes back to the treasury
 function guardStrike(S, g, m, dmg) {
-  const took = Math.min(dmg, m.hp); m.hp -= dmg; m.hitT = S.t; S.stats.guardDmg += took;
+  const took = Math.min(dmg, m.hp); m.hp -= dmg; m.hitT = S.t; S.stats.guardDmg += took; if (m.wave) S.waves.log[m.wave - 1].dmg.guard += took;
   if (!m.wild && !m.targetId) m.targetId = g.id;
   if (m.raidN != null) { const r = S.raidLog[m.raidN]; if (r.hitT == null) { r.hitT = S.t; r.firstBy = 'the guild guard'; } }
   if (m.hp > 0) return;
-  m.dead = true; m.gone = true; g.kills++; S.stats.guardKills++;
+  m.dead = true; m.gone = true; g.kills++; S.stats.guardKills++; waveKill(S, m, 'guard');
   if (m.raidN != null) S.raidLog[m.raidN].killed++;
   if (m.loot) {
     if (m.raidN != null) S.raidLog[m.raidN].recovered += m.loot;
     S.gold += m.loot; S.ledger.recovered += m.loot; fx(S, m.x, m.z, '+' + m.loot + 'g back', 'recover');
-    event(S, `The guild guard brought down a bandit carrying ${m.loot}g of your coin. It is back in the treasury.`, 'good', m.x, m.z); m.loot = 0;
+    event(S, `The guild guard brought down ${aMob(m)} carrying ${m.loot}g of your coin. It is back in the treasury.`, 'good', m.x, m.z); m.loot = 0;
   }
   fx(S, m.x, m.z, 'no coin', 'nocoin');
   note(S, g, `Brought down ${aMob(m)} at the hall.`);
@@ -2198,7 +2280,7 @@ function wildBounds(m) { const r = d2(m.x, m.z, 0, 0), K = CFG.wildKeepOut; if (
 
 // ===== Guildmaster step 1 — view, camera, input, UI =====
 const HEADLESS = /[?&]headless=1/.test(location.search);
-const GM = window.GM = { CFG, newSim, step, postBounty, cancelBounty, buildSite, plan, planVil, evalLair, power, STATES,
+const GM = window.GM = { waveMake, waveText, waveEdge, waveActive, CFG, newSim, step, postBounty, cancelBounty, buildSite, plan, planVil, evalLair, power, STATES,
   plantFlag, raiseFlag, cancelFlag, soundHorn, hornReady, hornWouldAnswer, flagThreat, evalFlag, flagSpot, flagFor, advInTown,
   setRecruitClass, rawPower, evalFollow, healAmt,
   buildShop, upgradeShop, buildArray, canPay, shopCost, arrayCost, wantBuy, repairCost, condEff, arrayStats,
@@ -2523,7 +2605,7 @@ function startGame() {
   const iconURL = {}; for (const st of ICON_KEYS) iconURL[st] = iconCanvas(st, 0, 64).toDataURL();
   const vilIcon = v => v.state === 'flee' ? 'vflee' : (v.state === 'wait' || v.state === 'emerge') ? 'vwait' : (siteById(S, v.site || v.lastSite) ? CFG.siteKinds[siteById(S, v.site || v.lastSite).kind].icon : 'vwait');
   const mobIcon = m => ({ prowl: 'mprowl', raid: 'mraid', rob: 'mrob', return: 'mhome', flee: 'wflee', charge: 'wangry', maul: 'wangry', back: 'mhome' }[m.state] || null);
-  const MOB_LABEL = { guard: 'Guarding its lair', prowl: 'Hunting', raid: 'Raiding the village', rob: 'Robbing the caravan', return: 'Going home', scatter: 'Fleeing',
+  const MOB_LABEL = { guard: 'Guarding its lair', prowl: 'Hunting', raid: 'Attacking the village', rob: 'Robbing the caravan', return: 'Going home', scatter: 'Fleeing',
     graze: 'Grazing', flee: 'Running away', root: 'Rooting in its patch', charge: 'Charging', back: 'Going back to its patch', roam: 'Wandering', maul: 'Attacking' };
   const WILD_DANGER = { deer: 'Harmless. Runs from people.', boar: 'About level 2. Charges anyone near its patch.', bear: 'About level 3. Attacks anyone within reach.' };
   function vilLabel(v) {
@@ -2825,8 +2907,8 @@ function startGame() {
     scene.add(g);
     return toyUnit({ g, body, arm, skin: tunic, tools, load, icon, hp, iconKey: '', lastX: v.x, lastZ: v.z, bob: 0 });
   }
-  const SKIN = { wolf: '#9a9aa6', bandit: '#a3392b', deer: '#d08a46', boar: '#6e4a3a', bear: '#7a4a2a' };
-  const MOB_H = { wolf: 1.75, bandit: 2.4, deer: 2.2, boar: 1.5, bear: 2.9 };   // (units are drawn 1.25× their sim size)   // where the icon and health bar sit
+  const SKIN = { wolf: '#9a9aa6', bandit: '#a3392b', deer: '#d08a46', boar: '#6e4a3a', bear: '#7a4a2a', brute: '#6a7a4a' };
+  const MOB_H = { wolf: 1.75, bandit: 2.4, deer: 2.2, boar: 1.5, bear: 2.9, brute: 3.3 };   // (units are drawn 1.25× their sim size)   // where the icon and health bar sit
   function makeMobV(m) {
     const g = new THREE.Group(), body = new THREE.Group(); g.add(body);
     const skin = new THREE.MeshLambertMaterial({ color: SKIN[m.kind] });
@@ -2863,6 +2945,14 @@ function startGame() {
       [-0.1, 0.1].forEach(x => body.add(mesh(new THREE.ConeGeometry(0.07, 0.18, 4), skin, x, 0.97, 0.55)));
       const tail = mesh(new THREE.BoxGeometry(0.12, 0.12, 0.5), skin, 0, 0.7, -0.68); tail.rotation.x = 0.6; body.add(tail);
       [[-0.17, 0.35], [0.17, 0.35], [-0.17, -0.35], [0.17, -0.35]].forEach(([x, z]) => body.add(mesh(new THREE.BoxGeometry(0.12, 0.4, 0.12), '#5e5b56', x, 0.2, z)));
+    } else if (m.kind === 'brute') {   // step 8: a big, hunched figure with a heavy hammer, clearly not a bandit
+      body.add(mesh(new THREE.CylinderGeometry(0.62, 0.5, 1.15, 6), skin, 0, 0.95, 0));
+      body.add(mesh(new THREE.BoxGeometry(1.15, 0.36, 0.7), '#4a3a2a', 0, 1.5, 0));
+      body.add(mesh(new THREE.IcosahedronGeometry(0.3, 0), skin, 0, 1.86, 0.14));
+      body.add(mesh(new THREE.BoxGeometry(0.2, 0.42, 0.24), '#3a3a3e', -0.3, 0.2, 0), mesh(new THREE.BoxGeometry(0.2, 0.42, 0.24), '#3a3a3e', 0.3, 0.2, 0));
+      arm = new THREE.Group(); arm.position.set(0.68, 1.35, 0); body.add(arm);
+      const haft = mesh(new THREE.CylinderGeometry(0.07, 0.08, 1.2, 5), '#5a4030', 0, 0.3, 0.2); haft.rotation.x = 0.5; arm.add(haft);
+      const head = mesh(new THREE.BoxGeometry(0.62, 0.42, 0.42), '#55555c', 0, 0.82, 0.48); head.rotation.x = 0.5; arm.add(head);
     } else {
       body.add(mesh(new THREE.CylinderGeometry(0.3, 0.42, 1.0, 6), skin, 0, 0.62, 0));
       body.add(mesh(new THREE.IcosahedronGeometry(0.25, 0), '#c99a74', 0, 1.36, 0));
@@ -2870,7 +2960,7 @@ function startGame() {
       arm = new THREE.Group(); arm.position.set(0.38, 0.9, 0); body.add(arm);
       const club = mesh(new THREE.CylinderGeometry(0.07, 0.11, 0.8, 5), '#5a4030', 0, 0.3, 0.12); club.rotation.x = 0.5; arm.add(club);
     }
-    const shadow = new THREE.Mesh(new THREE.CircleGeometry(m.kind === 'bear' ? 0.95 : 0.5, 10), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.25, depthWrite: false })); shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.03; g.add(shadow);
+    const shadow = new THREE.Mesh(new THREE.CircleGeometry(m.kind === 'bear' || m.kind === 'brute' ? 0.95 : 0.5, 10), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.25, depthWrite: false })); shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.03; g.add(shadow);
     const hp = bar(0xe0503c); hp.add(g);
     const icon = new THREE.Sprite(new THREE.SpriteMaterial({ map: iconTex.mprowl0, depthTest: false })); icon.renderOrder = 12; icon.visible = false; g.add(icon);
     scene.add(g);
@@ -3333,7 +3423,7 @@ function startGame() {
     if (sel.kind === 'hall') {
       const inside = S.adv.filter(a => a.inside && !a.dead), vin = S.vil.filter(v => v.inside && !v.dead);
       return `<header><h2>Guild hall</h2><span class="sub">Your branch</span><button class="x" data-act="close" aria-label="Close">✕</button></header>
-      <div class="grid"><span>Health</span><span data-f="hhp"></span><span>Adventurers</span><span data-f="count"></span><span>Next recruit</span><span data-f="recruit"></span><span>Villagers</span><span data-f="vcount"></span><span>Guild guard</span><span data-f="gcount"></span></div>
+      <div class="grid"><span>Health</span><span data-f="hhp"></span><span>Adventurers</span><span data-f="count"></span><span>Next recruit</span><span data-f="recruit"></span><span>Villagers</span><span data-f="vcount"></span><span>Guild guard</span><span data-f="gcount"></span><span>Waves</span><span data-f="hwave"></span></div>
       <h3>Who the hall recruits next</h3>
       <div class="clsPick">${CFG.clsOrder.map(k => `<button data-act="cls_${k}" data-f="cls_${k}" aria-pressed="false"><b>${CFG.cls[k].name}</b><small>${CLS_SHORT[k]}</small></button>`).join('')}</div>
       <p class="note" data-f="clsNote"></p>
@@ -3366,10 +3456,10 @@ function startGame() {
       <div class="grid"><span>Health</span><span data-f="hpbar"></span><span>Danger</span><span>${WILD_DANGER[m.kind]}</span><span>Worth</span><span>${W.coins[0]}–${W.coins[1]}g and ${W.xp} experience to the adventurer who kills it</span></div>
       <p class="why">It belongs to no lair and does not count toward clearing the map. When one is killed, another comes out of the deep forest after a while.</p>`;
       }
-      const L = lairById(S, m.lairId);
-      return `<header><h2>${esc(m.def.name)}</h2><span class="sub">From the ${esc(L.name.toLowerCase())}</span><button class="x" data-act="close" aria-label="Close">✕</button></header>
+      const L = lairById(S, m.lairId), Wv = m.wave ? S.waves.log[m.wave - 1] : null;
+      return `<header><h2>${esc(m.def.name)}</h2><span class="sub">${Wv ? `Wave ${m.wave}, from the ${esc(Wv.name)}` : `From the ${esc(L.name.toLowerCase())}`}</span><button class="x" data-act="close" aria-label="Close">✕</button></header>
       <div class="now"><img data-f="icon" alt=""><div><b data-f="state"></b><p data-f="why"></p></div></div>
-      <div class="grid"><span>Health</span><span data-f="hpbar"></span>${m.kind === 'bandit' ? '<span>Stolen coin</span><span data-f="loot"></span>' : ''}</div>`;
+      <div class="grid"><span>Health</span><span data-f="hpbar"></span>${m.kind !== 'wolf' ? '<span>Stolen coin</span><span data-f="loot"></span>' : ''}</div>${m.kind === 'brute' ? '<p class="why">Slow and very tough, and it breaks the guild hall far faster than a bandit does. Arrays and magicians help most against it.</p>' : ''}`;
     }
     if (sel.kind === 'site') {
       const st = siteById(S, sel.id), K = CFG.siteKinds[st.kind], amt = Math.round(K.load * st.yield), pay = CFG.vil.pay + (st.yield > 1.2 ? 1 : 0);
@@ -3472,7 +3562,7 @@ function startGame() {
       const m = mobById(S, sel.id); if (!m) return;
       const ik = mobIcon(m) || (m.wild ? 'vwait' : 'mguard'); const img = card.querySelector('[data-f="icon"]'); if (img && img.dataset.st !== ik) { img.src = iconURL[ik]; img.dataset.st = ik; }
       setF('state', MOB_LABEL[m.state] + (m.fighting ? ', fighting' : '')); setF('why', m.why);
-      setF('hpbar', hpBar(m.hp / m.max, 'foe') + `<em>${Math.ceil(m.hp)} / ${m.max}</em>`, true);
+      setF('hpbar', hpBar(m.hp / m.max, 'foe') + `<em>${Math.ceil(m.hp)} / ${Math.round(m.max)}</em>`, true);
       setF('loot', m.loot ? `${m.loot}g, recovered if it is killed` : 'None');
     } else if (sel.kind === 'site') {
       const st = siteById(S, sel.id);
@@ -3501,6 +3591,7 @@ function startGame() {
       setF('escL', S.ledger.escorts ? `${S.ledger.escorts}g posted, ${S.ledger.escortRefunds}g back` : 'None');
       setF('arrL', S.ledger.arrayShots ? `${S.ledger.arrayShots}g for ${S.stats.arrayShots} shots` : 'None fired');
       setF('hhp', hpBar(S.hall.hp / S.hall.max) + `<em>${Math.ceil(S.hall.hp)} / ${S.hall.max}</em>`, true);
+      setF('hwave', waveLine(S));
       const vAlive = S.vil.filter(v => !v.dead).length;
       const gAlive = S.guards.filter(g => !g.dead).length;
       setF('gcount', `${gAlive} of ${CFG.guard.n} at the door` + (S.guardQ.length ? `, a new guard in ${Math.max(0, Math.ceil(S.guardQ[0][0] - S.t))} s` : '') + '. They fight only enemies that attack the hall.');
@@ -3778,7 +3869,7 @@ function startGame() {
       else if (sel.kind === 'shop') { const D = CFG.shops[sel.id]; sx = D.x; sz = D.z; r = D.r + 1; }
       else if (sel.kind === 'array') { const A = arrayById(S, sel.id); sx = A.x; sz = A.z; r = 1.4; }
       else if (sel.kind === 'vil') { const u = vilById(S, sel.id); if (u && !u.dead) { if (u.inside) { sx = 0; sz = 0; r = 4.2; } else { sx = u.x; sz = u.z; r = 0.85; } } else if (!u || S.t - u.deadT > 2.5) select(null); }
-      else if (sel.kind === 'mob') { const m = mobById(S, sel.id); if (m && !m.dead) { sx = m.x; sz = m.z; r = m.kind === 'bear' ? 1.6 : m.kind === 'wolf' || m.kind === 'deer' || m.kind === 'boar' ? 1.1 : 1; } else select(null); }
+      else if (sel.kind === 'mob') { const m = mobById(S, sel.id); if (m && !m.dead) { sx = m.x; sz = m.z; r = m.kind === 'bear' || m.kind === 'brute' ? 1.6 : m.kind === 'wolf' || m.kind === 'deer' || m.kind === 'boar' ? 1.1 : 1; } else select(null); }
       else if (sel.kind === 'site') { const st = siteById(S, sel.id); sx = st.x; sz = st.z; r = CFG.siteKinds[st.kind].r + 1; }
       else if (sel.kind === 'flag') { const F = flagById(S, sel.id); if (F) { sx = F.x; sz = F.z; r = 1.3; } else select(null); }
       else if (sel.kind === 'ground') { sx = sel.x; sz = sel.z; r = CFG.flag.guardR / 0.8; }
@@ -3842,12 +3933,56 @@ function startGame() {
   const DT = 1 / 30;
   GM.frameTimes = () => frameTimes.slice();
   GM.drawCalls = () => renderer.info.render.calls;
+  // ---------- step 8: the scouts' warning: a banner with a countdown and an arrow, and an arrow on the ground beside the village ----------
+  function waveLine(S) {
+    const V = S.waves, beaten = V.log.filter(W => W && W.clearedT != null).length, on = S.mobs.filter(m => !m.dead && m.wave).length;
+    if (V.warn) return `Wave ${V.warn.n} from the ${V.warn.name} in ${Math.max(0, Math.ceil(V.warn.at - S.t))} s`;
+    if (on) return `${on} still attacking. ${beaten} beaten so far.`;
+    return `Scouts expect the next one in ${Math.max(0, Math.ceil(V.nextT - S.t))} s. ${beaten} beaten so far.`;
+  }
+  const waveArrow = (() => {
+    const sh = new THREE.Shape(); sh.moveTo(-3, -0.9); sh.lineTo(1, -0.9); sh.lineTo(1, -2.1); sh.lineTo(4, 0); sh.lineTo(1, 2.1); sh.lineTo(1, 0.9); sh.lineTo(-3, 0.9); sh.closePath();
+    const g = new THREE.ShapeGeometry(sh); g.rotateX(-Math.PI / 2);
+    const a = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: 0xe0503c, transparent: true, opacity: 0.8, depthWrite: false, side: THREE.DoubleSide })); a.visible = false; a.renderOrder = 3; scene.add(a); return a;
+  })();
+  const waveBar = $('waveBar'), waveSvg = waveBar.querySelector('svg');
+  function waveNow(S) {   // what the banner is about: the warning, or else the oldest wave still on the map
+    const V = S.waves; if (V.warn) return { warn: true, n: V.warn.n, ang: V.warn.ang, name: V.warn.name };
+    const m = S.mobs.find(o => !o.dead && o.wave); if (!m) return null;
+    const W = V.log[m.wave - 1]; return { warn: false, n: m.wave, name: W.name, ang: Math.atan2(m.z, m.x), on: S.mobs.filter(o => !o.dead && o.wave).length };
+  }
+  function syncWaves(S, now) {
+    const w = S.lost || S.won ? null : waveNow(S);
+    const show = !!w;
+    if (waveBar.hidden === show) { waveBar.hidden = !show; document.body.classList.toggle('waveOn', show); }
+    waveArrow.visible = !!(w && w.warn);
+    if (!w) return;
+    const txt = w.warn ? `Scouts: wave ${w.n} from the ${w.name}: ${waveText(S.waves.warn.comp)}` : `Wave ${w.n} from the ${w.name} is on the map`;
+    const el = $('waveText'); if (el.textContent !== txt) el.textContent = txt;
+    const tm = w.warn ? Math.max(0, Math.ceil(S.waves.warn.at - S.t)) + ' s' : w.on + ' left'; const te = $('waveTime'); if (te.textContent !== tm) te.textContent = tm;
+    // the arrow points across the screen toward where they come from, whatever the camera is doing
+    const a = toScreen(0, 0, 0), b = toScreen(Math.cos(w.ang) * 10, 0, Math.sin(w.ang) * 10);
+    waveSvg.style.transform = `rotate(${Math.atan2(b.y - a.y, b.x - a.x)}rad)`;
+    if (w.warn) {
+      const r = 19, x = Math.cos(w.ang) * r, z = Math.sin(w.ang) * r, p = 1 + 0.12 * Math.sin(now * 0.006);
+      waveArrow.position.set(x, heightAt(x, z) + 0.3, z); waveArrow.rotation.y = -w.ang; waveArrow.scale.setScalar(p);
+    }
+  }
+  waveBar.addEventListener('click', () => {   // tap: look toward where they are or will come from
+    const w = waveNow(S); if (!w) return;
+    const on = S.mobs.filter(o => !o.dead && o.wave === w.n);
+    let x, z;
+    if (on.length) { x = on.reduce((t, o) => t + o.x, 0) / on.length; z = on.reduce((t, o) => t + o.z, 0) / on.length; }
+    else { const e = waveEdge(w.ang); x = e.x * 0.6; z = e.z * 0.6; }
+    cam.follow = null; GM.look(x, z, Math.max(cam.dist, 60));
+  });
   function frame(now) {
     const real = Math.min(0.1, (now - last) / 1000); last = now;
     frameTimes.push(real * 1000); if (frameTimes.length > 600) frameTimes.shift();
     if (!paused) { acc += real * speed; let n = 0; while (acc >= DT && n < 12) { step(S, DT); acc -= DT; n++; } if (n === 12) acc = 0; }
     if (cam.follow) { const a = unitById(S, cam.follow); if (a && !a.dead) { const tx = a.inside ? 0 : a.x, tz = a.inside ? 0 : a.z; cam.x += (tx - cam.x) * Math.min(1, real * 4); cam.z += (tz - cam.z) * Math.min(1, real * 4); applyCam(); } else cam.follow = null; }
     pumpEvents();
+    syncWaves(S, now);
     pumpShots(paused ? 0 : real * speed);
     sync(real, now);
     uiT -= real;
@@ -3865,13 +4000,20 @@ function startGame() {
       // step 6: the blacksmith is taught when an adventurer first has gold for gear and nowhere to buy it
       const smithHint = !raidHint && !cvHint && S.everPosted && !S.shops.smith.built && aliveAdv(S).some(a => (a.weapon < 1 || a.armour < 1) && a.gold >= CFG.gear.price[1]);
       const den = lairById(S, 'den'), clsHint = !raidHint && !cvHint && !smithHint && S.everPosted && !S.pickedCls && aliveAdv(S).length < CFG.maxAdv && ((den && !den.alive) || S.t > 75) && S.t < 170;
-      const ht = raidHint ? 'Bandits are raiding. Tap the guild hall to sound the recall horn or plant a defend flag'
+      // step 8: the first warning teaches the answers; after wave 1, the hint points to what is missing for arrays
+      const V8 = S.waves, built8 = S.arrays.some(A => A.built), last8 = V8.log.filter(W => W && W.clearedT != null).pop();
+      const waveHint = V8.warn && V8.warn.n === 1 && !S.stats.horns ? `A wave is coming. Tap the guild hall to sound the recall horn or plant a defend flag` : null;
+      const arrayHint = !built8 && last8 && S.t - last8.clearedT < 40 ? (!S.sites.some(x => x.kind === 'quarry' && x.built) ? 'Waves grow. You will need arrays to hold the next ones: build a quarry first, for their stone'
+        : !S.shops.arrays.built ? 'Waves grow. You will need arrays to hold the next ones: tap the empty plot west of the guild hall to build an array master'
+        : 'Waves grow. Tap a + plot around the village to build an array') : null;
+      const ht = waveHint || arrayHint || (raidHint ? 'Bandits are raiding. Tap the guild hall to sound the recall horn or plant a defend flag'
         : cvHint ? 'A merchant caravan has come for your surplus food, and bandits will go for it. Tap the wagon to post an escort bounty'
         : smithHint ? 'An adventurer has gold for better gear. Tap the empty plot in front of the guild hall to build a blacksmith'
-        : clsHint ? 'Tap the guild hall to choose who it recruits next: warrior, archer, magician or healer' : 'Tap the wolf den to post a bounty';
+        : clsHint ? 'Tap the guild hall to choose who it recruits next: warrior, archer, magician or healer' : 'Tap the wolf den to post a bounty');
       if (hint.textContent !== ht) hint.textContent = ht;
-      hint.hidden = !!sel || (!raidHint && !cvHint && !clsHint && !smithHint && (S.everPosted || S.t < 2));   // never under an open card
+      hint.hidden = !!sel || (!waveHint && !arrayHint && !raidHint && !cvHint && !clsHint && !smithHint && (S.everPosted || S.t < 2));   // never under an open card
       if (S.won && $('won').hidden) { $('won').hidden = false; $('wonText').textContent = `Every threat is gone, on day ${Math.floor(S.wonT / 60) + 1}.`; }
+      if (S.lost && $('won').hidden) { $('won').hidden = false; $('wonTitle').textContent = 'The guild hall has fallen'; $('wonText').textContent = `It stood until day ${Math.floor(S.lostT / 60) + 1}, and ${S.waves.log.filter(W => W && W.clearedT != null).length} waves were beaten. Headquarters sends a new guildmaster to try again.`; $('againBtn').textContent = 'Try again'; }
     }
     renderer.render(scene, camera);
     requestAnimationFrame(frame);
