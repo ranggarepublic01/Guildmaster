@@ -1,9 +1,9 @@
 # Guildmaster (Playgama challenge entry)
 
-Read `playgama_game_brief_guildmaster_v3_6.md` before any work. `MIGRATION.md` says where the work stands, which pull request
-to merge first, and how a new chat (Claude Code or claude.ai) picks the project up. It is the single source of truth:
+Read `playgama_game_brief_guildmaster_v3_6.md` before any work. It is the single source of truth:
 the design, the locked decisions, the build order, the build choices waiting for Rawa, and what each
-step's bot results showed. The next step is step 8 (scouted waves that escalate; raiders damage the hall; arrays
+step's bot results showed. `MIGRATION.md` says where the work stands, which pull request to merge first, and how a new
+chat (Claude Code or claude.ai) picks the project up. The next step is step 8 (scouted waves that escalate; raiders damage the hall; arrays
 required) in the build order. Step 7b left two questions for Rawa in 1e (wood price, the guard's strength).
 
 ## Files
