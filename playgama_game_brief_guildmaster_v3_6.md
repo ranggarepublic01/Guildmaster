@@ -33,6 +33,13 @@ gear tiers); the other build choices are in 1e to confirm.
 **Step 7 built 29 Sep 2026** in Claude Code (see 1f): the merchant caravan, bandits robbing it, camp tiers, escort bounties.
 Rawa decided four points before the build (the road runs by the bandit camp, set per village; caravan pay; escort split and refund;
 half the stolen goods back when the camp falls); the other build choices are in 1e to confirm.
+**v3.7 decided 30 Sep 2026** (Rawa, on the open questions before step 8): the guildmaster chooses which goods the caravan
+buys (food, wood, stone); an escort bounty stays below the worth of the goods; a player who never escorts losing the camp race is
+intended; the hall repairs slowly on its own until a paid repair by ad (platform wiring); the guild guard is built now and only
+defends the hall; arrays cost less per shot (1g a shot kept for a later hard mode). **Step 7b built 30 Sep 2026** (see 1f).
+**Graphics pass 5 Nov 2026** (Rawa: bright toy-like look; ground, nature, lighting, buildings, units; best look always). Details
+and what to confirm in `MIGRATION.md`, section 7, and in 1e below. The sim is unchanged.
+**Moving to a new chat:** see `MIGRATION.md` (where things stand, Claude Code or a claude.ai chat, tools, a map of `index.html`).
 **From step 6 the build moves to Claude Code.** Keep this file, `index.html` (the step 5 build) and
 `guildmaster_bot_harness.js` in one project folder, with `CLAUDE.md` pointing to them. The last claude.ai
 build link, for reference: https://claude.ai/artifact/HpUoHyAbPg8UaJdLb22gbF
@@ -214,6 +221,11 @@ build link, for reference: https://claude.ai/artifact/HpUoHyAbPg8UaJdLb22gbF
 - *(Rawa, 29 Sep)* The escort bounty is shared **evenly** by the escorts still with the caravan when it arrives, and
   **comes back to the treasury** if the caravan is lost.
 - *(Rawa, 29 Sep)* Destroying a camp that robbed caravans returns **half the value** of the stolen goods to the treasury.
+- *(v3.7, Rawa 30 Sep)* **The guildmaster chooses what the caravan buys**: food, wood and stone, each switched on or off on the
+  caravan card (or the guild hall card). Villagers choose their own work, so the stores come out unbalanced; the caravan is how
+  the player turns a surplus into coin. Villagers keep 20 food; wood and stone are sold down to 0 when switched on.
+- *(v3.7, Rawa 30 Sep)* **An escort bounty is always less than the worth of the goods** it guards, so each caravan has a
+  maximum escort.
 
 **Bounties (v2)**
 - **Destroy:** on a lair or camp. Paid when it is destroyed.
@@ -278,7 +290,10 @@ build link, for reference: https://claude.ai/artifact/HpUoHyAbPg8UaJdLb22gbF
   guild hall. Those raiders damage the hall and take coin from the treasury, even when it
   does not fall. Waves are tuned so adventurers alone cannot hold them; arrays are needed.
 - **Guild guard:** the starting squad. It defends the village centre on its own and
-  cannot be commanded. It does not retreat *(v3)*.
+  cannot be commanded. It does not retreat *(v3)*. *(v3.7, Rawa 30 Sep)* Built in step 7b. Its only task is the guild hall: it
+  fights enemies that attack the hall, and nothing else.
+- *(v3.7, Rawa 30 Sep)* **Hall repair:** later, the player pays to repair the hall through an ad option (with the platform
+  wiring). Until then it repairs itself slowly.
 
 **Scoring (v3):** the coin left in the treasury when the map is cleared. Higher is better.
 It goes to guild headquarters as accomplishment points, which are a record and buy nothing.
@@ -352,6 +367,8 @@ Which number the leaderboard shows is open (see 1e).
    and stone. *(v3.1)* Gear condition and blacksmith repair; array cost per shot, and no
    coin from array kills.~~ Done 28 Sep.
 7. ~~Caravan every 3–5 min, bandits' caravan targeting and camp tier-up, and escort bounties.~~ Done 29 Sep.
+7b. ~~*(v3.7)* The caravan buys the goods the player chooses; escort capped below the goods' worth; the guild guard; slow hall
+    self-repair; cheaper array shots.~~ Done 30 Sep.
 8. Scouted waves that escalate over time. *(v3.1)* Raiders damage the hall and take treasury
    coin; waves tuned so arrays are required.
 9. *(v3)* Missions: the tutorial village, the coin score to guild headquarters, and a fresh
@@ -375,12 +392,37 @@ Which number the leaderboard shows is open (see 1e).
 - Each new village: a new map layout, or the same map with new threat positions?
 - Recruit cost per class, and a cap on how many adventurers the guild can hold.
 - Whether more houses mean more villagers.
+- *(step 7b, to confirm)* Choices made in the build:
+  - Caravan prices: food 3g, wood 2g, stone 3g. Reserves: food 20, wood 0, stone 0. Food is switched on at the start, wood and
+    stone off. The switches are on the caravan card and the guild hall card, work at any time, and stay as set; what is on is
+    loaded when the caravan leaves the hall.
+  - Escort cap: the escort bounty can be at most 1g less than the worth of the goods (what is for sale while the caravan comes
+    and loads; what is on board once it has left). The 25g / 50g buttons post only what fits and say how much; an empty caravan
+    takes no escort. If less is loaded than was for sale, the bounty above the cap comes back to the treasury.
+  - Guild guard: 2 guards, each like a level-3 warrior in starter gear with armour (116 health, 12 damage a second), at two posts
+    beside the hall door. They fight an enemy raiding within 6 units of the hall wall, or one attacking them there; nothing else.
+    They never retreat or leave, heal 2 health a second after 10 s without a hit, and a fallen guard is replaced after 60 s. Raiders
+    fight them like adventurers. Their kills drop no coin and give no experience (like arrays); stolen coin comes back. Tap a guard
+    for its card; the hall card shows how many stand.
+  - Hall repair: 1 health a second once nothing has hit it for 20 s (was 3 a second after 6 s).
+  - Array cost: 1g for every 4 shots, charged on the fourth. An array whose next shot would cost a coin falls silent while the
+    treasury has less than 1g.
+- *(step 7b, open, for Rawa)* **Wood swamps the caravan.** Nothing uses much wood yet, so it piles up (about 240 sold a run) and
+  selling it nearly triples caravan pay (689g a run against 270g for food alone, with 50g escorts). Wood at 1g, a cap per
+  caravan, or leave it for waves and upgrades to use up?
+- *(graphics pass, to confirm)* Bright toy-like look: smooth ground colours, round and pine trees, bushes, flowers and grass
+  tufts, warm sun with real shadows that follow the camera, a timber-framed guild hall with chimney smoke, colourful houses,
+  brighter shops and lairs, units 1.25× bigger with dark outlines, floating text that stacks. Draw calls about 90–120 (were
+  35–85). To confirm on Rawa's Android: the look, the frame rate with shadows, and the outlines at the widest zoom.
+- *(step 7b, open, for Rawa)* **The guild guard stops nearly every raid** (hall reached 0–2 times per 30 runs, was 26–71 with no
+  response), so the horn and hall flag matter much less until step 8's waves. Keep as it is for step 8 to balance against?
 - *(step 3, to confirm)* Choices made in the build: killing a bandit who carries stolen coin
   returns it to the treasury; adventurers chase roaming monsters only within 15 units or near
   the village; wolves do ×1.7 damage to villagers; site costs 30/40/50g, far sites ×1.4–1.6
   yield and 2g per load instead of 1g; two sites come pre-built (town farm, near lumber camp).
 - *(v3.1, to confirm)* Array running cost is charged per shot, and an empty treasury stops
-  the arrays. Whether the guild hall repairs itself or costs coin to repair.
+  the arrays. Whether the guild hall repairs itself or costs coin to repair. *(v3.7, Rawa 30 Sep: arrays cost less, 1g for every
+  4 shots in normal mode; 1g a shot is kept for a later hard mode. The hall repairs itself slowly until the paid repair by ad.)*
 - *(step 3b, to confirm)* Choices made in the build:
   - Numbers: deer up to 6 (4 at the start, one back every 20–30 s), boar up to 3 (2 at the start,
     40–60 s), bear up to 1 (the first comes out at 2.5–3.5 min, then 2.5–3.5 min after each kill).
@@ -417,7 +459,7 @@ Which number the leaderboard shows is open (see 1e).
   - At the first raid, a hint says to tap the guild hall for the horn or a flag.
 - *(step 4, open)* The recheck makes hunters join destroy bounties mid-hunt, so rewards are split and
   gear comes slower (see 1f). Tune in the content pass, or limit who joins a bounty already taken?
-- *(v3.4)* The guild guard: build it, and in which step? Rawa decides after reviewing step 4.
+- ~~*(v3.4)* The guild guard: build it, and in which step?~~ *(v3.7, Rawa 30 Sep: built in step 7b, hall only.)*
 - *(step 5, to confirm)* Choices made in the build:
   - The warrior is the step 1–4 adventurer, unchanged, so older bot results still compare.
   - Archer: 62 health (+14 a level), 7 damage every 1.15 s, range 7. Magician: 55 health (+12), 8 damage
@@ -510,13 +552,13 @@ Which number the leaderboard shows is open (see 1e).
     bounty", shows on the first two caravans until an escort is posted.
   - Raiders and robbers who get home join the camp's guards, even above its cap (as in step 6). The camp card now says
     "6 guarding: 4 usually, plus raiders back from the road" instead of "6 guarding, 4 at most".
-- *(step 7, open, for Rawa)* **Villagers farm only up to the caravan reserve.** They choose the farm when food is below 20 and prefer
+- *(v3.7: answered by letting the player sell wood and stone too.)* **Villagers farm only up to the caravan reserve.** They choose the farm when food is below 20 and prefer
   other sites above it, so once a quarry or the far sites are built the store hovers near 20 and caravans leave nearly empty
   (`caravanFar`: 45 of 64 empty; `shopsLong`: 50 of 63). Should villagers keep farming for the caravan (for example, value food up
   to 20 + what the next caravan would buy), or is choosing stone over caravan food a trade-off the player should face?
-- *(step 7, open, for Rawa)* **Escorts are cheap for what they save.** A 25g escort is delivered about as often as a 50g one (54/66
+- *(v3.7: the escort is now capped below the goods' worth; no other change.)* **Escorts are cheap for what they save.** A 25g escort is delivered about as often as a 50g one (54/66
   and 57/69), and escorts almost never die (0–0.1 a run). Stronger robbers, bigger parties at higher tiers, or a bigger ask?
-- *(step 7, open, for Rawa)* **A player who never escorts now often loses the camp race:** the camp tiers up and the scripted 150g
+- *(v3.7, Rawa: intended.)* **A player who never escorts now often loses the camp race:** the camp tiers up and the scripted 150g
   camp bounty is no longer enough (`normal` won 18/30, was 30/30). With escorts it wins 29/30. Intended, or soften the tiers?
 - More classes and more maps after the first four classes.
 - Plan for now: saves between missions only (mission number, headquarters points), with a
@@ -718,6 +760,29 @@ Older scenarios (they never post an escort, so their caravans are robbed and the
   goes to the guild, not to adventurers, and escort pay (about 97g a run shared by 2–3) goes on potions and tier-1 gear.
 - Draw calls: 36 in portrait and 82 in landscape at the test zoom. The wagon is about 20 meshes, one on the map at a time.
 
+**Step 7b, caravan goods, escort cap, the guild guard, hall repair, array cost.** Built in Claude Code and bot-tested: 37 scenarios
+× 30 runs × 12 min (35 as in step 7, plus caravanSellAll and caravanSellAllNone), compared with the step 7 runs. Zero stuck units,
+every decision has a reason (guards included), and the ledger, pots and stores balance (the store check now counts goods sold);
+no escort bounty is ever worth the goods or more. The UI was tested in headless Chromium at phone portrait and landscape by real
+taps (a guard's card, switching wood on for the caravan and the goods line changing, posting a capped escort, switching stone on from
+the hall card), with no page errors. The bot caught one problem, fixed: a guard could not get back onto its post while someone
+stood on it (it now keeps watch from where it got to).
+
+| 30 runs × 12 min | Step 7 | Step 7b |
+|---|---|---|
+| Raids reaching the hall, mixed, no bounties | 71/152, stolen 54g a run | 2/148, 0g; guards kill 5 a run, lose 0.9 |
+| Same, 50g escorts (`caravanEscort`) | 34/141 | 1/136; caravan income 270g a run |
+| Selling food, wood and stone, 50g escorts (`caravanSellAll`) | – | 59/69 delivered, median 349g a caravan, 689g a run |
+| Same, no escorts (`caravanSellAllNone`) | – | 1/69 delivered, 760g of goods stolen a run, camps end t2–t3 |
+| Two arrays (`arrays`): shots / their cost | 68 / 68g | 68 / 16g |
+| All warriors, den then camp (`normal`) | won 18/30, 4.3 min | won 20/30, 5.2 min |
+| Mixed guild (`mixed`) / `mixedPush` | 26/30, 3.4 / 30/30, 3.7 | 26/30, 4.3 / 30/30, 4.9 |
+
+- The hall's health never went below 600 in any run: the guards meet raiders at the door.
+- Runs that win now win about 1 minute later. The likely reason (not tested): raiders that the guards kill give adventurers no
+  coin or experience, so they level and gear more slowly before taking the camp.
+- Tier-2 gear is still never bought.
+
 **Tuning notes for the content pass**
 - First success is fast: the den falls about 23 s after posting. *(v3)* Keep that for the
   tutorial village. From mission 2, target about 2 min.
@@ -883,6 +948,9 @@ only 6 players on the leaderboard. Plenty started, few finished. Lesson for the 
 - *(Guildmaster, step 7)* In a cloud session the phone-size UI tests run in headless Chromium through Playwright
   (`/opt/node22/lib/node_modules/playwright`, browser in `/opt/pw-browsers`), against `tools/serve.js` on port 8765. Cards scroll
   in landscape: scroll a button into view before tapping it. A bandit standing on the camp takes the tap before the camp does.
+- *(Guildmaster, graphics pass)* `tools/ui_test.js` is the phone-size tap test, kept in the repo because a cloud session's
+  scratchpad is wiped when its machine restarts. `tools/game_only.js` writes the game code without three.js (288 KB) for a
+  claude.ai chat; `index.html` itself (906 KB) is too big to upload there. See `MIGRATION.md`.
 - *(Guildmaster, step 6)* Testing the UI in Claude Code: the built-in browser cannot open `file://`, so
   `.claude/launch.json` starts a tiny static server (`tools/serve.js`, plain Node). The page runs slowly while
   the browser pane is hidden, so fast-forward from the console with `GM.step(GM.sim(), 1/30)` and use `GM.screenOf` to
