@@ -1,6 +1,7 @@
 # Guildmaster (Playgama challenge entry)
 
-Read `playgama_game_brief_guildmaster_v3_6.md` before any work. It is the single source of truth:
+Read `playgama_game_brief_guildmaster_v3_6.md` before any work. `MIGRATION.md` says where the work stands, which pull request
+to merge first, and how a new chat (Claude Code or claude.ai) picks the project up. It is the single source of truth:
 the design, the locked decisions, the build order, the build choices waiting for Rawa, and what each
 step's bot results showed. The next step is step 8 (scouted waves that escalate; raiders damage the hall; arrays
 required) in the build order. Step 7b left two questions for Rawa in 1e (wood price, the guard's strength).
@@ -14,6 +15,8 @@ required) in the build order. Step 7b left two questions for Rawa in 1e (wood pr
   In a cloud session, use `node` from PATH. Nothing to install either way.
 - `builds/`: keep a copy of each finished step (`builds/step7b.html` is the current `index.html`), so every
   step can be bot-compared with the one before.
+- `tools/ui_test.js`: the phone-size tap test (headless Chromium, portrait and landscape, real taps). Start `tools/serve.js`
+  first. `tools/game_only.js` writes the game code without three.js, for uploading to a claude.ai chat.
 - `tools/serve.js`: a tiny static server for testing in the browser pane (`.claude/launch.json`, name `guildmaster`,
   port 8765); the browser pane cannot open `file://`. Cloud sessions have no browser pane: there, the phone-size
   tap tests need a headless browser, or are done on Rawa's PC after pulling.

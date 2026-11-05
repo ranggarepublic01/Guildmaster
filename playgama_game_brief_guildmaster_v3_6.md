@@ -37,6 +37,9 @@ half the stolen goods back when the camp falls); the other build choices are in 
 buys (food, wood, stone); an escort bounty stays below the worth of the goods; a player who never escorts losing the camp race is
 intended; the hall repairs slowly on its own until a paid repair by ad (platform wiring); the guild guard is built now and only
 defends the hall; arrays cost less per shot (1g a shot kept for a later hard mode). **Step 7b built 30 Sep 2026** (see 1f).
+**Graphics pass 5 Nov 2026** (Rawa: bright toy-like look; ground, nature, lighting, buildings, units; best look always). Details
+and what to confirm in `MIGRATION.md`, section 7, and in 1e below. The sim is unchanged.
+**Moving to a new chat:** see `MIGRATION.md` (where things stand, Claude Code or a claude.ai chat, tools, a map of `index.html`).
 **From step 6 the build moves to Claude Code.** Keep this file, `index.html` (the step 5 build) and
 `guildmaster_bot_harness.js` in one project folder, with `CLAUDE.md` pointing to them. The last claude.ai
 build link, for reference: https://claude.ai/artifact/HpUoHyAbPg8UaJdLb22gbF
@@ -407,6 +410,10 @@ Which number the leaderboard shows is open (see 1e).
 - *(step 7b, open, for Rawa)* **Wood swamps the caravan.** Nothing uses much wood yet, so it piles up (about 240 sold a run) and
   selling it nearly triples caravan pay (689g a run against 270g for food alone, with 50g escorts). Wood at 1g, a cap per
   caravan, or leave it for waves and upgrades to use up?
+- *(graphics pass, to confirm)* Bright toy-like look: smooth ground colours, round and pine trees, bushes, flowers and grass
+  tufts, warm sun with real shadows that follow the camera, a timber-framed guild hall with chimney smoke, colourful houses,
+  brighter shops and lairs, units 1.25× bigger with dark outlines, floating text that stacks. Draw calls about 90–120 (were
+  35–85). To confirm on Rawa's Android: the look, the frame rate with shadows, and the outlines at the widest zoom.
 - *(step 7b, open, for Rawa)* **The guild guard stops nearly every raid** (hall reached 0–2 times per 30 runs, was 26–71 with no
   response), so the horn and hall flag matter much less until step 8's waves. Keep as it is for step 8 to balance against?
 - *(step 3, to confirm)* Choices made in the build: killing a bandit who carries stolen coin
@@ -941,6 +948,9 @@ only 6 players on the leaderboard. Plenty started, few finished. Lesson for the 
 - *(Guildmaster, step 7)* In a cloud session the phone-size UI tests run in headless Chromium through Playwright
   (`/opt/node22/lib/node_modules/playwright`, browser in `/opt/pw-browsers`), against `tools/serve.js` on port 8765. Cards scroll
   in landscape: scroll a button into view before tapping it. A bandit standing on the camp takes the tap before the camp does.
+- *(Guildmaster, graphics pass)* `tools/ui_test.js` is the phone-size tap test, kept in the repo because a cloud session's
+  scratchpad is wiped when its machine restarts. `tools/game_only.js` writes the game code without three.js (288 KB) for a
+  claude.ai chat; `index.html` itself (906 KB) is too big to upload there. See `MIGRATION.md`.
 - *(Guildmaster, step 6)* Testing the UI in Claude Code: the built-in browser cannot open `file://`, so
   `.claude/launch.json` starts a tiny static server (`tools/serve.js`, plain Node). The page runs slowly while
   the browser pane is hidden, so fast-forward from the console with `GM.step(GM.sim(), 1/30)` and use `GM.screenOf` to
