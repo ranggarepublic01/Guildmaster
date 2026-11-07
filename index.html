@@ -267,18 +267,19 @@ CFG.obstacles = [{ x: CFG.hall.x, z: CFG.hall.z, r: CFG.hall.r }, ...CFG.shopOrd
 // stars: the coin left at the win for two and for three stars (one star for any win), set from the bot's results.
 const BASE_CFG = JSON.parse(JSON.stringify(CFG));
 const VILLAGES = [
-  { id: 'ashford', name: 'Ashford', kind: 'Tutorial village', stars: [200, 300],
+  { id: 'ashford', name: 'Ashford', kind: 'Tutorial village', stars: [40, 110],
     letter: 'Welcome to Ashford, Guildmaster. Wolves from a den to the north-east take the sheep, and a few bandits camp to the south-west. Post a bounty on each, and let your adventurers do the rest.',
     set(C) {
       C.lairs = [
         { id: 'den', kind: 'den', name: 'Wolf den', x: 26, z: -20, r: 1.8, level: 1, hp: 90, mob: 'wolf', cap: 2, every: 16, xp: 40, coins: 20 },
-        { id: 'camp', kind: 'camp', name: 'Bandit camp', x: -36, z: 26, r: 2.4, level: 3.5, hp: 320, mob: 'bandit', cap: 3, every: 20, xp: 90, coins: 40, raidEvery: 150, raidSize: 2 }
+        { id: 'camp', kind: 'camp', name: 'Bandit camp', x: -36, z: 26, r: 2.4, level: 4, hp: 900, mob: 'bandit', cap: 3, every: 20, xp: 90, coins: 40, raidEvery: 150, raidSize: 2 }
       ];
-      Object.assign(C.wave, { first: 150, max: 2, size: 3, grow: 2, bruteFrom: 99, strengthFrom: 99 });   // two small waves, so the horn and the arrays are met once
+      Object.assign(C.array, { cost: 30, wood: 5, stone: 10 });   // arrays come cheap here, so the first one is met early
+      Object.assign(C.wave, { first: 60, max: 2, size: 3, grow: 2, bruteFrom: 99, strengthFrom: 99 });   // two small waves, so the horn and the arrays are met once
       C.wild.bear.first = [300, 360];
       C.look = { seed: 11, trees: 430 };
     } },
-  { id: 'elmstead', name: 'Elmstead', kind: 'Forest village', stars: [150, 250],
+  { id: 'elmstead', name: 'Elmstead', kind: 'Forest village', stars: [80, 200],
     letter: 'Elmstead sits deep in the pinewoods, with timber to spare. Two wolf packs den in the forest, north-east and south-east, and bandits camp to the south-west. Use the wood well: the waves will not wait.',
     set(C) {
       C.lairs.push({ id: 'den2', kind: 'den', name: 'Pine den', x: 44, z: 30, r: 1.8, level: 1, hp: 90, mob: 'wolf', cap: 2, every: 16, xp: 40, coins: 20 });
@@ -287,24 +288,24 @@ const VILLAGES = [
       C.sites.push({ id: 'lumber3', kind: 'lumber', name: 'Pinewood camp', x: 24, z: 18, yield: 1.8, note: 'Old pines south-east of town, between the two wolf dens. Rich timber, and wolves pass through.' });
       C.look = { seed: 23, trees: 640 };
     } },
-  { id: 'stonecrest', name: 'Stonecrest', kind: 'Hill village', stars: [150, 250],
+  { id: 'stonecrest', name: 'Stonecrest', kind: 'Hill village', stars: [100, 180],
     letter: 'The last guildmaster here fled. A large bandit band holds the hills to the north-west, and food is scarce on this rocky ground. The quarries are rich, and stone builds arrays.',
     set(C) {
       C.lairs = [
         { id: 'den', kind: 'den', name: 'Wolf den', x: 34, z: 26, r: 1.8, level: 1, hp: 120, mob: 'wolf', cap: 3, every: 14, xp: 40, coins: 20 },
-        { id: 'camp', kind: 'camp', name: 'Bandit camp', x: -42, z: -34, r: 2.4, level: 7, hp: 1100, mob: 'bandit', cap: 7, every: 16, xp: 130, coins: 55, raidEvery: 80, raidSize: 2 }
+        { id: 'camp', kind: 'camp', name: 'Bandit camp', x: -42, z: -34, r: 2.4, level: 6, hp: 800, mob: 'bandit', cap: 6, every: 16, xp: 130, coins: 55, raidEvery: 80, raidSize: 2 }
       ];
       const S = id => C.sites.find(s => s.id === id);
       Object.assign(S('quarry1'), { built: true, yield: 1.5, note: 'Among the rocks west of town. Good stone, close to home.' });
       Object.assign(S('quarry2'), { yield: 2.2, note: 'Rich rock far to the north, on the bandits\' side. A lot of stone per trip, and a long run to safety.' });
-      S('farm1').yield = 0.7;
+      S('farm1').yield = 0.9;
       Object.assign(S('farm2'), { yield: 0.9, note: 'Thin soil beside the south road.' });
       Object.assign(S('lumber2'), { note: 'Deep forest east of town. More wood per trip, and wolves hunt here.' });
       C.caravan.route = { in: [[71, 8], [16, 8]], stop: [3.5, 6.5], out: [[-4.5, 5.5], [-12.5, 8.5], [-24, 4], [-34, -16], [-71, -14]] };
-      C.wave.first = 170;
+      Object.assign(C.wave, { first: 170, every: 85 });   // waves come sooner and faster here: a big camp is cleared late
       C.look = { seed: 37, trees: 380 };
     } },
-  { id: 'fordham', name: 'Fordham', kind: 'River village', stars: [150, 250],
+  { id: 'fordham', name: 'Fordham', kind: 'River village', stars: [60, 150],
     letter: 'Fordham lives on river trade, and the merchant road is long and open. Bandits camp beside it to the south-west and rob every caravan they can reach. Guard the wagons, and the coin will follow.',
     set(C) {
       C.lairs = [
@@ -315,8 +316,7 @@ const VILLAGES = [
       Object.assign(S('lumber2'), { note: 'Deep forest east of town. More wood per trip, and wolves hunt here.' });
       Object.assign(S('farm2'), { note: 'Good soil beside the merchant road, on the way to the bandit camp.' });
       C.caravan.route = { in: [[71, -30], [40, -10], [16, 8]], stop: [3.5, 6.5], out: [[-4.5, 5.5], [-12.5, 8.5], [-26, 24], [-36, 46], [-56, 71]] };
-      C.caravan.first = [170, 200]; C.caravan.every = [150, 240];
-      C.wave.first = 170;
+      C.caravan.first = [170, 200];
       C.look = { seed: 51, trees: 470 };
     } }
 ];
