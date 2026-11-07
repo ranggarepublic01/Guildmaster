@@ -16,6 +16,8 @@ chat (Claude Code or claude.ai) picks the project up. Steps 1–10 of the build 
   step can be bot-compared with the one before.
 - `tools/ui_test.js`: the phone-size tap test (headless Chromium, portrait and landscape, real taps). Start `tools/serve.js`
   first. `tools/game_only.js` writes the game code without three.js, for uploading to a claude.ai chat.
+- All player-facing text lives in `TXT` at the top of the game script (`TXT.game` was generated from the code); add new text there.
+  `tools/text_snapshot.js` checks that a change leaves the sim's texts the same.
 - `playgama-bridge-config.json`: Playgama's config, uploaded beside `index.html`. `tools/make_mock.js` writes `mock_bridge.html`, the game with a
   mock Bridge, for testing the platform calls in the browser.
 - `tools/serve.js`: a tiny static server for testing in the browser pane (`.claude/launch.json`, name `guildmaster`,

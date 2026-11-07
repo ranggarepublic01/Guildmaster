@@ -3,3 +3,5 @@ node_modules/
 *.log
 /game_only.js
 /mock_bridge.html
+/cards_old.html
+/cards_new.html

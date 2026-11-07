@@ -108,6 +108,7 @@ to read the whole page first, and the game code alone is about 160,000 tokens, t
 | `tools/ui_test.js` | Phone-size tap test in headless Chromium. It taps a guard, the caravan (sells wood, posts an escort), the hall (sells stone), an adventurer and the camp, at portrait and landscape. It prints what each card showed, draw calls and page errors, and saves screenshots. Start `node tools/serve.js . 8765` first. |
 | `tools/serve.js` | Tiny static server on port 8765. Browsers in Claude cannot open `file://`. |
 | `tools/game_only.js` | Writes `game_only.js` (the game code without three.js) for uploading to a chat. |
+| `tools/text_snapshot.js` | Hashes every text the sim shows in a scripted game in each village; the same hash means the same text. |
 | `tools/make_mock.js` | Writes `mock_bridge.html`: the game with a mock Playgama Bridge that records every call (`window.__calls`). |
 | `playgama-bridge-config.json` | Playgama's config, uploaded with `index.html`. The public token is a placeholder until Rawa pastes it in. |
 | `docs/screens/` | Before and after screenshots of the graphics pass. |
@@ -140,6 +141,7 @@ The page exposes `window.GM` for tests:
 | 1298 / 1379 | Monsters, and lairs (spawning, wolf hunts, raids) |
 | 1439 / 1507 | Villagers |
 | 1647 | `step(S, dt)`: one tick of everything |
+| 160 | `TXT`: every word the player reads (step 10), including `TXT.game` and `TXT.page` |
 | 263 | Villages (step 9): `VILLAGES`, `applyVillage`, `starsFor` |
 | 1676 | Waves (step 8): `waveMake`, `spawnWave`, `updateWaves`; numbers in `CFG.wave` |
 | 1645 | Player levers: bounties, cancel |

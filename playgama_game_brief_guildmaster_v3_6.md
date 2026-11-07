@@ -477,9 +477,13 @@ Which number the leaderboard shows is open (see 1e).
     chime (bounty, flag or escort posted), a small clink (coin into the treasury, at most every 1.2 s), a rising arpeggio (level up), two low horn calls
     (wave warning), a long horn (the recall horn), a thud (hall hit), a fanfare (win), a falling phrase (loss). Silent while paused, hidden, during an
     ad, when the platform mutes audio, or with the mute button (beside Pause).
-  - **Text table (`TXT`):** the letters, village kinds, headquarters and end screens, hints, sound labels, ad and leaderboard text are in one table.
-    **Not yet in it:** the adventurers' reasons, event messages and card text, which are built from game state in a few hundred places beside the code.
-    Moving them is mechanical but large, and only pays when a second language is wanted. Do it then?
+  - **Text table (`TXT`):** *(Rawa, 8 Nov: move all of it now. Done.)* Every word the player can read is in one table at the top of the game script:
+    the hand-written part (letters, village kinds, headquarters and end screens, hints, sound, ads, leaderboard, `page` for the words in the page
+    markup) and `TXT.game`, generated from the code: about 900 entries in 135 groups named after the function that uses them (`TXT.game.plan`,
+    `TXT.game.CFG` for names and notes, ...). A text built from game state is a small function of its values, for example
+    `hasGoing: (g, label, price) => \`Has ${g}g. Going to ...\``. Readable attributes (aria-label, title) moved too. Only code strings stay in
+    the code (ids, class names, keys). The table's keys come from the text's first words, so they read oddly in places; they are for
+    translators and for code, not for players. **For new text:** add it to `TXT` by hand rather than writing it inline.
 - *(step 9, to confirm)* Choices made in the build:
   - **Village numbers** (all else as step 8b): **Ashford**: den 26 units out (90 health, 2 wolves), camp level 4, 900 health, 3 bandits, raids every
     150 s; arrays cost 30g, 5 wood, 10 stone; first wave warning at 60 s, only 2 waves (3 and 5 enemies, no brutes, no strength growth); the first bear
@@ -1009,6 +1013,10 @@ as step 9, so step 9's bot results stand. Tested in the browser pane:
 - With the real Bridge script (v2.4.1, outside Playgama it runs as platform `mock`): it starts with no errors; the leaderboard reports
   `not_available` there, so its button stays hidden. At 844×390 and 390×844 the top bar fits with the mute button; no sideways scroll; no console errors.
 - **Not tested:** the real ads, storage and leaderboard on Playgama (they need the dashboard set up, section 3); sound on a phone speaker; frame rate.
+- **All text in the table (8 Nov):** moving the text changed nothing the player sees. Proof: `tools/text_snapshot.js` (every event, floating text,
+  thought and reason in a scripted 12-minute game, 3 seeds in each village and step 8b's map) gives the same hash before and after (fef3d532…, 2,586 different texts);
+  152 cards and the roster, read at 4 moments of an Elmstead game with a fixed seed in both builds, are the same 431,197 characters; six bot scenarios × 30 runs give the same results line for line.
+  The page loads with no console errors. The file grew by about 58 KB.
 - The first two minutes of Ashford, measured: a player who posts 50g on the den at 10 s sees it taken at once, the first adventurer there at about 19 s, and the den cleared at a median 31 s (26–35 s in 30 runs), so the first success comes about 20 s after the first bounty. The den hint shows from 2 s until the first bounty. The first wave warning comes at 60 s, the wave at 105 s. Rawa's fresh play on the phone decides whether anything changes.
 
 **Tuning notes for the content pass**
@@ -1190,6 +1198,8 @@ only 6 players on the leaderboard. Plenty started, few finished. Lesson for the 
   `<village>Thrifty` (the waveFull player with at most 2 arrays, lever `arrayMax`). The scripted player now posts 50g on every den. New report: SCORE (coin
   left at a win: median, quartiles, best, and how many wins earn 1, 2 and 3 stars). `GM_TUNE` runs after the village is applied, so it can change a
   village's numbers. All 62 scenarios (village and wave ones at 20 min, the rest at 12) took about 75 min on 8 cores.
+- *(Guildmaster, step 10)* `tools/text_snapshot.js <builds...>`: plays a scripted game with every lever in each village and hashes every text the
+  sim shows (events, floating texts, thoughts, reasons). Two builds with the same hash show the same sim text. About 4 minutes a build.
 - *(Guildmaster, step 10)* `tools/make_mock.js` writes `mock_bridge.html` (not committed): the game with a mock Bridge that records every call in
   `window.__calls`, keeps storage in localStorage, plays ads over about a second, and fires the platform's pause and audio events from
   `window.__mock`. Serve it with `tools/serve.js` and test there; `index.html` itself loads the real Bridge, which runs as platform `mock` off Playgama.
