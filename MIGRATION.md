@@ -10,22 +10,21 @@ Written 5 Nov 2026, at the end of the session that built steps 7 and 7b and the 
 
 ## 1. Where things stand
 
-**Step 9 in progress (7 Nov, branch step9-wip, not merged):** built: four villages (VILLAGES in index.html: ashford, elmstead, stonecrest, fordham), HQ screen, letters, stars, device save, wave max for the tutorial, wagon steering fix, harness scenarios <village>Full/NoArrays/Camp/Thrifty and a SCORE line. Not done: tuning (8-run tests: Ashford camp still falls too late for the array players, ~9 min, try camp hp 500 lvl 4.5 cap 4 and an earlier array build; Stonecrest best so far camp hp 900 lvl 6 cap 7, wave.first 190, farm1 yield 0.9, 3-4/8 wins; Fordham best wave.first 190 and caravan.every [180,300], 5/8; Elmstead 6/8 at 8.9 min, fine), star thresholds (set from Thrifty medians), the full 30-run comparison with step 8b, the browser tap tests of the new screens (not run at all yet), the brief update and builds/step9.html.
-
 - **Repository:** `https://github.com/ranggarepublic01/Guildmaster` (private), default branch `main`.
-- **On `main`:** steps 1–8, 7b, 8b, the graphics pass, this file and the test tools.
+- **On `main`:** steps 1–9, 7b, 8b, the graphics pass, this file and the test tools.
 - **Build order (brief, 1d):**
-  - Steps 1–8 are done, plus 7b (Rawa's v3.7 decisions), 8b (harder waves, v3.9) and the graphics pass.
-  - **Next: step 9**, missions: the tutorial village, the coin score, a fresh start in the next village. Its design was decided
-    on 7 Nov (brief, v3.10, build order step 9); it is ready to build.
-- **Latest build copy:** `builds/step8b.html`, the same as `index.html`.
-- **Not yet done by Rawa:** the Android phone test of steps 7, 7b, 8, 8b and the new graphics.
+  - Steps 1–9 are done, plus 7b (Rawa's v3.7 decisions), 8b (harder waves, v3.9) and the graphics pass. Step 9 (v3.10): four villages,
+    the headquarters screen, letters, stars and a save between missions.
+  - **Next: step 10**, the content and tuning pass, then platform wiring (Bridge, saves, leaderboard).
+- **Latest build copy:** `builds/step9.html`, the same as `index.html`.
+- **Not yet done by Rawa:** the Android phone test of steps 7, 7b, 8, 8b, 9 and the new graphics.
 
-### Before step 9 (open)
+### Before step 10 (open)
 
 1. **Waves every 95 s:** kept by Rawa on 7 Nov (22/30 wins with arrays, 7/30 without). The pace is still to be felt on the phone. See the brief, 1e, first step 8b item.
 2. **Step 8's build choices** (brief, 1e): waves that grow stronger from wave 3, more brutes, stronger arrays. These went past the v3.8 decisions.
-3. **The phone test:** the look, the frame rate, and a wave on screen (up to 266 draw calls seen, was 90–120). Until then waves stay at about 20 enemies at most.
+3. **Step 9's build choices** (brief, 1e): each village's numbers, the star thresholds, the tutorial's early first wave.
+4. **The phone test:** the look, the frame rate, and a wave on screen (up to 266 draw calls seen, was 90–120). Until then waves stay at about 20 enemies at most.
 
 ---
 
@@ -39,7 +38,7 @@ Claude Code can run the bot harness, the headless browser tests, git and pull re
 3. A first message that works:
 
    > Read CLAUDE.md, MIGRATION.md and the brief. Then answer/confirm the open questions with me (MIGRATION.md section 1)
-   > before starting step 9. Propose step 9's design points as questions first, as in steps 6, 7 and 8.
+   > before starting step 10. Propose step 10's design points as questions first, as in steps 6–9.
 
 **Cloud session notes (all learned the hard way):**
 - Node is on PATH, and Playwright with Chromium is installed globally (`npm root -g`). Don't run `playwright install`.
@@ -71,7 +70,7 @@ decide open questions and draft brief changes. Then bring the decisions back to 
 2. A first message that works:
 
    > This is the Guildmaster project. Read MIGRATION.md and the brief. Let's settle the open questions in MIGRATION.md
-   > section 1, then plan step 9 as questions for me, without writing code. At the end, write the brief changes as a list
+   > section 1, then plan step 10 as questions for me, without writing code. At the end, write the brief changes as a list
    > I can give to Claude Code.
 
 3. When decisions are made, open a Claude Code session (Option A). Paste the list in and ask it to build, test and update
@@ -138,6 +137,7 @@ The page exposes `window.GM` for tests:
 | 1298 / 1379 | Monsters, and lairs (spawning, wolf hunts, raids) |
 | 1439 / 1507 | Villagers |
 | 1647 | `step(S, dt)`: one tick of everything |
+| 263 | Villages (step 9): `VILLAGES`, `applyVillage`, `starsFor` |
 | 1676 | Waves (step 8): `waveMake`, `spawnWave`, `updateWaves`; numbers in `CFG.wave` |
 | 1645 | Player levers: bounties, cancel |
 | 1666 | Defend flags and the recall horn |

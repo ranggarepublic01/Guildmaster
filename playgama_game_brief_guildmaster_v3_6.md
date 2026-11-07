@@ -52,6 +52,7 @@ any won village can be replayed; the tutorial has a fast den, a weak camp and tw
 letters of 2–3 short sentences; the reply after a win gives 1–3 stars by coin left (thresholds per village, from the bot) and a short line;
 headquarters points are the sum of the best coin score per village; difficulty rises, with village 2 playing like today's build and
 villages 3 and 4 a little harder. Details in the build order, step 9.
+**Step 9 built 8 Nov 2026** (see 1f). The build choices are in 1e to confirm.
 **Moving to a new chat:** see `MIGRATION.md` (where things stand, Claude Code or a claude.ai chat, tools, a map of `index.html`).
 **From step 6 the build moves to Claude Code.** Keep this file, `index.html` (the step 5 build) and
 `guildmaster_bot_harness.js` in one project folder, with `CLAUDE.md` pointing to them. The last claude.ai
@@ -410,7 +411,7 @@ Which number the leaderboard shows is open (see 1e).
    starting coin, wave timing), and a headquarters letter before each village and a reply after
    the win. Bot checks: every village is winnable by the scripted player, with win time and coin
    left reported per village.
-   *(v3.10, Rawa 7 Nov)* Design decided, not built yet:
+   ~~*(v3.10, Rawa 7 Nov)* Design decided.~~ Done 8 Nov (see 1f; the numbers each village uses are in 1e, step 9):
    - **Villages:** 1 tutorial; 2 forest (two wolf dens, plenty of wood; plays like today's build); 3 hill (a big bandit camp, rich stone,
      little food); 4 river (a long, exposed caravan route). Villages 3 and 4 are a little harder (waves sooner, or stronger lairs).
    - **Map:** the same land each time. Each village sets where the lairs, work sites, caravan route and forest lie, how strong the lairs are,
@@ -437,6 +438,24 @@ Which number the leaderboard shows is open (see 1e).
 - *(v3.10, decided)* Each new village: the same land, with lairs, sites, caravan route and forest placed per village.
 - Recruit cost per class, and a cap on how many adventurers the guild can hold.
 - Whether more houses mean more villagers.
+- *(step 9, to confirm)* Choices made in the build:
+  - **Village numbers** (all else as step 8b): **Ashford**: den 26 units out (90 health, 2 wolves), camp level 4, 900 health, 3 bandits, raids every
+    150 s; arrays cost 30g, 5 wood, 10 stone; first wave warning at 60 s, only 2 waves (3 and 5 enemies, no brutes, no strength growth); the first bear
+    comes later. **Elmstead**: step 8b's map plus a second, smaller wolf den (south-east), a third lumber camp, and more wood per trip. **Stonecrest**:
+    the camp moves north-west and is level 6, 800 health, 6 bandits; both quarries are rich and the near one comes built; the farms yield less (0.9 and
+    0.9); the caravan road leaves west, then north past the camp; waves from 170 s, every 85 s. **Fordham**: the camp sits south-west, beside a long
+    caravan road that comes in from the east and leaves south-west past it; the first caravan comes a little sooner.
+  - **The tutorial is not "hard to lose" by design alone:** the scripted players never lost it (0/120). A player who rushes the camp wins at about 2.5 min
+    and meets only wave 1; a player who builds two arrays first wins at about 8 min and meets both. Rawa's 5–7 min sits between the two.
+  - **Star thresholds** (2 and 3 stars): Ashford 40g and 110g, Elmstead 80g and 200g, Stonecrest 100g and 180g, Fordham 60g and 150g. They come from the
+    scripted player who builds two arrays (2 stars near its median). A player who skips arrays and survives keeps far more coin, so three stars mostly go
+    to a risky rush. Check this feels right on the phone.
+  - **Flow:** the page opens on the headquarters screen. Tapping a village opens its letter; "Set out" starts it. A win saves the score and stars, opens the
+    next village and offers "Next: <village>" (its letter first) and "Headquarters". A loss offers "Try again" (straight back in) and "Headquarters".
+    A new village reloads the page with `#go=<id>` in the address, since each village builds its own world. Save key `guildmaster.save.v1` in the device's
+    local storage; if storage is blocked, the game still runs but nothing is kept.
+  - **Fix:** people now steer round the parked caravan wagon, not only round buildings. A villager walking from the hall to Elmstead's new lumber camp got
+    stuck against it; the same could happen on the old map, more rarely. This changes the older scenarios a little (1f).
 - *(step 8b; Rawa, 7 Nov: keep 95 s, judge the pace on the phone)* **Waves every 95 s, not every 2 min.** Rawa chose harder waves so that skipping arrays rarely wins (v3.9). Eighteen settings
   were tried with the bot. Stronger waves, more brutes, stronger or cheaper arrays and a slower camp did not separate the two players; both lost about equally. The
   reason is the race: without arrays a player clears the camp sooner, so many finish before wave 4 arrives and stronger waves never reach them. A faster
@@ -914,6 +933,30 @@ mixedPush 15 and 12, now 11 and 19; shops 10 and 14, now 13 and 17; arraysNormal
 - **Treasury after a wave** still goes both ways for a player who answers waves. Arrays fall silent for lack of coin for at most 10.3 s a run. Tier-2 gear: never bought (0/30 in all 46).
 - **Stalling** still does not pay: six arrays, horn and flag fall at wave 6 or 7 (median 12.8 min), with 0g.
 
+**Step 9, missions (v3.10).** Built 8 Nov, in `builds/step9.html`. Four villages, the headquarters screen, letters, stars and a save between missions.
+Checks clean in all 62 scenarios (stuck 0, no-reason 0, ledger, stores, escorts). Tested in the browser pane with real taps at 390×844: headquarters screen,
+letter, Set out, the win screen (3 stars, save written, the next village opened), Next, Back, the lose screen and Try again; at 844×390: headquarters
+screen and letter. No console errors, no sideways scroll. Draw calls at a village's start: about 260–267 (the starting view shows more of the map).
+**Not measured: frame rate on a phone.**
+
+Each village, 30 runs played out to 20 min (Thrifty = the waveFull player with at most 2 arrays; Camp = attacks the camp, ignores waves and arrays):
+
+| Village | Thrifty won (median) | Full won | No arrays won | Camp only won | Thrifty coin at a win (median) |
+|---|---|---|---|---|---|
+| 1 Ashford (tutorial) | 30 (7.9 min) | 30 (7.9) | 30 (2.6) | 30 (2.5) | 13g |
+| 2 Elmstead (forest) | 23 (9.1 min) | 23 (9.1) | 15 (8.7) | 13 (9.0) | 65g |
+| 3 Stonecrest (hill) | 14 (8.8 min) | 13 (9.6) | 7 (8.9) | 6 (8.5) | 106g |
+| 4 Fordham (river) | 14 (10.7 min) | 15 (9.5) | 9 (7.6) | 3 (9.3) | 60g |
+
+- Difficulty rises as decided: Elmstead about as hard as step 8b (`waveFull` 22/30 there), Stonecrest and Fordham harder. In every village a player with
+  arrays wins more often than one without, though those without keep far more coin when they do win.
+- Tuning tried 9 settings for Stonecrest and Fordham and 7 for the tutorial; Elmstead needed none. Stonecrest's big camp at first made arrays a handicap (skipping them won
+  15/16); waves every 85 s there fixed it. In Ashford a camp rush wins at 2–3 min whatever the camp's health, so the first wave warning moved to 60 s.
+- Step 8b's map against step 9 (older scripted players, 30 runs, 12 min, won and lost; the change is the wagon steering fix and chance): campPush 2 and 28,
+  now 1 and 29; mixed 0 and 30, now 3 and 25; mixedPush 11 and 19, now 4 and 26; shops 13 and 17, now 8 and 22; arraysNormal 12 and 18, now 9 and 19;
+  caravanEscortNormal 7 and 23, now 13 and 17; waveOff 21, now 22; `waveFull` (20 min) 22, now 19; `waveFullNoArrays` 7, now 7.
+- Tier-2 gear: still never bought (0/30 in all 62).
+
 **Tuning notes for the content pass**
 - First success is fast: the den falls about 23 s after posting. *(v3)* Keep that for the
   tutorial village. From mission 2, target about 2 min.
@@ -1085,6 +1128,11 @@ only 6 players on the leaderboard. Plenty started, few finished. Lesson for the 
   and damage by adventurers, arrays and guard, treasury up or down). Wave enemies are reported under WAVES, not RAIDS. `GM_TUNE` tries numbers without
   editing the game, for example `GM_TUNE="CFG.wave.grow=3"`. Use 20 min for the wave scenarios: at 12 min many games are still undecided. On 8 cores, all
   46 scenarios on step 8 and 37 on step 7b took about 75 min.
+  *(Step 9)* Villages: `GM.applyVillage(id)` sets the numbers for a village before `newSim`; without it the sim is step 8b's map, so older scenarios
+  still compare. New scenarios for each village (ashford, elmstead, stonecrest, fordham): `<village>Full`, `<village>NoArrays`, `<village>Camp` and
+  `<village>Thrifty` (the waveFull player with at most 2 arrays, lever `arrayMax`). The scripted player now posts 50g on every den. New report: SCORE (coin
+  left at a win: median, quartiles, best, and how many wins earn 1, 2 and 3 stars). `GM_TUNE` runs after the village is applied, so it can change a
+  village's numbers. All 62 scenarios (village and wave ones at 20 min, the rest at 12) took about 75 min on 8 cores.
 - *(Guildmaster, step 8)* Playwright is not installed on Rawa's PC, so `tools/ui_test.js` does not run there; test through the browser pane with real
   clicks. In the pane's emulated portrait, the click frame is 800×600 stretched to 390×844 (css x = x × 0.4875, css y = y × 1.407), so take a screenshot before a
   coordinate click, and wait a few seconds for the page to update while animation is throttled.
