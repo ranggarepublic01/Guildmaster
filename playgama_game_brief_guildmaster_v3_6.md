@@ -45,7 +45,7 @@ stay at the hall until it or they fall; one new enemy kind (a brute); waves ever
 a 45 s warning; waves march straight to the hall; the camp holds its village raids during a wave. Details under Threats, **Waves (v3.8)**.
 **Step 8 built 5 Nov 2026** (see 1f). The build choices are in 1e to confirm.
 **v3.9 decided 5 Nov 2026** (Rawa, on the step 8 result that a player could win without arrays): make waves harder, so skipping arrays rarely
-wins. **Step 8b built 5 Nov 2026:** stronger waves alone did not do this, so waves now come every 95 s, not every 2 min (1e, to confirm; 1f).
+wins. **Step 8b built 5 Nov 2026:** stronger waves alone did not do this, so waves now come every 95 s, not every 2 min (1f). Rawa kept 95 s on 7 Nov.
 **Moving to a new chat:** see `MIGRATION.md` (where things stand, Claude Code or a claude.ai chat, tools, a map of `index.html`).
 **From step 6 the build moves to Claude Code.** Keep this file, `index.html` (the step 5 build) and
 `guildmaster_bot_harness.js` in one project folder, with `CLAUDE.md` pointing to them. The last claude.ai
@@ -315,7 +315,7 @@ build link, for reference: https://claude.ai/artifact/HpUoHyAbPg8UaJdLb22gbF
     shows they are too weak (about half a guard's damage today, and each covers only its own side of the hall).
   - **The camp holds its village raids** while a wave is warned or on the map, as it does for a caravan. Robbers still go for caravans.
   - **Pay:** no new bounty kind. In-town free defence, the horn and defend flags apply as they stand.
-  - *(Step 8b as built: waves come every 95 s, not every 2 min. This and the other numbers that differ from the above are in 1e, step 8. Results are in 1f.)*
+  - *(Step 8b as built, kept by Rawa on 7 Nov: waves come every 95 s, not every 2 min. This and the other numbers that differ from the above are in 1e, step 8. Results are in 1f.)*
 - **Guild guard:** the starting squad. It defends the village centre on its own and
   cannot be commanded. It does not retreat *(v3)*. *(v3.7, Rawa 30 Sep)* Built in step 7b. Its only task is the guild hall: it
   fights enemies that attack the hall, and nothing else.
@@ -420,7 +420,7 @@ Which number the leaderboard shows is open (see 1e).
 - Each new village: a new map layout, or the same map with new threat positions?
 - Recruit cost per class, and a cap on how many adventurers the guild can hold.
 - Whether more houses mean more villagers.
-- *(step 8b, to confirm)* **Waves every 95 s, not every 2 min.** Rawa chose harder waves so that skipping arrays rarely wins (v3.9). Eighteen settings
+- *(step 8b; Rawa, 7 Nov: keep 95 s, judge the pace on the phone)* **Waves every 95 s, not every 2 min.** Rawa chose harder waves so that skipping arrays rarely wins (v3.9). Eighteen settings
   were tried with the bot. Stronger waves, more brutes, stronger or cheaper arrays and a slower camp did not separate the two players; both lost about equally. The
   reason is the race: without arrays a player clears the camp sooner, so many finish before wave 4 arrives and stronger waves never reach them. A faster
   rhythm brings wave 4 before the camp can fall. Measured: 22/30 wins with arrays, 7/30 without (1f). To go back, set `CFG.wave.every` and `first`.

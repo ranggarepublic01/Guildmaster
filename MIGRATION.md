@@ -20,8 +20,7 @@ Written 5 Nov 2026, at the end of the session that built steps 7 and 7b and the 
 
 ### Before step 9 (open)
 
-1. **Waves every 95 s:** Rawa asked for harder waves so that skipping arrays rarely wins. Only a faster rhythm did this (22/30 wins with arrays, 7/30 without), and it replaces
-   the decided 2 minutes. To confirm. See the brief, 1e, first step 8b item.
+1. **Waves every 95 s:** kept by Rawa on 7 Nov (22/30 wins with arrays, 7/30 without). The pace is still to be felt on the phone. See the brief, 1e, first step 8b item.
 2. **Step 8's build choices** (brief, 1e): waves that grow stronger from wave 3, more brutes, stronger arrays. These went past the v3.8 decisions.
 3. **The phone test:** the look, the frame rate, and a wave on screen (up to 266 draw calls seen, was 90–120). Until then waves stay at about 20 enemies at most.
 
