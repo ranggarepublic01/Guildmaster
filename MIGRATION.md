@@ -10,6 +10,8 @@ Written 5 Nov 2026, at the end of the session that built steps 7 and 7b and the 
 
 ## 1. Where things stand
 
+**Step 9 in progress (7 Nov, branch step9-wip, not merged):** built: four villages (VILLAGES in index.html: ashford, elmstead, stonecrest, fordham), HQ screen, letters, stars, device save, wave max for the tutorial, wagon steering fix, harness scenarios <village>Full/NoArrays/Camp/Thrifty and a SCORE line. Not done: tuning (8-run tests: Ashford camp still falls too late for the array players, ~9 min, try camp hp 500 lvl 4.5 cap 4 and an earlier array build; Stonecrest best so far camp hp 900 lvl 6 cap 7, wave.first 190, farm1 yield 0.9, 3-4/8 wins; Fordham best wave.first 190 and caravan.every [180,300], 5/8; Elmstead 6/8 at 8.9 min, fine), star thresholds (set from Thrifty medians), the full 30-run comparison with step 8b, the browser tap tests of the new screens (not run at all yet), the brief update and builds/step9.html.
+
 - **Repository:** `https://github.com/ranggarepublic01/Guildmaster` (private), default branch `main`.
 - **On `main`:** steps 1–8, 7b, 8b, the graphics pass, this file and the test tools.
 - **Build order (brief, 1d):**

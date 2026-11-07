@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<title>Guildmaster, step 8: scouted waves</title>
+<title>Guildmaster, step 9: missions</title>
 <style>
 :root{--panel:rgba(26,34,31,.93);--panel2:rgba(40,50,45,.95);--ink:#f1ead9;--muted:#b4bcaa;--brass:#d6a94a;--brass2:#f0c866;--line:rgba(241,234,217,.14);--red:#e0624f;--green:#86c86a;
 --serif:"Palatino Linotype","Book Antiqua",Palatino,"Noto Serif",Georgia,serif;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
@@ -85,6 +85,24 @@ ol time{display:block;color:var(--muted);font-size:11.5px}
 #won>div{background:var(--panel);border:1px solid var(--brass);border-radius:18px;padding:22px 26px;text-align:center;max-width:calc(100vw - 48px)}
 #won h2{font:600 26px var(--serif);margin:0 0 6px;color:var(--brass2)}
 #won button{margin-top:14px;min-height:44px;padding:0 22px;border-radius:11px;border:none;background:var(--brass);color:#1f1a0e;font-weight:650}
+#won button.plain{background:rgba(255,255,255,.08);color:var(--ink);border:1px solid var(--line)}
+.endRow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.stars{margin:8px 0 0;font-size:30px;letter-spacing:4px;color:var(--brass2)}.stars i{font-style:normal;color:rgba(241,234,217,.22)}
+.reply{margin:6px 0 0;color:var(--ink);font-family:var(--serif);font-size:15.5px;max-width:420px}
+#hq,#letter{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:calc(var(--st) + 16px) calc(var(--sr) + 16px) calc(var(--sb) + 16px) calc(var(--sl) + 16px);background:linear-gradient(#9fdcf5,#72c244);overflow-y:auto}
+.hqBox{background:var(--panel);border:1px solid var(--brass);border-radius:18px;padding:20px 22px;width:100%;max-width:460px;margin:auto}
+.hqBox h1{font:600 30px var(--serif);margin:0;color:var(--brass2);text-align:center}
+.hqBox h2{font:600 24px var(--serif);margin:2px 0 8px;color:var(--brass2)}
+.hqBox small{color:var(--muted)}
+.hqBox .sub{text-align:center;margin:2px 0 12px;color:var(--muted)}.hqBox .sub b{color:var(--brass2)}
+.hqBox .note{color:var(--muted);font-size:12.5px;margin:10px 0 0;text-align:center}
+#letterText{font-family:var(--serif);font-size:16.5px;margin:0}
+#hqList{display:grid;gap:8px}
+.vil{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;text-align:left;min-height:58px;padding:9px 13px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);font:inherit}
+.vil b{font:600 17px var(--serif)}.vil small{color:var(--muted);font-size:12.5px}
+.vil .st{grid-row:1/3;grid-column:2;text-align:right;color:var(--brass2);font-size:18px;letter-spacing:2px}.vil .st i{font-style:normal;color:rgba(241,234,217,.22)}.vil .st em{display:block;font-style:normal;font-size:12px;color:var(--muted);letter-spacing:0}
+.vil:disabled{opacity:.5;cursor:default}
+@media (orientation:landscape) and (max-height:560px){#hqList{grid-template-columns:1fr 1fr}.hqBox{max-width:640px;padding:14px 18px}.hqBox h1{font-size:24px}}
 #tag{position:fixed;left:calc(var(--sl) + 20px);bottom:calc(var(--sb) + 6px);font-size:11px;color:rgba(20,30,25,.6);pointer-events:none}
 .clsPick{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .clsPick button{min-height:54px;border-radius:11px;border:1px solid var(--line);background:rgba(255,255,255,.06);text-align:left;padding:8px 11px}
@@ -117,8 +135,10 @@ ol time{display:block;color:var(--muted);font-size:11.5px}
 <button id="waveBar" hidden aria-label="Show where the wave comes from"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10h11V5l8 7-8 7v-5H3z" fill="#ffd9a0"/></svg><span id="waveText"></span><b id="waveTime"></b></button>
 <div id="hint" hidden>Tap the wolf den to post a bounty</div>
 <div id="card" hidden></div>
-<div id="won" hidden><div><h2 id="wonTitle">Map cleared</h2><p id="wonText"></p><button id="againBtn">Play again</button></div></div>
-<div id="tag">Step 8 test build: scouted waves</div>
+<div id="won" hidden><div><h2 id="wonTitle">Map cleared</h2><p id="wonText"></p><p id="wonStars" class="stars" hidden></p><p id="wonReply" class="reply" hidden></p><div class="endRow"><button id="hqBtn" class="plain">Headquarters</button><button id="againBtn">Play again</button></div></div></div>
+<div id="hq" hidden><div class="hqBox"><h1>Guildmaster</h1><p class="sub">Guild headquarters &middot; <b id="hqPts">0</b> accomplishment points</p><div id="hqList"></div><p class="note">Each village counts its best coin score once. Win a village to open the next.</p></div></div>
+<div id="letter" hidden><div class="hqBox"><small>A letter from guild headquarters</small><h2 id="letterTitle"></h2><p id="letterText"></p><div class="row"><button id="letterBack">Back</button><button id="letterGo" class="gold">Set out</button></div></div></div>
+<div id="tag">Step 9 test build: missions</div>
 <script>/**
  * @license
  * Copyright 2010-2023 Three.js Authors
@@ -240,6 +260,77 @@ const CFG = {
   campTier: { max: 3, k: 0.2, threat: 0.5, potion: 40, goodsBack: 0.5 }
 };
 CFG.obstacles = [{ x: CFG.hall.x, z: CFG.hall.z, r: CFG.hall.r }, ...CFG.shopOrder.map(k => CFG.shops[k]), ...CFG.houses, ...CFG.arrayPlots.map(p => ({ x: p.x, z: p.z, r: 0.7 }))];
+
+// ---------- step 9 (v3.10, Rawa 7 Nov): villages ----------
+// Each village is the same land with its own setup: where the lairs, work sites, caravan road and forest lie, how strong the lairs are,
+// the starting coin and when the waves start. A village is applied on top of the base numbers above (which are step 8b's, unchanged).
+// stars: the coin left at the win for two and for three stars (one star for any win), set from the bot's results.
+const BASE_CFG = JSON.parse(JSON.stringify(CFG));
+const VILLAGES = [
+  { id: 'ashford', name: 'Ashford', kind: 'Tutorial village', stars: [200, 300],
+    letter: 'Welcome to Ashford, Guildmaster. Wolves from a den to the north-east take the sheep, and a few bandits camp to the south-west. Post a bounty on each, and let your adventurers do the rest.',
+    set(C) {
+      C.lairs = [
+        { id: 'den', kind: 'den', name: 'Wolf den', x: 26, z: -20, r: 1.8, level: 1, hp: 90, mob: 'wolf', cap: 2, every: 16, xp: 40, coins: 20 },
+        { id: 'camp', kind: 'camp', name: 'Bandit camp', x: -36, z: 26, r: 2.4, level: 3.5, hp: 320, mob: 'bandit', cap: 3, every: 20, xp: 90, coins: 40, raidEvery: 150, raidSize: 2 }
+      ];
+      Object.assign(C.wave, { first: 150, max: 2, size: 3, grow: 2, bruteFrom: 99, strengthFrom: 99 });   // two small waves, so the horn and the arrays are met once
+      C.wild.bear.first = [300, 360];
+      C.look = { seed: 11, trees: 430 };
+    } },
+  { id: 'elmstead', name: 'Elmstead', kind: 'Forest village', stars: [150, 250],
+    letter: 'Elmstead sits deep in the pinewoods, with timber to spare. Two wolf packs den in the forest, north-east and south-east, and bandits camp to the south-west. Use the wood well: the waves will not wait.',
+    set(C) {
+      C.lairs.push({ id: 'den2', kind: 'den', name: 'Pine den', x: 44, z: 30, r: 1.8, level: 1, hp: 90, mob: 'wolf', cap: 2, every: 16, xp: 40, coins: 20 });
+      const S = id => C.sites.find(s => s.id === id);
+      S('lumber1').yield = 1.3; S('lumber2').yield = 2;
+      C.sites.push({ id: 'lumber3', kind: 'lumber', name: 'Pinewood camp', x: 24, z: 18, yield: 1.8, note: 'Old pines south-east of town, between the two wolf dens. Rich timber, and wolves pass through.' });
+      C.look = { seed: 23, trees: 640 };
+    } },
+  { id: 'stonecrest', name: 'Stonecrest', kind: 'Hill village', stars: [150, 250],
+    letter: 'The last guildmaster here fled. A large bandit band holds the hills to the north-west, and food is scarce on this rocky ground. The quarries are rich, and stone builds arrays.',
+    set(C) {
+      C.lairs = [
+        { id: 'den', kind: 'den', name: 'Wolf den', x: 34, z: 26, r: 1.8, level: 1, hp: 120, mob: 'wolf', cap: 3, every: 14, xp: 40, coins: 20 },
+        { id: 'camp', kind: 'camp', name: 'Bandit camp', x: -42, z: -34, r: 2.4, level: 7, hp: 1100, mob: 'bandit', cap: 7, every: 16, xp: 130, coins: 55, raidEvery: 80, raidSize: 2 }
+      ];
+      const S = id => C.sites.find(s => s.id === id);
+      Object.assign(S('quarry1'), { built: true, yield: 1.5, note: 'Among the rocks west of town. Good stone, close to home.' });
+      Object.assign(S('quarry2'), { yield: 2.2, note: 'Rich rock far to the north, on the bandits\' side. A lot of stone per trip, and a long run to safety.' });
+      S('farm1').yield = 0.7;
+      Object.assign(S('farm2'), { yield: 0.9, note: 'Thin soil beside the south road.' });
+      Object.assign(S('lumber2'), { note: 'Deep forest east of town. More wood per trip, and wolves hunt here.' });
+      C.caravan.route = { in: [[71, 8], [16, 8]], stop: [3.5, 6.5], out: [[-4.5, 5.5], [-12.5, 8.5], [-24, 4], [-34, -16], [-71, -14]] };
+      C.wave.first = 170;
+      C.look = { seed: 37, trees: 380 };
+    } },
+  { id: 'fordham', name: 'Fordham', kind: 'River village', stars: [150, 250],
+    letter: 'Fordham lives on river trade, and the merchant road is long and open. Bandits camp beside it to the south-west and rob every caravan they can reach. Guard the wagons, and the coin will follow.',
+    set(C) {
+      C.lairs = [
+        { id: 'den', kind: 'den', name: 'Wolf den', x: 30, z: 34, r: 1.8, level: 1, hp: 120, mob: 'wolf', cap: 3, every: 14, xp: 40, coins: 20 },
+        { id: 'camp', kind: 'camp', name: 'Bandit camp', x: -46, z: 40, r: 2.4, level: 6, hp: 900, mob: 'bandit', cap: 6, every: 16, xp: 110, coins: 45, raidEvery: 80, raidSize: 2 }
+      ];
+      const S = id => C.sites.find(s => s.id === id);
+      Object.assign(S('lumber2'), { note: 'Deep forest east of town. More wood per trip, and wolves hunt here.' });
+      Object.assign(S('farm2'), { note: 'Good soil beside the merchant road, on the way to the bandit camp.' });
+      C.caravan.route = { in: [[71, -30], [40, -10], [16, 8]], stop: [3.5, 6.5], out: [[-4.5, 5.5], [-12.5, 8.5], [-26, 24], [-36, 46], [-56, 71]] };
+      C.caravan.first = [170, 200]; C.caravan.every = [150, 240];
+      C.wave.first = 170;
+      C.look = { seed: 51, trees: 470 };
+    } }
+];
+// sets CFG for a village (null for an unknown id, which leaves CFG as it is)
+function applyVillage(id) {
+  const V = VILLAGES.find(v => v.id === id); if (!V) return null;
+  for (const k of Object.keys(BASE_CFG)) CFG[k] = JSON.parse(JSON.stringify(BASE_CFG[k]));
+  V.set(CFG);
+  CFG.obstacles = [{ x: CFG.hall.x, z: CFG.hall.z, r: CFG.hall.r }, ...CFG.shopOrder.map(k => CFG.shops[k]), ...CFG.houses, ...CFG.arrayPlots.map(p => ({ x: p.x, z: p.z, r: 0.7 }))];
+  CFG.village = id;
+  return V;
+}
+// stars for a win: one for any win, two and three at the village's coin thresholds
+function starsFor(V, coin) { return coin >= V.stars[1] ? 3 : coin >= V.stars[0] ? 2 : 1; }
 const RES_NAME = { wood: 'wood', stone: 'stone', food: 'food' };
 const VNAMES = ['Anna', 'Bert', 'Cora', 'Dirk', 'Elsa', 'Finn', 'Greta', 'Hugo', 'Ines', 'Jory', 'Kasia', 'Lars', 'Moll', 'Nils', 'Olga', 'Piet', 'Rosa', 'Sten'];
 const VTUNICS = ['#8a7a5c', '#6f7d5a', '#9a8468', '#7a6a58', '#86705a', '#6d7866'];
@@ -259,7 +350,7 @@ function shuffle(a, R) { for (let i = a.length - 1; i > 0; i--) { const j = Math
 function newSim(seed) {
   const R = mulberry32(seed >>> 0);
   const S = {
-    seed, R, t: 0, gold: CFG.startGold, adv: [], mobs: [], lairs: [], bounty: {}, events: [], fx: [], nid: 1,
+    seed, R, t: 0, village: CFG.village || null, gold: CFG.startGold, adv: [], mobs: [], lairs: [], bounty: {}, events: [], fx: [], nid: 1,
     recruitQ: CFG.recruitStart.slice(), recruitT: CFG.recruitEvery,
     hall: { x: CFG.hall.x, z: CFG.hall.z, hp: CFG.hall.hp, max: CFG.hall.hp, hitT: -99 },
     ledger: { tax: 0, bounties: 0, refunds: 0, recent: [], deliveries: 0, recentDel: [], builds: 0, stolen: 0, recovered: 0, flags: 0, flagRefunds: 0, horn: 0, wages: 0, killPay: 0, arrayShots: 0, caravans: 0, escorts: 0, escortRefunds: 0, goodsBack: 0 },
@@ -367,8 +458,10 @@ function freePoint(S, cx, cz, r0, r1) {
   }
   return [cx + r0 + 1, cz];
 }
+// step 9 fix: people steer round the parked wagon too, not only buildings (a villager walked into it and stuck there)
+let steerWagon = null;
 function steer(u, nx, nz, d) {
-  for (const o of CFG.obstacles) {
+  for (const o of steerWagon ? [...CFG.obstacles, steerWagon] : CFG.obstacles) {
     const ox = o.x - u.x, oz = o.z - u.z, od = Math.hypot(ox, oz), R0 = o.r + 0.8;
     if (od > R0 + 2.5) continue;
     const proj = ox * nx + oz * nz; if (proj <= 0 || proj > d + o.r) continue;
@@ -1647,6 +1740,7 @@ function separate(S) {
 function step(S, dt) {
   S.t += dt;
   if (S.won || S.lost) return;
+  steerWagon = S.caravan && S.caravan.state !== 'wreck' ? { x: S.caravan.x, z: S.caravan.z, r: CFG.caravan.r } : null;
   updateWaves(S);
   if (S.recruitQ.length) { if (S.t >= S.recruitQ[0]) { S.recruitQ.shift(); recruit(S); } }
   else if (aliveAdv(S).length < CFG.maxAdv) { S.recruitT -= dt; if (S.recruitT <= 0) { recruit(S); S.recruitT = CFG.recruitEvery; } }
@@ -1709,7 +1803,7 @@ function spawnWave(S, w) {
 }
 function updateWaves(S) {
   const V = S.waves; if (V.off) return;
-  if (!V.warn && S.t >= V.nextT) {
+  if (!V.warn && S.t >= V.nextT && !(CFG.wave.max && V.n >= CFG.wave.max)) {
     const n = V.n + 1, ang = S.R() * TAU, comp = waveMake(n), name = compassOf(ang);
     V.n = n; V.nextT += CFG.wave.every;
     V.warn = { n, ang, name, comp, size: comp.size, warnT: S.t, at: S.t + CFG.wave.warn, goldAtWarn: S.gold, hallAtWarn: S.hall.hp };
@@ -2280,7 +2374,7 @@ function wildBounds(m) { const r = d2(m.x, m.z, 0, 0), K = CFG.wildKeepOut; if (
 
 // ===== Guildmaster step 1 — view, camera, input, UI =====
 const HEADLESS = /[?&]headless=1/.test(location.search);
-const GM = window.GM = { waveMake, waveText, waveEdge, waveActive, CFG, newSim, step, postBounty, cancelBounty, buildSite, plan, planVil, evalLair, power, STATES,
+const GM = window.GM = { VILLAGES, applyVillage, starsFor, waveMake, waveText, waveEdge, waveActive, CFG, newSim, step, postBounty, cancelBounty, buildSite, plan, planVil, evalLair, power, STATES,
   plantFlag, raiseFlag, cancelFlag, soundHorn, hornReady, hornWouldAnswer, flagThreat, evalFlag, flagSpot, flagFor, advInTown,
   setRecruitClass, rawPower, evalFollow, healAmt,
   buildShop, upgradeShop, buildArray, canPay, shopCost, arrayCost, wantBuy, repairCost, condEff, arrayStats,
@@ -2431,9 +2525,41 @@ function iconCanvas(st, fighting, size) {
   return cv;
 }
 
-if (!HEADLESS) window.addEventListener('DOMContentLoaded', () => startGame());
+// ---------- step 9 (v3.10): headquarters, letters, stars and saves ----------
+// Progress is saved between missions only, on the device (the platform's save comes in step 10). A new village loads the page
+// again with its id in the address (#go=id), since every village builds its own world.
+const SAVE_KEY = 'guildmaster.save.v1';
+function loadSave() { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s && s.best && s.stars) return s; } catch (e) {} return { unlocked: 1, best: {}, stars: {} }; }
+function writeSave(s) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(s)); } catch (e) {} }
+const hqPoints = s => VILLAGES.reduce((t, V) => t + (s.best[V.id] || 0), 0);
+const starHtml = n => '\u2605'.repeat(n) + '<i>' + '\u2605'.repeat(3 - n) + '</i>';
+function goVillage(id, letter) { location.hash = 'go=' + id + (letter ? '&l=1' : ''); location.reload(); }
+function goHQ() { location.hash = 'hq'; location.reload(); }
+function showHQ() {
+  const s = loadSave(), $ = id => document.getElementById(id);
+  $('hqPts').textContent = hqPoints(s);
+  $('hqList').innerHTML = VILLAGES.map((V, i) => {
+    const open = i < s.unlocked, best = s.best[V.id];
+    return `<button class="vil" data-v="${V.id}"${open ? '' : ' disabled'}><b>${i + 1}. ${V.name}</b><span class="st">${s.stars[V.id] ? starHtml(s.stars[V.id]) : ''}<em>${best != null ? 'Best ' + best + 'g' : ''}</em></span><small>${open ? V.kind : 'Win ' + VILLAGES[i - 1].name + ' to open'}</small></button>`;
+  }).join('');
+  for (const b of $('hqList').querySelectorAll('button.vil')) b.addEventListener('click', () => showLetter(b.dataset.v));
+  $('hq').hidden = false;
+}
+function showLetter(id) {
+  const V = VILLAGES.find(v => v.id === id), $ = id => document.getElementById(id);
+  $('hq').hidden = true; $('letterTitle').textContent = V.name; $('letterText').textContent = V.letter; $('letter').hidden = false;
+  $('letterBack').onclick = () => { $('letter').hidden = true; showHQ(); };
+  $('letterGo').onclick = () => { $('letter').hidden = true; startGame(id); };
+}
+function boot() {
+  const m = /go=([a-z]+)(&l=1)?/.exec(location.hash), V = m && VILLAGES.find(v => v.id === m[1]);
+  if (V && VILLAGES.indexOf(V) < loadSave().unlocked) { if (m[2]) showLetter(V.id); else startGame(V.id); }
+  else showHQ();
+}
+if (!HEADLESS) window.addEventListener('DOMContentLoaded', boot);
 
-function startGame() {
+function startGame(villageId) {
+  const VIL = applyVillage(villageId);
   let S = newSim((Date.now() % 100000) | 0);
   GM.sim = () => S;
   let speed = 1, paused = false;
@@ -2469,7 +2595,7 @@ function startGame() {
 
   // ---------- ground ----------
   const H = CFG.mapHalf + 12;
-  const segs = [[CFG.hall, CFG.lairs[0]], [CFG.hall, CFG.lairs[1]], ...CFG.shopOrder.map(k => [CFG.hall, CFG.shops[k]]), ...CFG.sites.map(x => [CFG.hall, x])];
+  const segs = [...CFG.lairs.map(L => [CFG.hall, L]), ...CFG.shopOrder.map(k => [CFG.hall, CFG.shops[k]]), ...CFG.sites.map(x => [CFG.hall, x])];
   { const R0 = CFG.caravan.route, pts = [...R0.in, R0.stop, ...R0.out].map(p => ({ x: p[0], z: p[1] })); for (let i = 1; i < pts.length; i++) segs.push([pts[i - 1], pts[i]]); }   // step 7: the caravan road
   const segDist = (x, z) => { let best = 1e9; for (const [a, b] of segs) { const vx = b.x - a.x, vz = b.z - a.z, L2 = vx * vx + vz * vz; let t = ((x - a.x) * vx + (z - a.z) * vz) / L2; t = clamp(t, 0, 1); best = Math.min(best, d2(x, z, a.x + vx * t, a.z + vz * t)); } return best; };
   const clearZone = (x, z) => {
@@ -2501,8 +2627,8 @@ function startGame() {
   }
   // ---------- trees, bushes, flowers, rocks (instanced: one draw call per kind) ----------
   {
-    const R = mulberry32(99), spots = [];
-    for (let i = 0; i < 2400 && spots.length < 470; i++) {
+    const LOOK = CFG.look || {}, R = mulberry32(LOOK.seed || 99), spots = [], nTrees = LOOK.trees || 470;
+    for (let i = 0; i < 2400 + nTrees * 2 && spots.length < nTrees; i++) {
       const x = (R() * 2 - 1) * (H - 2), z = (R() * 2 - 1) * (H - 2);
       if (clearZone(x, z) < 2.5) continue;
       if (CFG.obstacles.some(o => d2(x, z, o.x, o.z) < o.r + 3)) continue;
@@ -3098,7 +3224,7 @@ function startGame() {
     if (kind === 'guard') { const g = guardById(S, id); return g ? toScreen(g.x, 1, g.z) : null; }
   };
 
-  const den0 = CFG.lairs[0];
+  const den0 = CFG.lairs.find(L => L.kind === 'den') || CFG.lairs[0];
   fitTo([[CFG.hall.x - 3, CFG.hall.z + 3], [den0.x + 2, den0.z - 2]], 0.08);
 
   // ---------- input ----------
@@ -3663,7 +3789,34 @@ function startGame() {
   const speeds = [1, 2, 4];
   $('speedBtn').addEventListener('click', () => { speed = speeds[(speeds.indexOf(speed) + 1) % speeds.length]; $('speedBtn').textContent = speed + '×'; });
   $('pauseBtn').addEventListener('click', () => { paused = !paused; $('pauseBtn').textContent = paused ? 'Resume' : 'Pause'; document.body.classList.toggle('paused', paused); });
-  $('againBtn').addEventListener('click', () => location.reload());
+  $('againBtn').addEventListener('click', () => { const a = $('againBtn').dataset.go; if (a) goVillage(a, $('againBtn').dataset.letter === '1'); else location.reload(); });
+  $('hqBtn').addEventListener('click', goHQ);
+  // step 9: the win records the score and stars, opens the next village, and shows headquarters' reply
+  function showEnd() {
+    const idx = VIL ? VILLAGES.indexOf(VIL) : -1, next = idx >= 0 ? VILLAGES[idx + 1] : null;
+    $('won').hidden = false; $('hqBtn').hidden = !VIL;
+    if (S.won) {
+      const coin = Math.floor(S.gold);
+      $('wonTitle').textContent = 'Every threat is gone';
+      $('wonText').textContent = VIL ? `${VIL.name} is safe, on day ${Math.floor(S.wonT / 60) + 1}. Coin left in the treasury: ${coin}g.` : `Every threat is gone, on day ${Math.floor(S.wonT / 60) + 1}.`;
+      if (VIL) {
+        const sv = loadSave(), n = starsFor(VIL, coin), best = sv.best[VIL.id], isBest = best == null || coin > best;
+        if (isBest) sv.best[VIL.id] = coin;
+        sv.stars[VIL.id] = Math.max(sv.stars[VIL.id] || 0, n); sv.unlocked = Math.max(sv.unlocked, Math.min(VILLAGES.length, idx + 2)); writeSave(sv);
+        $('wonStars').innerHTML = starHtml(n); $('wonStars').hidden = false;
+        $('wonReply').textContent = (n === 3 ? 'Headquarters is delighted: your coffers put older guildmasters to shame.' : n === 2 ? 'A solid result. Headquarters notes the coin you kept.' : 'The threats are gone, though the treasury is thin. Headquarters expects more coin next time.')
+          + (isBest ? (best != null ? ` A new best for ${VIL.name} (was ${best}g).` : '') : ` Your best here is still ${best}g.`)
+          + (n < 3 ? ` ${n === 1 ? 'Two' : 'Three'} stars from ${VIL.stars[n - 1]}g.` : '');
+        $('wonReply').hidden = false;
+        if (next) { $('againBtn').textContent = 'Next: ' + next.name; $('againBtn').dataset.go = next.id; $('againBtn').dataset.letter = '1'; }
+        else { $('againBtn').textContent = 'Play ' + VIL.name + ' again'; $('againBtn').dataset.go = VIL.id; $('againBtn').dataset.letter = ''; }
+      }
+    } else {
+      $('wonTitle').textContent = 'The guild hall has fallen';
+      $('wonText').textContent = `It stood until day ${Math.floor(S.lostT / 60) + 1}, and ${S.waves.log.filter(W => W && W.clearedT != null).length} waves were beaten. Headquarters sends a new guildmaster to try again.`;
+      $('againBtn').textContent = 'Try again'; if (VIL) { $('againBtn').dataset.go = VIL.id; $('againBtn').dataset.letter = ''; }
+    }
+  }
   GM.setSpeed = v => { speed = v; $('speedBtn').textContent = speed + '×'; };
   document.addEventListener('visibilitychange', () => { if (document.hidden && !paused) $('pauseBtn').click(); });
 
@@ -3938,6 +4091,7 @@ function startGame() {
     const V = S.waves, beaten = V.log.filter(W => W && W.clearedT != null).length, on = S.mobs.filter(m => !m.dead && m.wave).length;
     if (V.warn) return `Wave ${V.warn.n} from the ${V.warn.name} in ${Math.max(0, Math.ceil(V.warn.at - S.t))} s`;
     if (on) return `${on} still attacking. ${beaten} beaten so far.`;
+    if (CFG.wave.max && V.n >= CFG.wave.max) return `No more waves are expected here. ${beaten} beaten.`;
     return `Scouts expect the next one in ${Math.max(0, Math.ceil(V.nextT - S.t))} s. ${beaten} beaten so far.`;
   }
   const waveArrow = (() => {
@@ -4012,8 +4166,7 @@ function startGame() {
         : clsHint ? 'Tap the guild hall to choose who it recruits next: warrior, archer, magician or healer' : 'Tap the wolf den to post a bounty');
       if (hint.textContent !== ht) hint.textContent = ht;
       hint.hidden = !!sel || (!waveHint && !arrayHint && !raidHint && !cvHint && !clsHint && !smithHint && (S.everPosted || S.t < 2));   // never under an open card
-      if (S.won && $('won').hidden) { $('won').hidden = false; $('wonText').textContent = `Every threat is gone, on day ${Math.floor(S.wonT / 60) + 1}.`; }
-      if (S.lost && $('won').hidden) { $('won').hidden = false; $('wonTitle').textContent = 'The guild hall has fallen'; $('wonText').textContent = `It stood until day ${Math.floor(S.lostT / 60) + 1}, and ${S.waves.log.filter(W => W && W.clearedT != null).length} waves were beaten. Headquarters sends a new guildmaster to try again.`; $('againBtn').textContent = 'Try again'; }
+      if ((S.won || S.lost) && $('won').hidden) showEnd();
     }
     renderer.render(scene, camera);
     requestAnimationFrame(frame);

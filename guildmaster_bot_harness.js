@@ -1,4 +1,4 @@
-// Headless bot harness for Guildmaster (step 8). Usage: node guildmaster_bot_harness.js index.html <scenario> [runs=30] [minutes=10]
+// Headless bot harness for Guildmaster (step 9). Usage: node guildmaster_bot_harness.js index.html <scenario> [runs=30] [minutes=10]
 // scenarios: campPush normal noBounty farSites cancel | step 4: raidHorn raidFlag normalHorn farFlag flagDanger
 // step 5: mixed mixedPush mixedNoBounty mixedHorn mixedFlag mixedFar twoHealers allArcher allMagician allHealer (the scripted player picks each recruit's class)
 // step 6: noSmith shops arrays arraysAll arraysNormal arraysBroke wardFlag. From step 6 the scripted player builds the blacksmith at 20 s in every
@@ -8,6 +8,8 @@
 // step 7b: caravanSellAll caravanSellAllNone (the caravan buys wood and stone as well as food). The guild guard stands in every scenario.
 // step 8: waveOff waveNoArrays waveNoArraysHorn waveArrays waveDefend waveFull waveFullNoArrays waveCamp waveStall (waves come in every scenario unless noWaves is set).
 // A run now ends when the hall falls too. Wave enemies are reported under WAVES, not RAIDS.
+// step 9: <village>Full, <village>NoArrays, <village>Camp, <village>Thrifty (waveFull with at most 2 arrays) for ashford elmstead stonecrest fordham (the waveFull, waveFullNoArrays and waveCamp players
+// in that village). Without a village the sim is step 8b's map, so older scenarios compare. SCORE reports the coin left at a win.
 // Works on older builds too: step 4-6 levers are skipped when the build does not have them, and raids are detected here, not read from the sim.
 const fs = require('fs'), vm = require('vm');
 // file: index.html (the game's own script is taken from its last <script> block) or a plain .js sim
@@ -40,9 +42,9 @@ function run(GM, seed, scen, minutes) {
   let hallMin = S.hall.hp;
   for (let i = 0; S.t < T; i++) {
     // ---- scripted player ----
-    const den = S.lairs.find(l => l.id === 'den'), camp = S.lairs.find(l => l.id === 'camp');
-    if (scen.bounties && !denPosted && S.t > 10) { GM.postBounty(S, 'den', 50); denPosted = true; }
-    if (scen.bounties && !den.alive && camp.alive && !(scen.arrayFirst && S.arrays.filter(A => A.built).length < scen.arrayFirst)) {
+    const dens = S.lairs.filter(l => l.kind === 'den'), camp = S.lairs.find(l => l.id === 'camp');
+    if (scen.bounties && !denPosted && S.t > 10) { for (const L of dens) GM.postBounty(S, L.id, 50); denPosted = true; }   // step 9: every den (Elmstead has two)
+    if (scen.bounties && dens.every(l => !l.alive) && camp.alive && !(scen.arrayFirst && S.arrays.filter(A => A.built).length < scen.arrayFirst)) {
       if (campPostedT == null && S.gold >= 100) { GM.postBounty(S, 'camp', 100); campPostedT = S.t; }
       else if (campPostedT != null && S.bounty.camp < (scen.campMax || 150) && S.gold >= 25 && S.t - campPostedT > (scen.campRamp || 60) * (S.bounty.camp - 75) / 25) GM.postBounty(S, 'camp', 25);
     }
@@ -82,7 +84,7 @@ function run(GM, seed, scen, minutes) {
       const reserve = scen.bounties && camp.alive && campPostedT == null && !(scen.arrayFirst && S.arrays.filter(A => A.built).length < scen.arrayFirst) ? 100 : 0, spare = c => S.gold - (c.gold || 0) >= reserve;
       if (scen.arrayMaster && S.t > scen.arrayMaster && !S.shops.arrays.built && spare(GM.shopCost('arrays'))) GM.buildShop(S, 'arrays');
       if (scen.arrays && S.shops.arrays.built) for (const id of scen.arrays) { const A = S.arrays.find(x => x.id === id); if (!A.built && GM.canPay(S, GM.arrayCost()) && spare(GM.arrayCost())) GM.buildArray(S, id); }
-      if (scen.arrayDir && S.shops.arrays.built && S.waves && S.waves.warn && GM.canPay(S, GM.arrayCost()) && spare(GM.arrayCost())) {
+      if (scen.arrayDir && !(scen.arrayMax && S.arrays.filter(A => A.built).length >= scen.arrayMax) && S.shops.arrays.built && S.waves && S.waves.warn && GM.canPay(S, GM.arrayCost()) && spare(GM.arrayCost())) {
         const e = GM.waveEdge(S.waves.warn.ang); let best = null, bd = 1e9;
         for (const A of S.arrays) if (!A.built) { const d = Math.hypot(A.x - e.x, A.z - e.z); if (d < bd) { bd = d; best = A; } }
         if (best) GM.buildArray(S, best.id);
@@ -263,7 +265,15 @@ if (require.main === module) {
     waveDefend: { classes: MIX, escort: 50, quarry: true, arrayMaster: 60, arrays: ['a1', 'a2', 'a3', 'a4', 'a5', 'a6'], arrayDir: true, horn: true },   // no bounties; arrays and the horn: does it hold?
     waveStall: { classes: MIX, escort: 50, quarry: true, arrayMaster: 60, arrays: ['a1', 'a2', 'a3', 'a4', 'a5', 'a6'], arrayDir: true, horn: true, hallFlag: true }   // holds without ever clearing: does stalling pay?
   };
+  // step 9: each village with the waveFull, waveFullNoArrays and waveCamp players
+  for (const v of ['ashford', 'elmstead', 'stonecrest', 'fordham']) {
+    SC[v + 'Full'] = Object.assign({}, SC.waveFull, { village: v });
+    SC[v + 'NoArrays'] = Object.assign({}, SC.waveFullNoArrays, { village: v });
+    SC[v + 'Camp'] = Object.assign({}, SC.waveCamp, { village: v });
+    SC[v + 'Thrifty'] = Object.assign({}, SC.waveFull, { village: v, arrayMax: 2 });   // builds two arrays, then keeps its coin
+  }
   const GM = load(file), rs = [];
+  if (SC[scenName].village) { if (!GM.applyVillage || !GM.applyVillage(SC[scenName].village)) throw new Error('this build has no village ' + SC[scenName].village); }
   if (process.env.GM_TUNE) new Function('CFG', process.env.GM_TUNE)(GM.CFG);   // try numbers without editing the game, e.g. GM_TUNE="CFG.wave.grow=3"
   const t0 = Date.now();
   for (let i = 0; i < +runs; i++) rs.push(run(GM, 1000 + i * 7919, SC[scenName], +minutes));
@@ -327,5 +337,7 @@ if (require.main === module) {
       console.log(`  wave ${n} (${W[0].size}): met ${W.length}, reached hall ${W.filter(w => w.reachedT != null).length}, beaten ${done.length}, clear ${r1(mdn2(done.map(w => w.clearedT - w.t)))} s, hall low ${Math.round(mdn2(W.map(w => w.hallMin)))}, stolen ${r1(W.reduce((t, w) => t + w.stolen, 0) / W.length)}g (back ${r1(W.reduce((t, w) => t + w.recovered, 0) / W.length)}g), kills adv ${r1(k('adv'))} array ${r1(k('array'))} guard ${r1(k('guard'))}, damage adv ${dS('adv')}% array ${dS('array')}% guard ${dS('guard')}%, treasury up ${up}/${done.length} (median ${r1(mdn2(done.map(w => w.goldAfter - w.goldAtWarn)))}g)`);
     }
   }
+  if (cnt(r => r.won)) { const c = rs.filter(r => r.won).map(r => Math.floor(r.endGold)).sort((a, b) => a - b), q = f => c[Math.min(c.length - 1, Math.floor(c.length * f))];
+    console.log(`SCORE coin left at a win: median ${q(0.5)}g (25% ${q(0.25)}g, 75% ${q(0.75)}g, best ${c[c.length - 1]}g)` + (GM.VILLAGES && SC[scenName].village ? `; stars at ${GM.VILLAGES.find(v => v.id === SC[scenName].village).stars.join('g / ')}g: ${[1, 2, 3].map(n => rs.filter(r => r.won && GM.starsFor(GM.VILLAGES.find(v => v.id === SC[scenName].village), r.endGold) === n).length).join(' / ')}` : '')); }
   console.log(`CHECKS stuck ${stuck.length}${stuck.length ? ' e.g. ' + stuck.slice(0, 4).join(' | ') : ''}  no-reason ${noWhy.length}${noWhy.length ? ' ' + noWhy.slice(0, 5).join(',') : ''}  ledger errors ${rs.reduce((s, r) => s + r.ledgerErr, 0)}  pot errors ${rs.reduce((s, r) => s + r.potErr, 0)}  horn paid more than answered ${cnt(r => r.hornPays > r.hornAnswers)}  store errors ${rs.reduce((s, r) => s + (r.resErr || 0), 0)}  escort without caravan ${rs.reduce((s, r) => s + (r.escortBad || 0), 0)}  escort worth the goods or more ${rs.reduce((s, r) => s + (r.escortOver || 0), 0)}  other ${bad.join(', ') || 'none'}`);
 }
