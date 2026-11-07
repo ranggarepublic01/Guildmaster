@@ -4,7 +4,7 @@ Read `playgama_game_brief_guildmaster_v3_6.md` before any work. It is the single
 the design, the locked decisions, the build order, the build choices waiting for Rawa, and what each
 step's bot results showed. `MIGRATION.md` says where the work stands, which pull request to merge first, and how a new
 chat (Claude Code or claude.ai) picks the project up. The next step is step 10 (content and tuning pass, then platform wiring: Bridge, saves, leaderboard) in the build order.
-Propose its design points as questions first. Step 9 (missions) is done; Rawa still has to test steps 8, 8b and 9 on a phone.
+Rawa decided its design on 8 Nov (brief, v3.11, build order step 10); it is ready to build. Step 9 (missions) is done; Rawa still has to test steps 8, 8b and 9 on a phone.
 
 ## Files
 - `index.html`: the game. One self-contained file (three.js inlined, no external assets), as Playgama needs.

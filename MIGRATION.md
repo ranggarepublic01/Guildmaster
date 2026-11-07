@@ -15,7 +15,8 @@ Written 5 Nov 2026, at the end of the session that built steps 7 and 7b and the 
 - **Build order (brief, 1d):**
   - Steps 1–9 are done, plus 7b (Rawa's v3.7 decisions), 8b (harder waves, v3.9) and the graphics pass. Step 9 (v3.10): four villages,
     the headquarters screen, letters, stars and a save between missions.
-  - **Next: step 10**, the content and tuning pass, then platform wiring (Bridge, saves, leaderboard).
+  - **Next: step 10**, the content and tuning pass, then platform wiring (Bridge, saves, leaderboard). Its design was decided on
+    8 Nov (brief, v3.11, build order step 10); it is ready to build.
 - **Latest build copy:** `builds/step9.html`, the same as `index.html`.
 - **Not yet done by Rawa:** the Android phone test of steps 7, 7b, 8, 8b, 9 and the new graphics.
 

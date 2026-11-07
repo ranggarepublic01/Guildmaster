@@ -53,6 +53,10 @@ letters of 2–3 short sentences; the reply after a win gives 1–3 stars by coi
 headquarters points are the sum of the best coin score per village; difficulty rises, with village 2 playing like today's build and
 villages 3 and 4 a little harder. Details in the build order, step 9.
 **Step 9 built 8 Nov 2026** (see 1f). The build choices are in 1e to confirm.
+**v3.11 decided 8 Nov 2026** (Rawa, on step 10's design points): step 10 is built as one step (content and platform together); generated
+ambience plus key sound cues with a mute button; the leaderboard shows the headquarters points total; a rewarded ad repairs the hall (once per
+mission) and interstitials come only between missions; English only, with all text in one table; a mid-mission save; recruits stay free, at most 5;
+the first two minutes are judged by Rawa's fresh phone play of Ashford. Details in the build order, step 10.
 **Moving to a new chat:** see `MIGRATION.md` (where things stand, Claude Code or a claude.ai chat, tools, a map of `index.html`).
 **From step 6 the build moves to Claude Code.** Keep this file, `index.html` (the step 5 build) and
 `guildmaster_bot_harness.js` in one project folder, with `CLAUDE.md` pointing to them. The last claude.ai
@@ -426,6 +430,20 @@ Which number the leaderboard shows is open (see 1e).
    - **Saves:** between missions only (unlocked villages, best score and stars per village), on the device for now; the platform save comes in step 10.
 10. Content and tuning pass (the first two minutes, difficulty), then platform wiring
     (Bridge, saves, leaderboard).
+    *(v3.11, Rawa 8 Nov)* Design decided, not built yet. One step, tested and pushed once at the end:
+    - **Sound:** generated with Web Audio (no files, no licences). A soft village ambience that fades in quiet moments, and short cues: bounty
+      posted, coin, level up, wave warning, horn, hall hit, win and loss. A mute button in the HUD; the platform's audio event mutes it too.
+    - **The first two minutes:** measure the hint timings and the first success in Ashford with the bot; Rawa plays it fresh on the phone, and only
+      what that finds is changed.
+    - **Text:** all game text in one table (English only for now), so languages can be added without touching the code.
+    - **Mid-mission save:** leave and come back to the same moment of a mission. The whole sim state is saved (including the random number
+      generator, so the game carries on exactly) every few seconds and when the page is hidden or paused; the headquarters screen offers
+      "Continue <village>". A save from an older build is dropped safely. This is the biggest and riskiest piece of step 10.
+    - **Platform (Bridge v2):** initialise first; saves through `bridge.storage` (device storage without Bridge); pause and audio events;
+      `game_ready` and the level messages; the leaderboard shows the headquarters points total; a rewarded ad on the hall card repairs the hall,
+      once per mission; interstitials only between missions (after the win or loss screen, before the next village), at most every few minutes.
+      Tested against a mock Bridge in the browser; the real Bridge and leaderboard need the Playgama dashboard set up by Rawa.
+    - **Unchanged:** recruits stay free, at most 5.
 
 ## 1e. Still open
 
@@ -436,7 +454,7 @@ Which number the leaderboard shows is open (see 1e).
 - *(v3.5)* A full story mode (set campaign, recurring characters, scripted events, an ending) is left
   for an update after launch, if the numbers are good.
 - *(v3.10, decided)* Each new village: the same land, with lairs, sites, caravan route and forest placed per village.
-- Recruit cost per class, and a cap on how many adventurers the guild can hold.
+- *(v3.11, decided)* Recruits stay free, at most 5 adventurers. Leaderboard: the headquarters points total.
 - Whether more houses mean more villagers.
 - *(step 9, to confirm)* Choices made in the build:
   - **Village numbers** (all else as step 8b): **Ashford**: den 26 units out (90 health, 2 wolves), camp level 4, 900 health, 3 bandits, raids every
@@ -644,7 +662,7 @@ Which number the leaderboard shows is open (see 1e).
 - *(v3.7, Rawa: intended.)* **A player who never escorts now often loses the camp race:** the camp tiers up and the scripted 150g
   camp bounty is no longer enough (`normal` won 18/30, was 30/30). With escorts it wins 29/30. Intended, or soften the tiers?
 - More classes and more maps after the first four classes.
-- Plan for now: saves between missions only (mission number, headquarters points), with a
+- *(v3.11: a mid-mission save is in step 10.)* Plan for now: saves between missions only (mission number, headquarters points), with a
   mid-mission save later. English first, with all text in one table so languages can be
   added later.
 
