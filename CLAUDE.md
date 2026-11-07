@@ -4,7 +4,7 @@ Read `playgama_game_brief_guildmaster_v3_6.md` before any work. It is the single
 the design, the locked decisions, the build order, the build choices waiting for Rawa, and what each
 step's bot results showed. `MIGRATION.md` says where the work stands, which pull request to merge first, and how a new
 chat (Claude Code or claude.ai) picks the project up. The next step is step 9 (missions: the tutorial village, the coin score, a fresh start in the next
-village) in the build order. Propose its design points as questions first. Steps 8 and 8b are done (waves every 95 s, kept by Rawa on 7 Nov);
+village) in the build order. Rawa decided its design on 7 Nov (brief, v3.10, build order step 9); it is ready to build. Steps 8 and 8b are done (waves every 95 s, kept by Rawa on 7 Nov);
 Rawa still has to test them on a phone.
 
 ## Files

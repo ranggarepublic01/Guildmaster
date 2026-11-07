@@ -14,7 +14,8 @@ Written 5 Nov 2026, at the end of the session that built steps 7 and 7b and the 
 - **On `main`:** steps 1–8, 7b, 8b, the graphics pass, this file and the test tools.
 - **Build order (brief, 1d):**
   - Steps 1–8 are done, plus 7b (Rawa's v3.7 decisions), 8b (harder waves, v3.9) and the graphics pass.
-  - **Next: step 9**, missions: the tutorial village, the coin score, a fresh start in the next village.
+  - **Next: step 9**, missions: the tutorial village, the coin score, a fresh start in the next village. Its design was decided
+    on 7 Nov (brief, v3.10, build order step 9); it is ready to build.
 - **Latest build copy:** `builds/step8b.html`, the same as `index.html`.
 - **Not yet done by Rawa:** the Android phone test of steps 7, 7b, 8, 8b and the new graphics.
 

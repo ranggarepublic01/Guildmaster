@@ -46,6 +46,12 @@ a 45 s warning; waves march straight to the hall; the camp holds its village rai
 **Step 8 built 5 Nov 2026** (see 1f). The build choices are in 1e to confirm.
 **v3.9 decided 5 Nov 2026** (Rawa, on the step 8 result that a player could win without arrays): make waves harder, so skipping arrays rarely
 wins. **Step 8b built 5 Nov 2026:** stronger waves alone did not do this, so waves now come every 95 s, not every 2 min (1f). Rawa kept 95 s on 7 Nov.
+**v3.10 decided 7 Nov 2026** (Rawa, on step 9's design points): the tutorial plus three villages (forest, hill, river); the same land each
+time, with lairs, work sites, caravan route, forest, starting coin and wave timing set per village; a fixed order where a win unlocks the next and
+any won village can be replayed; the tutorial has a fast den, a weak camp and two small waves with the hints (about 5–7 min, hard to lose);
+letters of 2–3 short sentences; the reply after a win gives 1–3 stars by coin left (thresholds per village, from the bot) and a short line;
+headquarters points are the sum of the best coin score per village; difficulty rises, with village 2 playing like today's build and
+villages 3 and 4 a little harder. Details in the build order, step 9.
 **Moving to a new chat:** see `MIGRATION.md` (where things stand, Claude Code or a claude.ai chat, tools, a map of `index.html`).
 **From step 6 the build moves to Claude Code.** Keep this file, `index.html` (the step 5 build) and
 `guildmaster_bot_harness.js` in one project folder, with `CLAUDE.md` pointing to them. The last claude.ai
@@ -404,20 +410,31 @@ Which number the leaderboard shows is open (see 1e).
    starting coin, wave timing), and a headquarters letter before each village and a reply after
    the win. Bot checks: every village is winnable by the scripted player, with win time and coin
    left reported per village.
+   *(v3.10, Rawa 7 Nov)* Design decided, not built yet:
+   - **Villages:** 1 tutorial; 2 forest (two wolf dens, plenty of wood; plays like today's build); 3 hill (a big bandit camp, rich stone,
+     little food); 4 river (a long, exposed caravan route). Villages 3 and 4 are a little harder (waves sooner, or stronger lairs).
+   - **Map:** the same land each time. Each village sets where the lairs, work sites, caravan route and forest lie, how strong the lairs are,
+     the starting coin and when the waves start.
+   - **Order:** fixed; a win unlocks the next village. Any won village can be replayed to beat its best score. A loss restarts the village.
+   - **Tutorial:** a fast den (first success about 30 s after the bounty), a weak camp, and two small waves, with the hints, so every lever is
+     met once. About 5–7 min, and hard to lose.
+   - **Letters:** 2–3 short sentences before each village (the problem, what is special, one tip), fitting a phone screen without scrolling.
+   - **Reply after a win:** 1–3 stars by coin left, with thresholds set per village from the bot's results, and a short line of praise or grumbling.
+   - **Headquarters points:** the sum of the best coin score of each village. Replaying to do better raises it; replaying for the same score does not.
+     Likely the leaderboard number in step 10.
+   - **Saves:** between missions only (unlocked villages, best score and stars per village), on the device for now; the platform save comes in step 10.
 10. Content and tuning pass (the first two minutes, difficulty), then platform wiring
     (Bridge, saves, leaderboard).
 
 ## 1e. Still open
 
 - Playgama weekly challenge: not now, maybe a future one. No deadline.
-- Leaderboard: the best single-mission coin score, or the guild headquarters total?
-- *(v3.5)* How many villages in the challenge entry (tutorial plus how many)?
-- *(v3.5)* Headquarters letters: one short paragraph, or longer? Does the reply after a win give a
-  rank (for example by coin left), or only words?
-- *(v3.5)* Villages played in a fixed order, or can the player pick any unlocked one?
+- Leaderboard: the best single-mission coin score, or the guild headquarters total? *(v3.10: headquarters points are the sum of the best
+  score per village, likely the leaderboard number; decide in step 10.)*
+- *(v3.5; v3.10, decided)* Villages: the tutorial plus three. Letters: 2–3 short sentences. The reply: 1–3 stars and a line. Order: fixed, with replay.
 - *(v3.5)* A full story mode (set campaign, recurring characters, scripted events, an ending) is left
   for an update after launch, if the numbers are good.
-- Each new village: a new map layout, or the same map with new threat positions?
+- *(v3.10, decided)* Each new village: the same land, with lairs, sites, caravan route and forest placed per village.
 - Recruit cost per class, and a cap on how many adventurers the guild can hold.
 - Whether more houses mean more villagers.
 - *(step 8b; Rawa, 7 Nov: keep 95 s, judge the pace on the phone)* **Waves every 95 s, not every 2 min.** Rawa chose harder waves so that skipping arrays rarely wins (v3.9). Eighteen settings
