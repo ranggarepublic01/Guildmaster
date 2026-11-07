@@ -2,3 +2,4 @@
 node_modules/
 *.log
 /game_only.js
+/mock_bridge.html

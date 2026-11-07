@@ -57,6 +57,8 @@ villages 3 and 4 a little harder. Details in the build order, step 9.
 ambience plus key sound cues with a mute button; the leaderboard shows the headquarters points total; a rewarded ad repairs the hall (once per
 mission) and interstitials come only between missions; English only, with all text in one table; a mid-mission save; recruits stay free, at most 5;
 the first two minutes are judged by Rawa's fresh phone play of Ashford. Details in the build order, step 10.
+*(8 Nov, Rawa, on Claude's view that it is high risk: the mid-mission save is dropped; saves stay between missions.)*
+**Step 10 built 8 Nov 2026** (see 1f). The build choices are in 1e to confirm. Before release Rawa sets up the Playgama dashboard (section 3).
 **Moving to a new chat:** see `MIGRATION.md` (where things stand, Claude Code or a claude.ai chat, tools, a map of `index.html`).
 **From step 6 the build moves to Claude Code.** Keep this file, `index.html` (the step 5 build) and
 `guildmaster_bot_harness.js` in one project folder, with `CLAUDE.md` pointing to them. The last claude.ai
@@ -430,13 +432,13 @@ Which number the leaderboard shows is open (see 1e).
    - **Saves:** between missions only (unlocked villages, best score and stars per village), on the device for now; the platform save comes in step 10.
 10. Content and tuning pass (the first two minutes, difficulty), then platform wiring
     (Bridge, saves, leaderboard).
-    *(v3.11, Rawa 8 Nov)* Design decided, not built yet. One step, tested and pushed once at the end:
+    ~~*(v3.11, Rawa 8 Nov)* Design decided.~~ Done 8 Nov (see 1f; build choices in 1e, step 10). One step, tested and pushed once at the end:
     - **Sound:** generated with Web Audio (no files, no licences). A soft village ambience that fades in quiet moments, and short cues: bounty
       posted, coin, level up, wave warning, horn, hall hit, win and loss. A mute button in the HUD; the platform's audio event mutes it too.
     - **The first two minutes:** measure the hint timings and the first success in Ashford with the bot; Rawa plays it fresh on the phone, and only
       what that finds is changed.
     - **Text:** all game text in one table (English only for now), so languages can be added without touching the code.
-    - **Mid-mission save:** leave and come back to the same moment of a mission. The whole sim state is saved (including the random number
+    - ~~**Mid-mission save:**~~ *(Dropped 8 Nov by Rawa as high risk: saves stay between missions.)* Leave and come back to the same moment of a mission. The whole sim state is saved (including the random number
       generator, so the game carries on exactly) every few seconds and when the page is hidden or paused; the headquarters screen offers
       "Continue <village>". A save from an older build is dropped safely. This is the biggest and riskiest piece of step 10.
     - **Platform (Bridge v2):** initialise first; saves through `bridge.storage` (device storage without Bridge); pause and audio events;
@@ -456,6 +458,28 @@ Which number the leaderboard shows is open (see 1e).
 - *(v3.10, decided)* Each new village: the same land, with lairs, sites, caravan route and forest placed per village.
 - *(v3.11, decided)* Recruits stay free, at most 5 adventurers. Leaderboard: the headquarters points total.
 - Whether more houses mean more villagers.
+- *(step 10, to confirm)* Choices made in the build:
+  - **Platform messages:** `game_ready` once the first screen shows; `level_started` when a village starts; `level_completed` or `level_failed` on the
+    end screen; `level_paused` and `level_resumed` with the Pause button. These are the brief's names (section 3); Cadenza only ever sent `game_ready`,
+    so whether Playgama knows the level ones is not confirmed. Each call is guarded, so an unknown one fails silently.
+  - **Ads:** placements `mission_end` (interstitial) and `hall_repair` (rewarded), in `playgama-bridge-config.json`. An interstitial plays only when
+    leaving an end screen (Next, Try again, Headquarters), at most every 3 minutes (the game's own check and the config's
+    `minimumDelayBetweenInterstitial: 180`); if no ad opens within 2.5 s the game carries on. The rewarded repair sits on the hall card, pauses the
+    game and mutes the sound while the ad plays, and repairs the hall only if the platform reports the reward. Once per village, and not offered at
+    full health. The game's numbers do not count on it, since the bot never uses it.
+  - **Leaderboard:** id `hq_points`, score = headquarters points. Sent when Bridge starts and after each new best. A "Leaderboard" button on the
+    headquarters screen opens the platform's pop-up where there is one, otherwise a list of up to 50 rows with the player's own row marked.
+    Hidden where the platform has no leaderboard.
+  - **Saves:** the save string is mirrored to the device and to Bridge storage, read back raw (`get([key], false)`), as Cadenza learned. When both
+    exist, the one further on wins (more villages open, then more points). The mute choice is saved in it too.
+  - **Start-up:** Bridge's script loads in the background; the first screen waits for it at most 4 s, so the game also starts offline or from a copied file.
+  - **Sound:** wind (soft filtered noise) and birds now and then; while a wave is on the map the birds stop and a low drum beats. Cues: a bright two-note
+    chime (bounty, flag or escort posted), a small clink (coin into the treasury, at most every 1.2 s), a rising arpeggio (level up), two low horn calls
+    (wave warning), a long horn (the recall horn), a thud (hall hit), a fanfare (win), a falling phrase (loss). Silent while paused, hidden, during an
+    ad, when the platform mutes audio, or with the mute button (beside Pause).
+  - **Text table (`TXT`):** the letters, village kinds, headquarters and end screens, hints, sound labels, ad and leaderboard text are in one table.
+    **Not yet in it:** the adventurers' reasons, event messages and card text, which are built from game state in a few hundred places beside the code.
+    Moving them is mechanical but large, and only pays when a second language is wanted. Do it then?
 - *(step 9, to confirm)* Choices made in the build:
   - **Village numbers** (all else as step 8b): **Ashford**: den 26 units out (90 health, 2 wolves), camp level 4, 900 health, 3 bandits, raids every
     150 s; arrays cost 30g, 5 wood, 10 stone; first wave warning at 60 s, only 2 waves (3 and 5 enemies, no brutes, no strength growth); the first bear
@@ -662,7 +686,7 @@ Which number the leaderboard shows is open (see 1e).
 - *(v3.7, Rawa: intended.)* **A player who never escorts now often loses the camp race:** the camp tiers up and the scripted 150g
   camp bounty is no longer enough (`normal` won 18/30, was 30/30). With escorts it wins 29/30. Intended, or soften the tiers?
 - More classes and more maps after the first four classes.
-- *(v3.11: a mid-mission save is in step 10.)* Plan for now: saves between missions only (mission number, headquarters points), with a
+- *(v3.11; 8 Nov, Rawa: the mid-mission save is dropped as high risk.)* Plan for now: saves between missions only (mission number, headquarters points), with a
   mid-mission save later. English first, with all text in one table so languages can be
   added later.
 
@@ -975,6 +999,18 @@ Each village, 30 runs played out to 20 min (Thrifty = the waveFull player with a
   caravanEscortNormal 7 and 23, now 13 and 17; waveOff 21, now 22; `waveFull` (20 min) 22, now 19; `waveFullNoArrays` 7, now 7.
 - Tier-2 gear: still never bought (0/30 in all 62).
 
+**Step 10, sound and platform (v3.11).** Built 8 Nov, in `builds/step10.html`. The sim is unchanged: 5 scenarios × 30 runs give the same results line for line
+as step 9, so step 9's bot results stand. Tested in the browser pane:
+- With a mock Bridge (`tools/make_mock.js`, real taps at 390×844): the call order is initialize, storage.get (raw), storage.set, the pause and audio
+  events, the two ad events, setScore, game_ready; then level_started when a village starts. The rewarded repair: the game pauses, the card says the
+  ad is playing, the hall goes back to full, the button stays off for the rest of the village. Mute button: sound off, saved, still off after a reload.
+  A platform pause pauses the game. A win: level_completed, the save written to Bridge, setScore with the new total. "Next" plays the interstitial,
+  then the next village's letter opens. The leaderboard list shows the rows with the player's own marked.
+- With the real Bridge script (v2.4.1, outside Playgama it runs as platform `mock`): it starts with no errors; the leaderboard reports
+  `not_available` there, so its button stays hidden. At 844×390 and 390×844 the top bar fits with the mute button; no sideways scroll; no console errors.
+- **Not tested:** the real ads, storage and leaderboard on Playgama (they need the dashboard set up, section 3); sound on a phone speaker; frame rate.
+- The first two minutes of Ashford, measured: a player who posts 50g on the den at 10 s sees it taken at once, the first adventurer there at about 19 s, and the den cleared at a median 31 s (26–35 s in 30 runs), so the first success comes about 20 s after the first bounty. The den hint shows from 2 s until the first bounty. The first wave warning comes at 60 s, the wave at 105 s. Rawa's fresh play on the phone decides whether anything changes.
+
 **Tuning notes for the content pass**
 - First success is fast: the den falls about 23 s after posting. *(v3)* Keep that for the
   tutorial village. From mission 2, target about 2 min.
@@ -1049,6 +1085,9 @@ Each village, 30 runs played out to 20 min (Thrifty = the waveFull player with a
   Playgama's random nicknames. Bridge's SaaS calls do not check for server errors.
 - **Localisation** is listed as a required step (`platform.language`). Find the Village
   shipped English only; plan for it if there is time.
+- *(Guildmaster, step 10)* **Before uploading:** in the Playgama dashboard, create the leaderboard `hq_points`, copy the game's public token from its
+  Leaderboards tab into `playgama-bridge-config.json` (it holds a placeholder now), and check the ad placements `mission_end` (interstitial) and
+  `hall_repair` (rewarded). Upload `index.html` and `playgama-bridge-config.json` together.
 - **Licences:** anything added later (sounds, images, fonts, map data) needs a licence record.
   three.js (MIT) is inlined in the build; keep its licence header.
 
@@ -1151,6 +1190,9 @@ only 6 players on the leaderboard. Plenty started, few finished. Lesson for the 
   `<village>Thrifty` (the waveFull player with at most 2 arrays, lever `arrayMax`). The scripted player now posts 50g on every den. New report: SCORE (coin
   left at a win: median, quartiles, best, and how many wins earn 1, 2 and 3 stars). `GM_TUNE` runs after the village is applied, so it can change a
   village's numbers. All 62 scenarios (village and wave ones at 20 min, the rest at 12) took about 75 min on 8 cores.
+- *(Guildmaster, step 10)* `tools/make_mock.js` writes `mock_bridge.html` (not committed): the game with a mock Bridge that records every call in
+  `window.__calls`, keeps storage in localStorage, plays ads over about a second, and fires the platform's pause and audio events from
+  `window.__mock`. Serve it with `tools/serve.js` and test there; `index.html` itself loads the real Bridge, which runs as platform `mock` off Playgama.
 - *(Guildmaster, step 8)* Playwright is not installed on Rawa's PC, so `tools/ui_test.js` does not run there; test through the browser pane with real
   clicks. In the pane's emulated portrait, the click frame is 800×600 stretched to 390×844 (css x = x × 0.4875, css y = y × 1.407), so take a screenshot before a
   coordinate click, and wait a few seconds for the page to update while animation is throttled.

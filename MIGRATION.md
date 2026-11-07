@@ -11,21 +11,21 @@ Written 5 Nov 2026, at the end of the session that built steps 7 and 7b and the 
 ## 1. Where things stand
 
 - **Repository:** `https://github.com/ranggarepublic01/Guildmaster` (private), default branch `main`.
-- **On `main`:** steps 1–9, 7b, 8b, the graphics pass, this file and the test tools.
+- **On `main`:** steps 1–10, 7b, 8b, the graphics pass, this file and the test tools.
 - **Build order (brief, 1d):**
-  - Steps 1–9 are done, plus 7b (Rawa's v3.7 decisions), 8b (harder waves, v3.9) and the graphics pass. Step 9 (v3.10): four villages,
-    the headquarters screen, letters, stars and a save between missions.
-  - **Next: step 10**, the content and tuning pass, then platform wiring (Bridge, saves, leaderboard). Its design was decided on
-    8 Nov (brief, v3.11, build order step 10); it is ready to build.
-- **Latest build copy:** `builds/step9.html`, the same as `index.html`.
-- **Not yet done by Rawa:** the Android phone test of steps 7, 7b, 8, 8b, 9 and the new graphics.
+  - Steps 1–10 are done, plus 7b, 8b and the graphics pass. Step 9: four villages, headquarters, letters, stars, a save between missions.
+    Step 10: sound, the text table, Playgama Bridge (storage, pause and audio, messages, the leaderboard, a rewarded hall repair, interstitials).
+  - **Next:** Rawa's phone test, the Playgama dashboard set-up (brief, section 3), then the store page and launch (brief, section 4).
+- **Latest build copy:** `builds/step10.html`, the same as `index.html`.
+- **Not yet done by Rawa:** the Android phone test of steps 7–10 and the new graphics, and the Playgama dashboard (leaderboard `hq_points`, the public token, ad placements).
 
-### Before step 10 (open)
+### Before release (open)
 
 1. **Waves every 95 s:** kept by Rawa on 7 Nov (22/30 wins with arrays, 7/30 without). The pace is still to be felt on the phone. See the brief, 1e, first step 8b item.
 2. **Step 8's build choices** (brief, 1e): waves that grow stronger from wave 3, more brutes, stronger arrays. These went past the v3.8 decisions.
-3. **Step 9's build choices** (brief, 1e): each village's numbers, the star thresholds, the tutorial's early first wave.
-4. **The phone test:** the look, the frame rate, and a wave on screen (up to 266 draw calls seen, was 90–120). Until then waves stay at about 20 enemies at most.
+3. **Step 10's build choices** (brief, 1e): the level message names, ad timing, the text table (reasons and cards not in it yet).
+4. **Step 9's build choices** (brief, 1e): each village's numbers, the star thresholds, the tutorial's early first wave.
+5. **The phone test:** the look, the frame rate, and a wave on screen (up to 266 draw calls seen, was 90–120). Until then waves stay at about 20 enemies at most.
 
 ---
 
@@ -108,6 +108,8 @@ to read the whole page first, and the game code alone is about 160,000 tokens, t
 | `tools/ui_test.js` | Phone-size tap test in headless Chromium. It taps a guard, the caravan (sells wood, posts an escort), the hall (sells stone), an adventurer and the camp, at portrait and landscape. It prints what each card showed, draw calls and page errors, and saves screenshots. Start `node tools/serve.js . 8765` first. |
 | `tools/serve.js` | Tiny static server on port 8765. Browsers in Claude cannot open `file://`. |
 | `tools/game_only.js` | Writes `game_only.js` (the game code without three.js) for uploading to a chat. |
+| `tools/make_mock.js` | Writes `mock_bridge.html`: the game with a mock Playgama Bridge that records every call (`window.__calls`). |
+| `playgama-bridge-config.json` | Playgama's config, uploaded with `index.html`. The public token is a placeholder until Rawa pastes it in. |
 | `docs/screens/` | Before and after screenshots of the graphics pass. |
 
 The page exposes `window.GM` for tests:

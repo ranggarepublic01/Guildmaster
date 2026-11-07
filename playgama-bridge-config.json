@@ -1,0 +1,33 @@
+{
+  "advertisement": {
+    "minimumDelayBetweenInterstitial": 180,
+    "interstitial": {
+      "placements": [
+        {
+          "id": "mission_end"
+        }
+      ]
+    },
+    "rewarded": {
+      "placements": [
+        {
+          "id": "hall_repair"
+        }
+      ]
+    }
+  },
+  "leaderboards": [
+    {
+      "id": "hq_points"
+    }
+  ],
+  "saas": {
+    "publicToken": "PASTE_THE_PUBLIC_TOKEN_FROM_THE_PLAYGAMA_DASHBOARD",
+    "leaderboards": {
+      "platforms": [
+        "playgama",
+        "playgama_sandbox"
+      ]
+    }
+  }
+}

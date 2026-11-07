@@ -3,9 +3,8 @@
 Read `playgama_game_brief_guildmaster_v3_6.md` before any work. It is the single source of truth:
 the design, the locked decisions, the build order, the build choices waiting for Rawa, and what each
 step's bot results showed. `MIGRATION.md` says where the work stands, which pull request to merge first, and how a new
-chat (Claude Code or claude.ai) picks the project up. The next step is step 10 (content and tuning pass, then platform wiring: Bridge, saves, leaderboard) in the build order.
-Rawa decided its design on 8 Nov (brief, v3.11, build order step 10); it is ready to build. Step 9 (missions) is done; Rawa still has to test steps 8, 8b and 9 on a phone.
-
+chat (Claude Code or claude.ai) picks the project up. Steps 1–10 of the build order are done. What is left before release: Rawa's phone test (steps 8–10), the Playgama dashboard set-up
+(brief, section 3: leaderboard `hq_points`, the public token in `playgama-bridge-config.json`, ad placements), then the store page and launch (brief, section 4).
 ## Files
 - `index.html`: the game. One self-contained file (three.js inlined, no external assets), as Playgama needs.
 - `guildmaster_bot_harness.js`: runs the sim headless in plain Node.
@@ -13,10 +12,12 @@ Rawa decided its design on 8 Nov (brief, v3.11, build order step 10); it is read
   Scenarios are listed at the top of the file. Use 30 runs × 12 min for the numbers that go in the brief.
   On Rawa's PC, Node is a portable copy (not on PATH): `%LOCALAPPDATA%\Programs\node\node-v24.19.0-win-x64\node.exe`.
   In a cloud session, use `node` from PATH. Nothing to install either way.
-- `builds/`: keep a copy of each finished step (`builds/step9.html` is the current `index.html`), so every
+- `builds/`: keep a copy of each finished step (`builds/step10.html` is the current `index.html`), so every
   step can be bot-compared with the one before.
 - `tools/ui_test.js`: the phone-size tap test (headless Chromium, portrait and landscape, real taps). Start `tools/serve.js`
   first. `tools/game_only.js` writes the game code without three.js, for uploading to a claude.ai chat.
+- `playgama-bridge-config.json`: Playgama's config, uploaded beside `index.html`. `tools/make_mock.js` writes `mock_bridge.html`, the game with a
+  mock Bridge, for testing the platform calls in the browser.
 - `tools/serve.js`: a tiny static server for testing in the browser pane (`.claude/launch.json`, name `guildmaster`,
   port 8765); the browser pane cannot open `file://`. Cloud sessions have no browser pane: there, the phone-size
   tap tests need a headless browser, or are done on Rawa's PC after pulling.

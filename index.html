@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<title>Guildmaster, step 9: missions</title>
+<title>Guildmaster, step 10: sound and platform</title>
+<script async src="https://bridge.playgama.com/v2/stable/playgama-bridge.js" onload="window.__pgLoad=1" onerror="window.__pgLoad=-1"></script>
 <style>
 :root{--panel:rgba(26,34,31,.93);--panel2:rgba(40,50,45,.95);--ink:#f1ead9;--muted:#b4bcaa;--brass:#d6a94a;--brass2:#f0c866;--line:rgba(241,234,217,.14);--red:#e0624f;--green:#86c86a;
 --serif:"Palatino Linotype","Book Antiqua",Palatino,"Noto Serif",Georgia,serif;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
@@ -89,7 +90,9 @@ ol time{display:block;color:var(--muted);font-size:11.5px}
 .endRow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .stars{margin:8px 0 0;font-size:30px;letter-spacing:4px;color:var(--brass2)}.stars i{font-style:normal;color:rgba(241,234,217,.22)}
 .reply{margin:6px 0 0;color:var(--ink);font-family:var(--serif);font-size:15.5px;max-width:420px}
-#hq,#letter{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:calc(var(--st) + 16px) calc(var(--sr) + 16px) calc(var(--sb) + 16px) calc(var(--sl) + 16px);background:linear-gradient(#9fdcf5,#72c244);overflow-y:auto}
+#muteBtn{width:44px;padding:0;display:flex;align-items:center;justify-content:center}#muteBtn svg{width:22px;height:22px}#muteBtn .off{display:none}body.muted #muteBtn .on{display:none}body.muted #muteBtn .off{display:inline}
+.lbList{margin:8px 0 0;padding:0;list-style:none;max-height:50vh;overflow-y:auto}.lbList li{display:flex;gap:10px;padding:7px 4px;border-top:1px solid var(--line);font-size:14.5px}.lbList li b{width:2.2em;color:var(--brass2)}.lbList li span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lbList li.me{background:rgba(214,169,74,.15)}
+#hq,#letter,#lb{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:calc(var(--st) + 16px) calc(var(--sr) + 16px) calc(var(--sb) + 16px) calc(var(--sl) + 16px);background:linear-gradient(#9fdcf5,#72c244);overflow-y:auto}
 .hqBox{background:var(--panel);border:1px solid var(--brass);border-radius:18px;padding:20px 22px;width:100%;max-width:460px;margin:auto}
 .hqBox h1{font:600 30px var(--serif);margin:0;color:var(--brass2);text-align:center}
 .hqBox h2{font:600 24px var(--serif);margin:2px 0 8px;color:var(--brass2)}
@@ -128,6 +131,7 @@ ol time{display:block;color:var(--muted);font-size:11.5px}
   <span class="grow"></span>
   <button class="hb" id="rosterBtn">Adventurers</button>
   <button class="hb" id="speedBtn" aria-label="Game speed">1×</button>
+  <button class="hb" id="muteBtn" aria-label="Sound on" title="Sound"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path class="on" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/><path class="off" d="M16 9l6 6M22 9l-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
   <button class="hb" id="pauseBtn">Pause</button>
 </div>
 <ul id="roster" hidden></ul>
@@ -136,9 +140,10 @@ ol time{display:block;color:var(--muted);font-size:11.5px}
 <div id="hint" hidden>Tap the wolf den to post a bounty</div>
 <div id="card" hidden></div>
 <div id="won" hidden><div><h2 id="wonTitle">Map cleared</h2><p id="wonText"></p><p id="wonStars" class="stars" hidden></p><p id="wonReply" class="reply" hidden></p><div class="endRow"><button id="hqBtn" class="plain">Headquarters</button><button id="againBtn">Play again</button></div></div></div>
-<div id="hq" hidden><div class="hqBox"><h1>Guildmaster</h1><p class="sub">Guild headquarters &middot; <b id="hqPts">0</b> accomplishment points</p><div id="hqList"></div><p class="note">Each village counts its best coin score once. Win a village to open the next.</p></div></div>
+<div id="hq" hidden><div class="hqBox"><h1>Guildmaster</h1><p class="sub">Guild headquarters &middot; <b id="hqPts">0</b> accomplishment points</p><div id="hqList"></div><p class="note">Each village counts its best coin score once. Win a village to open the next.</p><div class="row" id="lbRow" hidden><button id="lbBtn">Leaderboard</button></div></div></div>
+<div id="lb" hidden><div class="hqBox"><h2>Leaderboard</h2><p class="note" id="lbNote"></p><ol id="lbList" class="lbList"></ol><div class="row"><button id="lbClose">Back</button></div></div></div>
 <div id="letter" hidden><div class="hqBox"><small>A letter from guild headquarters</small><h2 id="letterTitle"></h2><p id="letterText"></p><div class="row"><button id="letterBack">Back</button><button id="letterGo" class="gold">Set out</button></div></div></div>
-<div id="tag">Step 9 test build: missions</div>
+<div id="tag">Step 10 test build: sound and platform</div>
 <script>/**
  * @license
  * Copyright 2010-2023 Three.js Authors
@@ -261,14 +266,55 @@ const CFG = {
 };
 CFG.obstacles = [{ x: CFG.hall.x, z: CFG.hall.z, r: CFG.hall.r }, ...CFG.shopOrder.map(k => CFG.shops[k]), ...CFG.houses, ...CFG.arrayPlots.map(p => ({ x: p.x, z: p.z, r: 0.7 }))];
 
+// ---------- step 10 (v3.11): the text table ----------
+// Player-facing text that is not built from the simulation: letters, headquarters, the end screens, hints, sound, ads and the leaderboard.
+// English only for now; a second language would add a second table with the same keys. (The adventurers' reasons and the card bodies are
+// still written inline beside the code that builds them; see the brief, 1e, step 10.)
+const TXT = {
+  letters: {
+    ashford: 'Welcome to Ashford, Guildmaster. Wolves from a den to the north-east take the sheep, and a few bandits camp to the south-west. Post a bounty on each, and let your adventurers do the rest.',
+    elmstead: 'Elmstead sits deep in the pinewoods, with timber to spare. Two wolf packs den in the forest, north-east and south-east, and bandits camp to the south-west. Use the wood well: the waves will not wait.',
+    stonecrest: 'The last guildmaster here fled. A large bandit band holds the hills to the north-west, and food is scarce on this rocky ground. The quarries are rich, and stone builds arrays.',
+    fordham: 'Fordham lives on river trade, and the merchant road is long and open. Bandits camp beside it to the south-west and rob every caravan they can reach. Guard the wagons, and the coin will follow.'
+  },
+  kinds: { ashford: 'Tutorial village', elmstead: 'Forest village', stonecrest: 'Hill village', fordham: 'River village' },
+  hq: { title: 'Guildmaster', points: 'accomplishment points', note: 'Each village counts its best coin score once. Win a village to open the next.', locked: v => 'Win ' + v + ' to open', best: g => 'Best ' + g + 'g', letterFrom: 'A letter from guild headquarters', setOut: 'Set out', back: 'Back' },
+  end: {
+    wonTitle: 'Every threat is gone', lostTitle: 'The guild hall has fallen',
+    won: (v, day, coin) => `${v} is safe, on day ${day}. Coin left in the treasury: ${coin}g.`, wonPlain: day => `Every threat is gone, on day ${day}.`,
+    lost: (day, n) => `It stood until day ${day}, and ${n} waves were beaten. Headquarters sends a new guildmaster to try again.`,
+    reply: ['The threats are gone, though the treasury is thin. Headquarters expects more coin next time.', 'A solid result. Headquarters notes the coin you kept.', 'Headquarters is delighted: your coffers put older guildmasters to shame.'],
+    newBest: (v, was) => ` A new best for ${v} (was ${was}g).`, stillBest: b => ` Your best here is still ${b}g.`, nextStar: (n, g) => ` ${n === 1 ? 'Two' : 'Three'} stars from ${g}g.`,
+    next: v => 'Next: ' + v, again: v => 'Play ' + v + ' again', tryAgain: 'Try again', hq: 'Headquarters'
+  },
+  hint: {
+    den: 'Tap the wolf den to post a bounty',
+    wave: 'A wave is coming. Tap the guild hall to sound the recall horn or plant a defend flag',
+    arrayQuarry: 'Waves grow. You will need arrays to hold the next ones: build a quarry first, for their stone',
+    arrayMaster: 'Waves grow. You will need arrays to hold the next ones: tap the empty plot west of the guild hall to build an array master',
+    arrayPlot: 'Waves grow. Tap a + plot around the village to build an array',
+    raid: 'Bandits are raiding. Tap the guild hall to sound the recall horn or plant a defend flag',
+    caravan: 'A merchant caravan has come for your surplus food, and bandits will go for it. Tap the wagon to post an escort bounty',
+    smith: 'An adventurer has gold for better gear. Tap the empty plot in front of the guild hall to build a blacksmith',
+    cls: 'Tap the guild hall to choose who it recruits next: warrior, archer, magician or healer'
+  },
+  sound: { on: 'Sound on', off: 'Sound off' },
+  ad: {
+    repairHead: 'Repair', repairBtn: 'Watch an ad to repair the hall', repairInfo: 'Watch a short ad and the builders repair the hall in full. Once per village.',
+    repairFull: 'The hall is at full health.', repairUsed: 'Used in this village. The hall still mends slowly on its own when nothing hits it.',
+    repairBusy: 'The ad is playing.', repairFail: 'No ad was available. Try again later.', repaired: 'The builders repaired the guild hall in full.'
+  },
+  lb: { title: 'Leaderboard', btn: 'Leaderboard', note: 'Headquarters points: the best coin score of each village, added together.', none: 'No scores yet.', fail: 'The leaderboard could not be loaded.', you: 'You' }
+};
+
 // ---------- step 9 (v3.10, Rawa 7 Nov): villages ----------
 // Each village is the same land with its own setup: where the lairs, work sites, caravan road and forest lie, how strong the lairs are,
 // the starting coin and when the waves start. A village is applied on top of the base numbers above (which are step 8b's, unchanged).
 // stars: the coin left at the win for two and for three stars (one star for any win), set from the bot's results.
 const BASE_CFG = JSON.parse(JSON.stringify(CFG));
 const VILLAGES = [
-  { id: 'ashford', name: 'Ashford', kind: 'Tutorial village', stars: [40, 110],
-    letter: 'Welcome to Ashford, Guildmaster. Wolves from a den to the north-east take the sheep, and a few bandits camp to the south-west. Post a bounty on each, and let your adventurers do the rest.',
+  { id: 'ashford', name: 'Ashford', kind: TXT.kinds.ashford, stars: [40, 110],
+    letter: TXT.letters.ashford,
     set(C) {
       C.lairs = [
         { id: 'den', kind: 'den', name: 'Wolf den', x: 26, z: -20, r: 1.8, level: 1, hp: 90, mob: 'wolf', cap: 2, every: 16, xp: 40, coins: 20 },
@@ -279,8 +325,8 @@ const VILLAGES = [
       C.wild.bear.first = [300, 360];
       C.look = { seed: 11, trees: 430 };
     } },
-  { id: 'elmstead', name: 'Elmstead', kind: 'Forest village', stars: [80, 200],
-    letter: 'Elmstead sits deep in the pinewoods, with timber to spare. Two wolf packs den in the forest, north-east and south-east, and bandits camp to the south-west. Use the wood well: the waves will not wait.',
+  { id: 'elmstead', name: 'Elmstead', kind: TXT.kinds.elmstead, stars: [80, 200],
+    letter: TXT.letters.elmstead,
     set(C) {
       C.lairs.push({ id: 'den2', kind: 'den', name: 'Pine den', x: 44, z: 30, r: 1.8, level: 1, hp: 90, mob: 'wolf', cap: 2, every: 16, xp: 40, coins: 20 });
       const S = id => C.sites.find(s => s.id === id);
@@ -288,8 +334,8 @@ const VILLAGES = [
       C.sites.push({ id: 'lumber3', kind: 'lumber', name: 'Pinewood camp', x: 24, z: 18, yield: 1.8, note: 'Old pines south-east of town, between the two wolf dens. Rich timber, and wolves pass through.' });
       C.look = { seed: 23, trees: 640 };
     } },
-  { id: 'stonecrest', name: 'Stonecrest', kind: 'Hill village', stars: [100, 180],
-    letter: 'The last guildmaster here fled. A large bandit band holds the hills to the north-west, and food is scarce on this rocky ground. The quarries are rich, and stone builds arrays.',
+  { id: 'stonecrest', name: 'Stonecrest', kind: TXT.kinds.stonecrest, stars: [100, 180],
+    letter: TXT.letters.stonecrest,
     set(C) {
       C.lairs = [
         { id: 'den', kind: 'den', name: 'Wolf den', x: 34, z: 26, r: 1.8, level: 1, hp: 120, mob: 'wolf', cap: 3, every: 14, xp: 40, coins: 20 },
@@ -305,8 +351,8 @@ const VILLAGES = [
       Object.assign(C.wave, { first: 170, every: 85 });   // waves come sooner and faster here: a big camp is cleared late
       C.look = { seed: 37, trees: 380 };
     } },
-  { id: 'fordham', name: 'Fordham', kind: 'River village', stars: [60, 150],
-    letter: 'Fordham lives on river trade, and the merchant road is long and open. Bandits camp beside it to the south-west and rob every caravan they can reach. Guard the wagons, and the coin will follow.',
+  { id: 'fordham', name: 'Fordham', kind: TXT.kinds.fordham, stars: [60, 150],
+    letter: TXT.letters.fordham,
     set(C) {
       C.lairs = [
         { id: 'den', kind: 'den', name: 'Wolf den', x: 30, z: 34, r: 1.8, level: 1, hp: 120, mob: 'wolf', cap: 3, every: 14, xp: 40, coins: 20 },
@@ -1817,6 +1863,12 @@ function updateWaves(S) {
     if (!S.mobs.some(m => !m.dead && m.wave === W.n)) { W.clearedT = S.t; W.goldAfter = S.gold; event(S, `Wave ${W.n} is beaten.`, 'good', S.hall.x, S.hall.z); }
   }
 }
+// step 10 (v3.11): the hall repair paid by a rewarded ad, once per village
+function adRepairHall(S) {
+  if (S.adRepaired || S.won || S.lost) return false;
+  S.adRepaired = true; S.hall.hp = S.hall.max; S.stats.adRepairs = (S.stats.adRepairs || 0) + 1;
+  event(S, TXT.ad.repaired, 'good', S.hall.x, S.hall.z); return true;
+}
 // player lever: post or raise a bounty
 function postBounty(S, lairId, amount) {
   const L = lairById(S, lairId);
@@ -2374,7 +2426,7 @@ function wildBounds(m) { const r = d2(m.x, m.z, 0, 0), K = CFG.wildKeepOut; if (
 
 // ===== Guildmaster step 1 — view, camera, input, UI =====
 const HEADLESS = /[?&]headless=1/.test(location.search);
-const GM = window.GM = { VILLAGES, applyVillage, starsFor, waveMake, waveText, waveEdge, waveActive, CFG, newSim, step, postBounty, cancelBounty, buildSite, plan, planVil, evalLair, power, STATES,
+const GM = window.GM = { TXT, adRepairHall, VILLAGES, applyVillage, starsFor, waveMake, waveText, waveEdge, waveActive, CFG, newSim, step, postBounty, cancelBounty, buildSite, plan, planVil, evalLair, power, STATES,
   plantFlag, raiseFlag, cancelFlag, soundHorn, hornReady, hornWouldAnswer, flagThreat, evalFlag, flagSpot, flagFor, advInTown,
   setRecruitClass, rawPower, evalFollow, healAmt,
   buildShop, upgradeShop, buildArray, canPay, shopCost, arrayCost, wantBuy, repairCost, condEff, arrayStats,
@@ -2529,38 +2581,194 @@ function iconCanvas(st, fighting, size) {
 // Progress is saved between missions only, on the device (the platform's save comes in step 10). A new village loads the page
 // again with its id in the address (#go=id), since every village builds its own world.
 const SAVE_KEY = 'guildmaster.save.v1';
-function loadSave() { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s && s.best && s.stars) return s; } catch (e) {} return { unlocked: 1, best: {}, stars: {} }; }
-function writeSave(s) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(s)); } catch (e) {} }
+// step 10: the save lives in memory, mirrored to the device and, on Playgama, to Bridge storage (read back as a raw string: by default
+// Bridge JSON-parses stored values, which broke Cadenza's save). One JSON string under one key.
+let saveMem = null;
+function parseSave(t) { try { const s = typeof t === 'string' ? JSON.parse(t) : t; if (s && s.best && s.stars) return Object.assign({ unlocked: 1, mute: false }, s); } catch (e) {} return null; }
+function loadSave() { if (!saveMem) { let t = null; try { t = localStorage.getItem(SAVE_KEY); } catch (e) {} saveMem = parseSave(t) || { unlocked: 1, best: {}, stars: {}, mute: false }; } return JSON.parse(JSON.stringify(saveMem)); }
+function writeSave(s) {
+  saveMem = JSON.parse(JSON.stringify(s)); const t = JSON.stringify(s);
+  try { localStorage.setItem(SAVE_KEY, t); } catch (e) {}
+  if (PG.ok) { try { const p = bridge.storage.set([SAVE_KEY], [t]); if (p && p.catch) p.catch(() => {}); } catch (e) {} }
+}
+
+// ---------- step 10 (v3.11): Playgama Bridge v2 ----------
+// Initialise first; storage; pause and audio events; game_ready and the level messages; the leaderboard (headquarters points);
+// a rewarded ad for the hall repair; interstitials only between villages. Without Bridge (a plain page, or offline) all of it
+// falls away quietly and the game runs the same on device storage.
+const PG = { ok: false, adsOK: false, lbType: 'not_available', paused: false, onPause: null, inter: null, rew: null, lastInter: -1e9 };
+const LB_ID = 'hq_points', INTER_GAP = 180000;
+function pgSend(msg) { if (!PG.ok) return; try { const p = bridge.platform.sendMessage(msg); if (p && p.catch) p.catch(() => {}); } catch (e) {} }
+async function pgInit() {
+  const t0 = Date.now();
+  while (!window.__pgLoad && Date.now() - t0 < 4000) await new Promise(r => setTimeout(r, 50));   // the script tag is async; offline it fails fast
+  if (typeof bridge === 'undefined') return;
+  try { await bridge.initialize(); PG.ok = true; } catch (e) { return; }
+  try {
+    const [t] = await bridge.storage.get([SAVE_KEY], false);
+    const remote = parseSave(t), local = loadSave();
+    // keep whichever save has got further; a new device takes the platform's, a first platform run takes the device's
+    const score = x => x ? x.unlocked * 1e6 + hqPoints(x) : -1;
+    if (remote && score(remote) >= score(local)) { remote.mute = remote.mute || false; saveMem = remote; try { localStorage.setItem(SAVE_KEY, JSON.stringify(remote)); } catch (e) {} }
+    else writeSave(local);
+  } catch (e) {}
+  try {
+    bridge.platform.on('pause_state_changed', p => { PG.paused = !!p; if (PG.onPause) PG.onPause(!!p); SND.setHidden(!!p); });
+    bridge.platform.on('audio_state_changed', st => SND.setPlatMute(st === false || st === 'disabled'));
+    if (bridge.platform.isAudioEnabled === false) SND.setPlatMute(true);
+    if (bridge.platform.isPaused) { PG.paused = true; SND.setHidden(true); }
+  } catch (e) {}
+  try {
+    bridge.advertisement.on('interstitial_state_changed', st => { if (PG.inter) PG.inter(st); });
+    bridge.advertisement.on('rewarded_state_changed', st => { if (PG.rew) PG.rew(st); });
+    PG.adsOK = true;
+  } catch (e) {}
+  try { PG.lbType = bridge.leaderboards.type || 'not_available'; } catch (e) {}
+  lbSubmit();
+}
+function lbSubmit() {
+  if (!PG.ok || PG.lbType === 'not_available') return;
+  try { const p = bridge.leaderboards.setScore(LB_ID, hqPoints(loadSave())); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+}
+// an interstitial between villages: the game is muted while it plays, then done() runs (also when no ad comes)
+function pgInterstitial(done) {
+  if (!PG.adsOK || Date.now() - PG.lastInter < INTER_GAP) return done();
+  let fin = false, opened = false;
+  const end = () => { if (fin) return; fin = true; PG.inter = null; SND.setDuck(false); done(); };
+  PG.inter = st => { if (st === 'loading' || st === 'opened') { opened = true; SND.setDuck(true); } if (st === 'closed' || st === 'failed') end(); };
+  PG.lastInter = Date.now();
+  try { bridge.advertisement.showInterstitial('mission_end'); } catch (e) { return end(); }
+  setTimeout(() => { if (!opened) end(); }, 2500);   // no ad came: carry on
+  setTimeout(end, 60000);
+}
+// a rewarded ad: onDone(true) only if the platform says the reward was earned
+function pgRewarded(onDone) {
+  if (!PG.adsOK) return onDone(false);
+  let fin = false, earned = false;
+  const end = () => { if (fin) return; fin = true; PG.rew = null; SND.setDuck(false); onDone(earned); };
+  PG.rew = st => { if (st === 'loading' || st === 'opened') SND.setDuck(true); if (st === 'rewarded') earned = true; if (st === 'closed' || st === 'failed') end(); };
+  try { bridge.advertisement.showRewarded('hall_repair'); } catch (e) { end(); }
+}
+
+// ---------- step 10 (v3.11): sound, generated with Web Audio (no files, no licences) ----------
+// A soft village ambience (wind and birds) that gives way to a low drum while a wave is on the map and fades out when the game is
+// paused or hidden; short cues for the moments that matter. It starts on the first tap, as browsers require.
+const SND = (() => {
+  let ctx = null, master = null, ambG = null, noiseBuf = null, userMute = false, platMute = false, duck = false, hidden = false, birdT = 2, drumT = 0, waveOn = false;
+  const last = {};
+  function ensure() {
+    if (ctx) { if (ctx.state === 'suspended') ctx.resume().catch(() => {}); return; }
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+    try { ctx = new AC(); } catch (e) { return; }
+    master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination);
+    noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    // wind: looped noise through a soft band-pass, its level drifting slowly
+    const src = ctx.createBufferSource(); src.buffer = noiseBuf; src.loop = true;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 420; bp.Q.value = 0.6;
+    ambG = ctx.createGain(); ambG.gain.value = 0.035;
+    const lfo = ctx.createOscillator(), lfoG = ctx.createGain(); lfo.frequency.value = 0.07; lfoG.gain.value = 0.015; lfo.connect(lfoG); lfoG.connect(ambG.gain); lfo.start();
+    src.connect(bp); bp.connect(ambG); ambG.connect(master); src.start();
+    apply();
+  }
+  function apply() { if (!master) return; const on = !userMute && !platMute && !duck && !hidden; master.gain.setTargetAtTime(on ? 0.7 : 0, ctx.currentTime, 0.2); }
+  function tone(f, dur, type, vol, at, f2) {
+    const t = ctx.currentTime + (at || 0), o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type || 'sine'; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.05);
+  }
+  function thud(vol, cut, dur, at) {
+    const t = ctx.currentTime + (at || 0), n = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    n.buffer = noiseBuf; f.type = 'lowpass'; f.frequency.value = cut; g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    n.connect(f); f.connect(g); g.connect(master); n.start(t); n.stop(t + dur + 0.05);
+  }
+  function horn(base, dur, vol) {   // a brass-like note: a saw through a low-pass that opens as it swells
+    const t = ctx.currentTime, o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(base * 0.97, t); o.frequency.linearRampToValueAtTime(base, t + 0.15);
+    f.type = 'lowpass'; f.frequency.setValueAtTime(300, t); f.frequency.linearRampToValueAtTime(1100, t + 0.25);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.12); g.gain.setValueAtTime(vol, t + dur - 0.25); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(f); f.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.05);
+  }
+  const CUES = {
+    bounty: () => { tone(988, 0.12, 'triangle', 0.18); tone(1319, 0.18, 'triangle', 0.16, 0.08); },
+    coin: () => { tone(1568, 0.08, 'square', 0.035); tone(2093, 0.12, 'square', 0.03, 0.05); },
+    level: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.18, 'triangle', 0.14, i * 0.07)),
+    warn: () => { horn(196, 0.55, 0.12); setTimeout(() => ctx && horn(233, 0.7, 0.12), 520); },
+    horn: () => horn(147, 1.4, 0.16),
+    hit: () => { thud(0.5, 220, 0.18); tone(70, 0.16, 'sine', 0.25, 0, 45); },
+    win: () => [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, i === 4 ? 0.9 : 0.25, 'triangle', 0.16, i * 0.11)),
+    lose: () => [392, 330, 262, 196].forEach((f, i) => tone(f, i === 3 ? 1.1 : 0.32, 'sawtooth', 0.07, i * 0.22))
+  };
+  const GAP = { coin: 1.2, hit: 0.45, bounty: 0.2, level: 0.3 };
+  return {
+    ensure,
+    play(k) { if (!ctx || !master || !CUES[k]) return; const t = ctx.currentTime; if (last[k] != null && t - last[k] < (GAP[k] || 0.1)) return; last[k] = t; try { CUES[k](); } catch (e) {} },
+    // called every frame: birds while the village is calm, a low drum while a wave is on the map
+    tick(dt, wave, calm) {
+      if (!ctx || !master) return;
+      if (wave !== waveOn) { waveOn = wave; ambG.gain.setTargetAtTime(wave ? 0.015 : 0.035, ctx.currentTime, 1.2); }
+      if (!calm) return;
+      if (waveOn) { drumT -= dt; if (drumT <= 0) { drumT = 1.35; thud(0.22, 140, 0.25); thud(0.14, 140, 0.2, 0.32); } }
+      else { birdT -= dt; if (birdT <= 0) { birdT = 3 + Math.random() * 6; const f = 2200 + Math.random() * 1400; tone(f, 0.09, 'sine', 0.025, 0, f * 1.25); tone(f * 1.1, 0.07, 'sine', 0.02, 0.12, f * 0.9); } }
+    },
+    setUserMute(v) { userMute = v; apply(); }, setPlatMute(v) { platMute = v; apply(); }, setDuck(v) { duck = v; apply(); }, setHidden(v) { hidden = v; apply(); },
+    get userMute() { return userMute; }
+  };
+})();
+if (!HEADLESS) {
+  document.addEventListener('pointerdown', () => SND.ensure(), true);
+  document.addEventListener('keydown', () => SND.ensure(), true);
+  document.addEventListener('visibilitychange', () => SND.setHidden(document.hidden || PG.paused));
+}
 const hqPoints = s => VILLAGES.reduce((t, V) => t + (s.best[V.id] || 0), 0);
 const starHtml = n => '\u2605'.repeat(n) + '<i>' + '\u2605'.repeat(3 - n) + '</i>';
-function goVillage(id, letter) { location.hash = 'go=' + id + (letter ? '&l=1' : ''); location.reload(); }
-function goHQ() { location.hash = 'hq'; location.reload(); }
+function goVillage(id, letter) { pgInterstitial(() => { location.hash = 'go=' + id + (letter ? '&l=1' : ''); location.reload(); }); }
+function goHQ() { pgInterstitial(() => { location.hash = 'hq'; location.reload(); }); }
 function showHQ() {
   const s = loadSave(), $ = id => document.getElementById(id);
-  $('hqPts').textContent = hqPoints(s);
+  $('hqPts').textContent = hqPoints(s); document.querySelector('#hq h1').textContent = TXT.hq.title; document.querySelector('#hq .note').textContent = TXT.hq.note; $('lbBtn').textContent = TXT.lb.btn;
+  document.querySelector('#hq .sub').lastChild.textContent = ' ' + TXT.hq.points;
   $('hqList').innerHTML = VILLAGES.map((V, i) => {
     const open = i < s.unlocked, best = s.best[V.id];
-    return `<button class="vil" data-v="${V.id}"${open ? '' : ' disabled'}><b>${i + 1}. ${V.name}</b><span class="st">${s.stars[V.id] ? starHtml(s.stars[V.id]) : ''}<em>${best != null ? 'Best ' + best + 'g' : ''}</em></span><small>${open ? V.kind : 'Win ' + VILLAGES[i - 1].name + ' to open'}</small></button>`;
+    return `<button class="vil" data-v="${V.id}"${open ? '' : ' disabled'}><b>${i + 1}. ${V.name}</b><span class="st">${s.stars[V.id] ? starHtml(s.stars[V.id]) : ''}<em>${best != null ? TXT.hq.best(best) : ''}</em></span><small>${open ? V.kind : TXT.hq.locked(VILLAGES[i - 1].name)}</small></button>`;
   }).join('');
   for (const b of $('hqList').querySelectorAll('button.vil')) b.addEventListener('click', () => showLetter(b.dataset.v));
+  $('lbRow').hidden = !PG.ok || PG.lbType === 'not_available'; $('lbBtn').onclick = showBoard;
   $('hq').hidden = false;
+}
+// the headquarters points board: the platform's own pop-up where it has one, otherwise our list
+async function showBoard() {
+  const $ = id => document.getElementById(id);
+  if (PG.lbType === 'native_popup') { try { await bridge.leaderboards.showNativePopup(LB_ID); } catch (e) {} return; }
+  $('hq').hidden = true; $('lb').hidden = false; $('lbNote').textContent = TXT.lb.note; $('lbList').innerHTML = '';
+  $('lbClose').onclick = () => { $('lb').hidden = true; showHQ(); };
+  let rows = null; try { rows = await bridge.leaderboards.getEntries(LB_ID); } catch (e) {}
+  const me = (() => { try { return bridge.player.id; } catch (e) { return null; } })();
+  const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  $('lbList').innerHTML = !rows ? `<li>${TXT.lb.fail}</li>` : !rows.length ? `<li>${TXT.lb.none}</li>`
+    : rows.slice(0, 50).map((r, i) => `<li${me != null && r.id === me ? ' class="me"' : ''}><b>${esc(r.rank || i + 1)}</b><span>${esc(r.name || TXT.lb.you)}</span><em>${esc(r.score)}</em></li>`).join('');
 }
 function showLetter(id) {
   const V = VILLAGES.find(v => v.id === id), $ = id => document.getElementById(id);
   $('hq').hidden = true; $('letterTitle').textContent = V.name; $('letterText').textContent = V.letter; $('letter').hidden = false;
+  document.querySelector('#letter small').textContent = TXT.hq.letterFrom; $('letterGo').textContent = TXT.hq.setOut; $('letterBack').textContent = TXT.hq.back;
   $('letterBack').onclick = () => { $('letter').hidden = true; showHQ(); };
   $('letterGo').onclick = () => { $('letter').hidden = true; startGame(id); };
 }
 function boot() {
+  const sv = loadSave(); SND.setUserMute(!!sv.mute); document.body.classList.toggle('muted', !!sv.mute);
   const m = /go=([a-z]+)(&l=1)?/.exec(location.hash), V = m && VILLAGES.find(v => v.id === m[1]);
-  if (V && VILLAGES.indexOf(V) < loadSave().unlocked) { if (m[2]) showLetter(V.id); else startGame(V.id); }
+  if (V && VILLAGES.indexOf(V) < sv.unlocked) { if (m[2]) showLetter(V.id); else startGame(V.id); }
   else showHQ();
+  pgSend('game_ready');
 }
-if (!HEADLESS) window.addEventListener('DOMContentLoaded', boot);
+// Bridge first (it gives the save), then the first screen; without Bridge this takes a moment at most
+if (!HEADLESS) window.addEventListener('DOMContentLoaded', () => { pgInit().catch(() => {}).then(boot); });
 
 function startGame(villageId) {
   const VIL = applyVillage(villageId);
   let S = newSim((Date.now() % 100000) | 0);
+  pgSend('level_started');
   GM.sim = () => S;
   let speed = 1, paused = false;
 
@@ -3555,6 +3763,7 @@ function startGame(villageId) {
       <p class="note" data-f="clsNote"></p>
       <h3>Recall horn</h3><p class="why" data-f="hornInfo"></p>
       <div class="row"><button class="gold" data-act="horn" data-f="hornBtn">Sound the recall horn</button></div>
+      ${PG.adsOK ? `<h3>${TXT.ad.repairHead}</h3><p class="why" data-f="adRepInfo"></p><div class="row"><button data-act="adRepair" data-f="adRepBtn">${TXT.ad.repairBtn}</button></div>` : ''}
       ${flagBlock('hall', 'at the hall door')}
       <h3>Treasury</h3>
       <div class="grid"><span>Tax collected</span><span data-f="tax"></span><span>Deliveries</span><span data-f="del"></span><span>Last 60 s</span><span data-f="tax60"></span><span>Paid in bounties</span><span data-f="paid"></span><span>Spent on building</span><span data-f="built"></span><span>Defend flags</span><span data-f="flagsL"></span><span>Recall horn</span><span data-f="hornL"></span><span>Array shots</span><span data-f="arrL"></span><span>Caravans</span><span data-f="cvL"></span><span>Escort bounties</span><span data-f="escL"></span><span>Stolen</span><span data-f="stolen"></span></div>
@@ -3738,6 +3947,8 @@ function startGame(villageId) {
       setF('flagsL', S.ledger.flags ? `${S.ledger.flags}g posted, ${S.ledger.flagRefunds}g back, ${S.flags.reduce((t, F) => t + F.pot, 0)}g in pots now` : 'None');
       setF('hornL', S.ledger.horn ? `${S.ledger.horn}g paid` : 'Not sounded');
       setF('hornInfo', hornInfo(S)); const hb = card.querySelector('[data-f="hornBtn"]'); if (hb) hb.disabled = !hornReady(S);
+      const rb = card.querySelector('[data-f="adRepBtn"]');
+      if (rb) { const full = S.hall.hp >= S.hall.max; setF('adRepInfo', adBusy ? TXT.ad.repairBusy : adFailT > S.t - 6 ? TXT.ad.repairFail : S.adRepaired ? TXT.ad.repairUsed : full ? TXT.ad.repairFull : TXT.ad.repairInfo); rb.disabled = adBusy || S.adRepaired || full || S.won || S.lost; }
       updateAnchorFlag('hall');
     }
   }
@@ -3755,6 +3966,10 @@ function startGame(villageId) {
     else if (act === 'b25' || act === 'b50') { postBounty(S, sel.id, act === 'b25' ? 25 : 50); updateCard(); }
     else if (act === 'cancel') { cancelBounty(S, sel.id); updateCard(); }
     else if (act === 'horn') { soundHorn(S); updateCard(); }
+    else if (act === 'adRepair' && !adBusy) {
+      adBusy = true; const wasPaused = paused; if (!paused) $('pauseBtn').click(); updateCard();
+      pgRewarded(ok => { adBusy = false; if (ok) adRepairHall(S); else adFailT = S.t; if (!wasPaused && paused) $('pauseBtn').click(); updateCard(); });
+    }
     else if (act === 'e25' || act === 'e50') { postEscort(S, act === 'e25' ? 25 : 50); updateCard(); }
     else if (act === 'ecancel') { cancelEscort(S); updateCard(); }
     else if (act && act.startsWith('sell_')) { const k = act.slice(5); setSell(S, k, !S.sell[k]); updateCard(); }
@@ -3795,32 +4010,53 @@ function startGame(villageId) {
   function showEnd() {
     const idx = VIL ? VILLAGES.indexOf(VIL) : -1, next = idx >= 0 ? VILLAGES[idx + 1] : null;
     $('won').hidden = false; $('hqBtn').hidden = !VIL;
+    pgSend(S.won ? 'level_completed' : 'level_failed');
+    $('hqBtn').textContent = TXT.end.hq;
     if (S.won) {
       const coin = Math.floor(S.gold);
-      $('wonTitle').textContent = 'Every threat is gone';
-      $('wonText').textContent = VIL ? `${VIL.name} is safe, on day ${Math.floor(S.wonT / 60) + 1}. Coin left in the treasury: ${coin}g.` : `Every threat is gone, on day ${Math.floor(S.wonT / 60) + 1}.`;
+      $('wonTitle').textContent = TXT.end.wonTitle;
+      $('wonText').textContent = VIL ? TXT.end.won(VIL.name, Math.floor(S.wonT / 60) + 1, coin) : TXT.end.wonPlain(Math.floor(S.wonT / 60) + 1);
       if (VIL) {
         const sv = loadSave(), n = starsFor(VIL, coin), best = sv.best[VIL.id], isBest = best == null || coin > best;
         if (isBest) sv.best[VIL.id] = coin;
         sv.stars[VIL.id] = Math.max(sv.stars[VIL.id] || 0, n); sv.unlocked = Math.max(sv.unlocked, Math.min(VILLAGES.length, idx + 2)); writeSave(sv);
         $('wonStars').innerHTML = starHtml(n); $('wonStars').hidden = false;
-        $('wonReply').textContent = (n === 3 ? 'Headquarters is delighted: your coffers put older guildmasters to shame.' : n === 2 ? 'A solid result. Headquarters notes the coin you kept.' : 'The threats are gone, though the treasury is thin. Headquarters expects more coin next time.')
-          + (isBest ? (best != null ? ` A new best for ${VIL.name} (was ${best}g).` : '') : ` Your best here is still ${best}g.`)
-          + (n < 3 ? ` ${n === 1 ? 'Two' : 'Three'} stars from ${VIL.stars[n - 1]}g.` : '');
+        $('wonReply').textContent = TXT.end.reply[n - 1] + (isBest ? (best != null ? TXT.end.newBest(VIL.name, best) : '') : TXT.end.stillBest(best)) + (n < 3 ? TXT.end.nextStar(n, VIL.stars[n - 1]) : '');
         $('wonReply').hidden = false;
-        if (next) { $('againBtn').textContent = 'Next: ' + next.name; $('againBtn').dataset.go = next.id; $('againBtn').dataset.letter = '1'; }
-        else { $('againBtn').textContent = 'Play ' + VIL.name + ' again'; $('againBtn').dataset.go = VIL.id; $('againBtn').dataset.letter = ''; }
+        if (isBest) lbSubmit();
+        if (next) { $('againBtn').textContent = TXT.end.next(next.name); $('againBtn').dataset.go = next.id; $('againBtn').dataset.letter = '1'; }
+        else { $('againBtn').textContent = TXT.end.again(VIL.name); $('againBtn').dataset.go = VIL.id; $('againBtn').dataset.letter = ''; }
       }
     } else {
-      $('wonTitle').textContent = 'The guild hall has fallen';
-      $('wonText').textContent = `It stood until day ${Math.floor(S.lostT / 60) + 1}, and ${S.waves.log.filter(W => W && W.clearedT != null).length} waves were beaten. Headquarters sends a new guildmaster to try again.`;
-      $('againBtn').textContent = 'Try again'; if (VIL) { $('againBtn').dataset.go = VIL.id; $('againBtn').dataset.letter = ''; }
+      $('wonTitle').textContent = TXT.end.lostTitle;
+      $('wonText').textContent = TXT.end.lost(Math.floor(S.lostT / 60) + 1, S.waves.log.filter(W => W && W.clearedT != null).length);
+      $('againBtn').textContent = TXT.end.tryAgain; if (VIL) { $('againBtn').dataset.go = VIL.id; $('againBtn').dataset.letter = ''; }
     }
   }
   GM.setSpeed = v => { speed = v; $('speedBtn').textContent = speed + '×'; };
   document.addEventListener('visibilitychange', () => { if (document.hidden && !paused) $('pauseBtn').click(); });
+  // step 10: the platform can pause the game (an ad, the player leaving); it stays paused until the player resumes
+  PG.onPause = p => { if (p && !paused) $('pauseBtn').click(); };
+  if (PG.paused && !paused) $('pauseBtn').click();
+  $('pauseBtn').addEventListener('click', () => pgSend(paused ? 'level_paused' : 'level_resumed'));
+  const paintMute = () => { const m = SND.userMute; document.body.classList.toggle('muted', m); $('muteBtn').setAttribute('aria-label', m ? TXT.sound.off : TXT.sound.on); };
+  paintMute();
+  $('muteBtn').addEventListener('click', () => { SND.ensure(); SND.setUserMute(!SND.userMute); const sv = loadSave(); sv.mute = SND.userMute; writeSave(sv); paintMute(); });
 
-  let evIdx = 0;
+  let evIdx = 0, adBusy = false, adFailT = -99;
+  // step 10: sound cues read from the sim's state, so the sim itself is unchanged
+  const snd = { gold: S.gold, hitT: S.hall.hitT, warnN: 0, horns: 0, lv: 0, posts: 0, end: false };
+  function pumpSound(real) {
+    if (S.gold > snd.gold + 0.5) SND.play('coin');
+    snd.gold = S.gold;
+    if (S.hall.hitT !== snd.hitT) { snd.hitT = S.hall.hitT; SND.play('hit'); }
+    const wn = S.waves.warn ? S.waves.warn.n : 0; if (wn && wn !== snd.warnN) { snd.warnN = wn; SND.play('warn'); }
+    if (S.stats.horns > snd.horns) { snd.horns = S.stats.horns; SND.play('horn'); }
+    if (S.stats.levelUps > snd.lv) { snd.lv = S.stats.levelUps; SND.play('level'); }
+    if (S.ledger.bounties + S.ledger.flags + S.ledger.escorts > snd.posts) { snd.posts = S.ledger.bounties + S.ledger.flags + S.ledger.escorts; SND.play('bounty'); }
+    if ((S.won || S.lost) && !snd.end) { snd.end = true; SND.play(S.won ? 'win' : 'lose'); }
+    SND.tick(real, waveActive(S), !paused);
+  }
   function pumpEvents() {
     while (evIdx < S.events.length) {
       const e = S.events[evIdx++];
@@ -4135,7 +4371,7 @@ function startGame(villageId) {
     frameTimes.push(real * 1000); if (frameTimes.length > 600) frameTimes.shift();
     if (!paused) { acc += real * speed; let n = 0; while (acc >= DT && n < 12) { step(S, DT); acc -= DT; n++; } if (n === 12) acc = 0; }
     if (cam.follow) { const a = unitById(S, cam.follow); if (a && !a.dead) { const tx = a.inside ? 0 : a.x, tz = a.inside ? 0 : a.z; cam.x += (tx - cam.x) * Math.min(1, real * 4); cam.z += (tz - cam.z) * Math.min(1, real * 4); applyCam(); } else cam.follow = null; }
-    pumpEvents();
+    pumpEvents(); pumpSound(real);
     syncWaves(S, now);
     pumpShots(paused ? 0 : real * speed);
     sync(real, now);
@@ -4156,14 +4392,10 @@ function startGame(villageId) {
       const den = lairById(S, 'den'), clsHint = !raidHint && !cvHint && !smithHint && S.everPosted && !S.pickedCls && aliveAdv(S).length < CFG.maxAdv && ((den && !den.alive) || S.t > 75) && S.t < 170;
       // step 8: the first warning teaches the answers; after wave 1, the hint points to what is missing for arrays
       const V8 = S.waves, built8 = S.arrays.some(A => A.built), last8 = V8.log.filter(W => W && W.clearedT != null).pop();
-      const waveHint = V8.warn && V8.warn.n === 1 && !S.stats.horns ? `A wave is coming. Tap the guild hall to sound the recall horn or plant a defend flag` : null;
-      const arrayHint = !built8 && last8 && S.t - last8.clearedT < 40 ? (!S.sites.some(x => x.kind === 'quarry' && x.built) ? 'Waves grow. You will need arrays to hold the next ones: build a quarry first, for their stone'
-        : !S.shops.arrays.built ? 'Waves grow. You will need arrays to hold the next ones: tap the empty plot west of the guild hall to build an array master'
-        : 'Waves grow. Tap a + plot around the village to build an array') : null;
-      const ht = waveHint || arrayHint || (raidHint ? 'Bandits are raiding. Tap the guild hall to sound the recall horn or plant a defend flag'
-        : cvHint ? 'A merchant caravan has come for your surplus food, and bandits will go for it. Tap the wagon to post an escort bounty'
-        : smithHint ? 'An adventurer has gold for better gear. Tap the empty plot in front of the guild hall to build a blacksmith'
-        : clsHint ? 'Tap the guild hall to choose who it recruits next: warrior, archer, magician or healer' : 'Tap the wolf den to post a bounty');
+      const waveHint = V8.warn && V8.warn.n === 1 && !S.stats.horns ? TXT.hint.wave : null;
+      const arrayHint = !built8 && last8 && S.t - last8.clearedT < 40 ? (!S.sites.some(x => x.kind === 'quarry' && x.built) ? TXT.hint.arrayQuarry
+        : !S.shops.arrays.built ? TXT.hint.arrayMaster : TXT.hint.arrayPlot) : null;
+      const ht = waveHint || arrayHint || (raidHint ? TXT.hint.raid : cvHint ? TXT.hint.caravan : smithHint ? TXT.hint.smith : clsHint ? TXT.hint.cls : TXT.hint.den);
       if (hint.textContent !== ht) hint.textContent = ht;
       hint.hidden = !!sel || (!waveHint && !arrayHint && !raidHint && !cvHint && !clsHint && !smithHint && (S.everPosted || S.t < 2));   // never under an open card
       if ((S.won || S.lost) && $('won').hidden) showEnd();
